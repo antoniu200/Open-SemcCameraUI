@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.baselayout.PredictiveLaunchCoverView android:id="@id/camera_predictive_launch_cover_view" android:focusable="false" android:visibility="invisible" android:clickable="true" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <ImageView android:layout_gravity="center" android:id="@id/hole_view" android:layout_width="fill_parent" android:layout_height="wrap_content" android:src="@drawable/predictivelaunch_animation_selector" android:scaleType="centerCrop" android:adjustViewBounds="true" />
+    <FrameLayout android:id="@id/square_box" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <FrameLayout android:id="@id/touch_area" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <TextView android:textSize="@dimen/predictive_launch_cover_description_font_size" android:textColor="@color/predictive_launch_cover_description_font_color" android:id="@id/predictive_launch_description" android:focusable="false" android:focusableInTouchMode="false" android:visibility="invisible" android:clickable="false" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    </FrameLayout>
+</com.sonyericsson.android.camera.view.baselayout.PredictiveLaunchCoverView>

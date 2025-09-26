@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="drawable" name="com.sonyericsson.android.addoncamera.artfilter">@drawable/cam_core_mode_shortcut_creative_effect_icn</item>
+    <item type="drawable" name="com.sonyericsson.android.camera.DUAL_BACKGROUND_DEFOCUS">@drawable/cam_core_mode_shortcut_bokeh_icn</item>
+    <item type="drawable" name="com.sonyericsson.android.camera.DUAL_MONOCHROME">@drawable/cam_core_mode_shortcut_monochrome_icn</item>
+    <item type="drawable" name="com.sonyericsson.android.camera.GOOGLE_LENS">@drawable/cam_core_mode_shortcut_googlelens_icn</item>
+    <item type="drawable" name="com.sonyericsson.android.camera.MANUAL">@drawable/cam_core_mode_shortcut_manual_icn</item>
+    <item type="drawable" name="com.sonyericsson.android.camera.PORTRAIT_SELFIE">@drawable/cam_core_mode_shortcut_portrait_selfie_icn</item>
+    <item type="drawable" name="com.sonyericsson.android.camera.SLOW_MOTION">@drawable/cam_core_mode_shortcut_slowmotion_icn</item>
+    <item type="drawable" name="com.sonyericsson.android.camera3d">@drawable/cam_core_mode_shortcut_panorama_icn</item>
+    <item type="drawable" name="com.sonymobile.android.addoncamera.soundphoto">@drawable/cam_core_mode_shortcut_sound_photo_icn</item>
+    <item type="drawable" name="com.sonymobile.androidapp.cameraaddon.areffect">@drawable/cam_core_mode_shortcut_ar_effect_icn</item>
+    <item type="drawable" name="com.sonymobile.backgrounddefocus">@drawable/cam_core_mode_shortcut_bokeh_icn</item>
+    <item type="drawable" name="notification_template_icon_bg">#3333b5e5</item>
+    <item type="drawable" name="notification_template_icon_low_bg">#0cffffff</item>
+</resources>

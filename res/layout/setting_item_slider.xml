@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center" android:id="@id/scale_number" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layoutDirection="ltr"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:orientation="vertical" android:id="@id/background" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <ImageView android:layout_gravity="center" android:id="@id/indicator" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/setting_default_indicator_selector" />
+        <ImageView android:layout_gravity="bottom|center" android:id="@id/auto_button" android:visibility="gone" android:clickable="true" android:layout_width="56.0dip" android:layout_height="56.0dip" android:layout_margin="4.0dip" android:src="@drawable/setting_slider_auto_button_selector" android:scaleType="center" />
+        <TextView android:textSize="@dimen/image_quality_control_parameter_value_text_size" android:textColor="#b2ffffff" android:gravity="center" android:layout_gravity="center|top" android:id="@id/max_value" android:visibility="gone" android:layout_width="48.0dip" android:layout_height="48.0dip" android:layout_margin="8.0dip" style="@style/ImageQualityControlTextDropShadow" />
+        <TextView android:textSize="@dimen/image_quality_control_parameter_value_text_size" android:textColor="#b2ffffff" android:gravity="center" android:layout_gravity="bottom|center" android:id="@id/min_value" android:visibility="gone" android:layout_width="48.0dip" android:layout_height="48.0dip" android:layout_margin="56.0dip" style="@style/ImageQualityControlTextDropShadow" />
+    </FrameLayout>
+</LinearLayout>

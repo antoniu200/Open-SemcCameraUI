@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="abc_config_activityDefaultDur">220</integer>
+    <integer name="abc_config_activityShortDur">150</integer>
+    <integer name="acceptable_burst_shot_fps_x1000">10000</integer>
+    <integer name="cancel_button_image_alpha">127</integer>
+    <integer name="category_switch_textview_max_lines">2</integer>
+    <integer name="config_tooltipAnimTime">150</integer>
+    <integer name="contextual_setting_scroll_bar_default_delay_before_fade">1000</integer>
+    <integer name="focus_indicator_animation_fadeout_duration">70</integer>
+    <integer name="focus_indicator_animation_focusin_duration">70</integer>
+    <integer name="google_play_services_version">8115000</integer>
+    <integer name="mode_selector_grid_item_name_text_max_line">2</integer>
+    <integer name="rec_sequence_thumbnail_max_num">3</integer>
+    <integer name="scene_fade_out_delay">2000</integer>
+    <integer name="scene_fade_out_duration">1000</integer>
+    <integer name="setting_1st_layer_reveal_animation_duration">200</integer>
+    <integer name="setting_defaultdelaybeforefade">1000</integer>
+    <integer name="setting_fade_animation_duration">150</integer>
+    <integer name="setting_fadeduration">1000</integer>
+    <integer name="settings_menu_dialog_panel_item_txt_lines">2</integer>
+    <integer name="shortcut_icon_count">5</integer>
+    <integer name="status_bar_notification_info_maxnum">999</integer>
+    <integer name="viewfinder_gesture_detector_time_slop_millis">200</integer>
+    <integer name="viewfinder_leftside_component_width_ratio">8</integer>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/zoombar_base" android:layout_width="@dimen/zoom_container_width" android:layout_height="@dimen/zoom_container_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.sonyericsson.android.camera.view.baselayout.zoombar.Zoombar android:layout_gravity="center|top" android:id="@id/zoombar" android:focusable="false" android:focusableInTouchMode="false" android:clickable="false" android:layout_width="@dimen/zoom_container_width" android:layout_height="@dimen/zoom_container_height" android:layoutDirection="ltr">
+        <ImageView android:layout_gravity="start|center" android:id="@id/left_indicator" android:focusable="false" android:focusableInTouchMode="false" android:clickable="false" android:layout_width="0.0dip" android:layout_height="wrap_content" android:src="@drawable/cam_zoom_bar_1_icn" android:scaleType="fitXY" />
+        <ImageView android:layout_gravity="end|center" android:id="@id/right_indicator" android:focusable="false" android:focusableInTouchMode="false" android:clickable="false" android:layout_width="0.0dip" android:layout_height="wrap_content" android:src="@drawable/cam_zoom_bar_2_icn" android:scaleType="fitXY" />
+        <TextView android:textColor="@color/zoom_text" android:layout_gravity="center" android:id="@id/value_indicator" android:focusable="false" android:focusableInTouchMode="false" android:clickable="false" android:layout_width="wrap_content" android:layout_height="wrap_content" style="@style/TextAppearance.SomcCamera.Medium" />
+    </com.sonyericsson.android.camera.view.baselayout.zoombar.Zoombar>
+</FrameLayout>

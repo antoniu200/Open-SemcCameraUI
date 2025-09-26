@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="horizontal" android:focusable="false" android:focusableInTouchMode="false" android:clickable="false" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layoutDirection="ltr"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textColor="@color/battery_indicator_text_color" android:gravity="center|right" android:layout_gravity="top" android:id="@id/battery_indicator_text" android:layout_width="@dimen/battery_indicator_text_max_width" android:layout_height="@dimen/top_indicator_image_size" android:maxLines="1" style="@style/OnScreenTextDropShadow" />
+    <ImageView android:layout_gravity="top" android:id="@id/battery_indicator_image" android:background="@drawable/cam_low_battery_icn" android:layout_width="@dimen/top_indicator_image_size" android:layout_height="@dimen/top_indicator_image_size" />
+</LinearLayout>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.overlaycontrol.imagequality.ImageQualityControlTab android:background="@drawable/setting_tab_selector" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layoutDirection="ltr"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:orientation="vertical" android:id="@id/container" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_marginLeft="@dimen/image_quality_control_tab__margin" android:layout_marginRight="@dimen/image_quality_control_tab__margin" android:layoutDirection="ltr">
+        <ImageView android:id="@id/icon" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="@dimen/image_quality_control_parameter_title_height" android:scaleType="center" android:layout_alignParentTop="true" />
+        <TextView android:textSize="@dimen/image_quality_control_parameter_value_text_size" android:textColor="#ffffffff" android:gravity="center" android:id="@id/valueText" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="@dimen/image_quality_control_parameter_value_height" android:lines="1" android:layout_alignParentBottom="true" style="@style/ImageQualityControlTextDropShadow" />
+        <ImageView android:id="@id/valueIcon" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="@dimen/image_quality_control_parameter_icon_height" android:scaleType="center" android:layout_alignParentBottom="true" />
+    </RelativeLayout>
+</com.sonyericsson.android.camera.view.overlaycontrol.imagequality.ImageQualityControlTab>

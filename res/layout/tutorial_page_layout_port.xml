@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="@dimen/tutorial_title_text_size" android:textColor="@color/tutorial_title_text_color" android:id="@id/tutorial_page_title" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginLeft="24.0dip" android:layout_marginTop="28.0dip" android:layout_marginRight="24.0dip" android:layout_marginBottom="16.0dip" android:text="" android:maxLines="2" android:layout_below="@id/tutorial_page_icon" android:contentDescription="" android:fontFamily="sans-serif-regular" />
+    <TextView android:textSize="@dimen/tutorial_text_size" android:textColor="@color/tutorial_text_color" android:id="@id/tutorial_page_description" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_marginLeft="24.0dip" android:layout_marginRight="24.0dip" android:layout_marginBottom="6.0dip" android:text="" android:layout_below="@id/tutorial_page_title" android:lineSpacingMultiplier="1.4" android:contentDescription="" android:fontFamily="sans-serif-regular" />
+</RelativeLayout>

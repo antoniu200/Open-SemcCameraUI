@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/indicator_video_high_sensitivity" android:focusableInTouchMode="false" android:visibility="gone" android:layout_width="@dimen/high_sensitivity_fusion_indicator_container_width" android:layout_height="@dimen/high_sensitivity_fusion_indicator_container_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_gravity="bottom" android:id="@id/video_high_sensitivity_icn" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/cam_core_main_high_sensitivity" />
+</FrameLayout>

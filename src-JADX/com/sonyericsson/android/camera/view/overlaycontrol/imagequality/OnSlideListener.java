@@ -1,0 +1,8 @@
+package com.sonyericsson.android.camera.view.overlaycontrol.imagequality;
+
+/* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
+public interface OnSlideListener {
+    void onSlideStarted();
+
+    void onSlideStopped();
+}

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut android:icon="@drawable/cam_app_shortcut_video_icn" android:enabled="true" android:shortcutId="back_video" android:shortcutShortLabel="@string/cam_app_shortcut_video_txt" android:shortcutLongLabel="@string/cam_app_shortcut_video_txt">
+        <intent android:targetPackage="com.sonyericsson.android.camera" android:action="android.media.action.VIDEO_CAMERA" android:targetClass="com.sonyericsson.android.camera.CameraActivity">
+            <extra android:name="com.sonyericsson.android.camera.extra.launchTrigger" android:value="APP_SHORTCUT" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut android:icon="@drawable/cam_app_shortcut_front_photo_icn" android:enabled="true" android:shortcutId="front_photo" android:shortcutShortLabel="@string/cam_app_shortcut_front_photo_txt" android:shortcutLongLabel="@string/cam_app_shortcut_front_photo_txt">
+        <intent android:targetPackage="com.sonyericsson.android.camera" android:action="android.media.action.STILL_IMAGE_CAMERA" android:targetClass="com.sonyericsson.android.camera.CameraActivity">
+            <extra android:name="com.sonyericsson.android.camera.extra.launchTrigger" android:value="APP_SHORTCUT" />
+            <extra android:name="android.intent.extra.USE_FRONT_CAMERA" android:value="true" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut android:icon="@drawable/cam_app_shortcut_manual_icn" android:enabled="true" android:shortcutId="back_manual" android:shortcutShortLabel="@string/cam_app_shortcut_manual_txt" android:shortcutLongLabel="@string/cam_app_shortcut_manual_txt">
+        <intent android:targetPackage="com.sonyericsson.android.camera" android:action="android.media.action.STILL_IMAGE_CAMERA" android:targetClass="com.sonyericsson.android.camera.CameraActivity">
+            <extra android:name="com.sonyericsson.android.camera.extra.launchTrigger" android:value="APP_SHORTCUT" />
+            <extra android:name="android.intent.extra.CAMERA_MODE" android:value="MANUAL_MODE" />
+        </intent>
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

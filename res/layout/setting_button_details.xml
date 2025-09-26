@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:id="@id/background" android:background="@drawable/setting_item_ripple_selector" android:clickable="true" android:layout_width="fill_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="16.0dip" android:textColor="#ffffffff" android:gravity="center_vertical" android:id="@id/text" android:visibility="visible" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="16.0dip" android:layout_marginBottom="12.0dip" android:lines="1" android:layout_marginStart="16.0dip" android:layout_marginEnd="16.0dip" />
+    <TextView android:textSize="14.0dip" android:textColor="#b2ffffff" android:gravity="top" android:id="@id/description" android:visibility="visible" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginBottom="16.0dip" android:lines="2" android:layout_marginStart="16.0dip" android:layout_marginEnd="16.0dip" />
+    <View android:id="@id/separator" android:background="@drawable/cam_core_dialog_separator_icn" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="@dimen/setting_common_separator_height" />
+</LinearLayout>

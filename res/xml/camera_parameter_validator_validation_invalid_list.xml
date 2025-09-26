@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<validation-set-list>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="sonymobile.statistics.conditionDetectMode" value="0" />
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="com.sonymobile.statistics.sceneDetectMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="com.sonymobile.control.stillHdrMode" value="2" />
+        </check-condition>
+    </validation-set>
+</validation-set-list>

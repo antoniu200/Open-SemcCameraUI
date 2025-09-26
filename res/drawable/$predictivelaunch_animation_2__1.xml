@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set android:ordering="together"
+  xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt">
+    <objectAnimator android:interpolator="@drawable/$$predictivelaunch_animation_2__1__0" android:duration="333" android:startOffset="0" android:valueFrom="M100 0 C100,-55.23 55.23,-100 0,-100 C-55.23,-100 -100,-55.23 -100,0 C-100,55.23 -55.23,100 0,100 C55.23,100 100,55.23 100,0c  M180 420 C180,420 -180,420 -180,420 C-180,420 -180,-420 -180,-420 C-180,-420 180,-420 180,-420 C180,-420 180,420 180,420c " android:valueTo="M459 0 C459,-253.5 253.5,-459 0,-459 C-253.5,-459 -459,-253.5 -459,0 C-459,253.5 -253.5,459 0,459 C253.5,459 459,253.5 459,0c  M180 420 C180,420 -180,420 -180,420 C-180,420 -180,-420 -180,-420 C-180,-420 180,-420 180,-420 C180,-420 180,420 180,420c " android:valueType="pathType" android:propertyName="pathData" />
+</set>

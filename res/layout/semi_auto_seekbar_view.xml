@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.overlaycontrol.semiauto.SemiAutoSeekBarView android:orientation="horizontal" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="fill_parent" android:layoutDirection="ltr"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:layout_gravity="center" android:id="@id/semi_auto_seek_area" android:layout_width="@dimen/seek_bar_view_seek_area_width" android:layout_height="fill_parent">
+        <ImageView android:layout_gravity="center" android:id="@id/semi_auto_seek_knob" android:layout_width="@dimen/seek_bar_view_seek_knob_width" android:layout_height="@dimen/seek_bar_view_seek_knob_height" android:src="@drawable/semi_auto_knob_icon" android:scaleType="centerInside" />
+    </FrameLayout>
+</com.sonyericsson.android.camera.view.overlaycontrol.semiauto.SemiAutoSeekBarView>

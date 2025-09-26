@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/indicator_video_hdr" android:focusableInTouchMode="false" android:visibility="gone" android:layout_width="@dimen/video_hdr_indicator_container_width" android:layout_height="@dimen/video_hdr_indicator_container_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ImageView android:layout_gravity="bottom" android:id="@id/video_hdr_icn" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/cam_core_main_video_hdr" />
+</FrameLayout>

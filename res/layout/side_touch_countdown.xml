@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/side_touch_countdown" android:visibility="invisible" android:layout_width="@dimen/side_icon_size_wh" android:layout_height="@dimen/side_icon_count_down_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.sonyericsson.android.camera.view.sidetouch.SideTouchCountDownCircleView android:layout_gravity="center_vertical" android:id="@id/side_touch_countdown_circle" android:background="@drawable/cam_side_touch_countdown_button_icn" android:layout_width="@dimen/side_icon_size_wh" android:layout_height="@dimen/side_icon_size_wh" />
+</FrameLayout>

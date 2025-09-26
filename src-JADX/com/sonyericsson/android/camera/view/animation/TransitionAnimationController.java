@@ -1,0 +1,281 @@
+package com.sonyericsson.android.camera.view.animation;
+
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.content.Context;
+import android.view.View;
+import com.sonyericsson.android.camera.NavigatorContents;
+import com.sonyericsson.android.camera.R;
+import com.sonyericsson.android.camera.util.CamLog;
+import com.sonyericsson.android.camera.view.ApplicationNavigator;
+import com.sonyericsson.android.camera.view.animation.AnimationRequest;
+import com.sonyericsson.android.camera.view.baselayout.SwitchAnimationView;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+/* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
+public class TransitionAnimationController {
+    private final FacingTransitionAnimation mFacingAnimation;
+    private final ModeTransitionAnimation mModeAnimation;
+    private final BlockingQueue<AnimatorSet> mQueue = new LinkedBlockingQueue();
+    private AnimationRequest mLastRequest = null;
+
+    public interface TransitionAnimationCallback {
+        void onAnimationFinished();
+    }
+
+    public TransitionAnimationController(ApplicationNavigator applicationNavigator, List<View> list, View view, View view2, View view3, View view4, View view5, View view6, View view7, View view8, View view9, SwitchAnimationView switchAnimationView) {
+        this.mModeAnimation = new ModeTransitionAnimation(applicationNavigator, list, view, view2, view3, view4, view5, view6, view7, view8, view9);
+        this.mFacingAnimation = new FacingTransitionAnimation(switchAnimationView, view4, list);
+    }
+
+    public void resume() {
+        this.mModeAnimation.resume();
+        this.mFacingAnimation.resume();
+    }
+
+    public void pause() {
+        for (AnimatorSet animatorSet : this.mQueue) {
+            animatorSet.removeAllListeners();
+            animatorSet.cancel();
+        }
+        this.mQueue.clear();
+        this.mLastRequest = null;
+    }
+
+    public static int getSwipeThreshold(Context context) {
+        return context.getResources().getDimensionPixelSize(R.dimen.swipe_threshold);
+    }
+
+    public static int getSwitchSwipeThreshold(Context context) {
+        return context.getResources().getDimensionPixelSize(R.dimen.camera_switch_swipe_threshold);
+    }
+
+    public boolean requestAnimation(AnimationRequest animationRequest) {
+        return requestAnimation(animationRequest, null);
+    }
+
+    public boolean requestAnimation(AnimationRequest animationRequest, TransitionAnimationCallback transitionAnimationCallback) {
+        AnimatorSet modeIconAnimation;
+        if (CamLog.DEBUG) {
+            CamLog.d("request source:" + animationRequest.mType + ", type:" + animationRequest.mDegree + ", mFrom:" + animationRequest.mFrom + ", mTarget:" + animationRequest.mTarget);
+        }
+        if (!verifyLastRequest(animationRequest)) {
+            return false;
+        }
+        switch (animationRequest.mType) {
+            case MODE_ICON:
+                modeIconAnimation = getModeIconAnimation(animationRequest);
+                break;
+            case MODE_TOUCH:
+                modeIconAnimation = getModeTouchAnimation(animationRequest);
+                break;
+            case MODE_SELECTOR:
+                modeIconAnimation = getModeIconAnimation(animationRequest);
+                break;
+            case MRU_SHORTCUT:
+                modeIconAnimation = getModeIconAnimation(animationRequest);
+                break;
+            case SWITCH_TOUCH:
+                if (animationRequest.mDegree == AnimationRequest.AnimationDegree.START) {
+                    this.mLastRequest = animationRequest;
+                    this.mFacingAnimation.getSwitchAnimationView().startDraggingStartedAnimation();
+                    return true;
+                }
+                modeIconAnimation = getSwitchAnimation(animationRequest);
+                break;
+            default:
+                return false;
+        }
+        if (modeIconAnimation == null) {
+            return false;
+        }
+        modeIconAnimation.addListener(new TransitionAnimatorListener(animationRequest, transitionAnimationCallback));
+        try {
+            this.mQueue.put(modeIconAnimation);
+            this.mLastRequest = animationRequest;
+            if (this.mQueue.size() == 1) {
+                modeIconAnimation.start();
+            }
+            return true;
+        } catch (InterruptedException unused) {
+            CamLog.e("startAnimation failed.");
+            return false;
+        }
+    }
+
+    private AnimatorSet getModeTouchAnimation(AnimationRequest animationRequest) {
+        switch (animationRequest.mDegree) {
+            case START:
+                return this.mModeAnimation.getStartAnimation();
+            case EXEC:
+                if (!this.mQueue.isEmpty()) {
+                    this.mQueue.poll().cancel();
+                    this.mQueue.clear();
+                }
+                return this.mModeAnimation.getExecuteAnimation(NavigatorContents.valueOf(animationRequest.mTarget));
+            case CANCEL:
+                return this.mModeAnimation.getCancelAnimation(NavigatorContents.valueOf(animationRequest.mTarget));
+            case FINISH:
+                return this.mModeAnimation.getFinishAnimation(animationRequest.mTarget);
+            default:
+                return null;
+        }
+    }
+
+    private AnimatorSet getModeIconAnimation(AnimationRequest animationRequest) {
+        int i = AnonymousClass1.$SwitchMap$com$sonyericsson$android$camera$view$animation$AnimationRequest$AnimationDegree[animationRequest.mDegree.ordinal()];
+        if (i != 4) {
+            switch (i) {
+                case 1:
+                    return this.mModeAnimation.getStartAnimation();
+                case 2:
+                    return this.mModeAnimation.getExecuteAnimation(NavigatorContents.valueOf(animationRequest.mTarget));
+                default:
+                    return null;
+            }
+        }
+        return this.mModeAnimation.getFinishAnimation(animationRequest.mTarget);
+    }
+
+    private AnimatorSet getSwitchAnimation(AnimationRequest animationRequest) {
+        switch (animationRequest.mDegree) {
+            case EXEC:
+                return this.mFacingAnimation.getSwipeSwitchAnimation();
+            case CANCEL:
+                return this.mFacingAnimation.getDraggingCancelAnimation();
+            case FINISH:
+                return this.mFacingAnimation.getAfterSwitchAnimation();
+            default:
+                return null;
+        }
+    }
+
+    public static float getPreviewAlpha(Context context, int i) {
+        return ModeTransitionAnimation.getPreviewAlpha(i, getSwipeThreshold(context));
+    }
+
+    public boolean startSwitchDraggingAnimation(float f) {
+        if (CamLog.VERBOSE) {
+            CamLog.d("startDraggingAnimation");
+        }
+        if (this.mLastRequest == null || this.mLastRequest.mType != AnimationRequest.AnimationType.SWITCH_TOUCH) {
+            return false;
+        }
+        this.mFacingAnimation.getSwitchAnimationView().startDraggingAnimation(f);
+        return true;
+    }
+
+    private class TransitionAnimatorListener implements Animator.AnimatorListener {
+        private final TransitionAnimationCallback mCallback;
+        private final AnimationRequest mRequest;
+
+        @Override // android.animation.Animator.AnimatorListener
+        public void onAnimationRepeat(Animator animator) {
+        }
+
+        private TransitionAnimatorListener(AnimationRequest animationRequest, TransitionAnimationCallback transitionAnimationCallback) {
+            this.mRequest = animationRequest;
+            this.mCallback = transitionAnimationCallback;
+        }
+
+        @Override // android.animation.Animator.AnimatorListener
+        public void onAnimationStart(Animator animator) {
+            if (CamLog.DEBUG) {
+                CamLog.d("TransitionAnimatorListener.onAnimationStart source:" + this.mRequest.mType + ", type:" + this.mRequest.mDegree + ", mFrom:" + this.mRequest.mFrom + ", mTarget:" + this.mRequest.mTarget);
+            }
+        }
+
+        @Override // android.animation.Animator.AnimatorListener
+        public void onAnimationEnd(Animator animator) {
+            if (CamLog.DEBUG) {
+                CamLog.d("TransitionAnimatorListener.onAnimationEnd source:" + this.mRequest.mType + ", type:" + this.mRequest.mDegree + ", mFrom:" + this.mRequest.mFrom + ", mTarget:" + this.mRequest.mTarget);
+            }
+            if (this.mCallback != null) {
+                this.mCallback.onAnimationFinished();
+            }
+            TransitionAnimationController.this.mQueue.poll();
+            if (!TransitionAnimationController.this.mQueue.isEmpty()) {
+                ((AnimatorSet) TransitionAnimationController.this.mQueue.peek()).start();
+            } else if (this.mRequest.mDegree == AnimationRequest.AnimationDegree.FINISH || this.mRequest.mDegree == AnimationRequest.AnimationDegree.CANCEL) {
+                TransitionAnimationController.this.mLastRequest = null;
+            }
+        }
+
+        @Override // android.animation.Animator.AnimatorListener
+        public void onAnimationCancel(Animator animator) {
+            if (CamLog.DEBUG) {
+                CamLog.d("TransitionAnimatorListener.onAnimationCancel source:" + this.mRequest.mType + ", type:" + this.mRequest.mDegree + ", mFrom:" + this.mRequest.mFrom + ", mTarget:" + this.mRequest.mTarget);
+            }
+        }
+    }
+
+    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
+    /* JADX WARN: Removed duplicated region for block: B:27:0x004a A[RETURN] */
+    /*
+        Code decompiled incorrectly, please refer to instructions dump.
+        To view partially-correct code enable 'Show inconsistent code' option in preferences
+    */
+    private boolean verifyLastRequest(com.sonyericsson.android.camera.view.animation.AnimationRequest r5) {
+        /*
+            r4 = this;
+            com.sonyericsson.android.camera.view.animation.AnimationRequest r0 = r4.mLastRequest
+            r1 = 0
+            r2 = 1
+            if (r0 != 0) goto L16
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = r5.mDegree
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r0 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.START
+            if (r5 != r0) goto L15
+            java.util.concurrent.BlockingQueue<android.animation.AnimatorSet> r4 = r4.mQueue
+            boolean r4 = r4.isEmpty()
+            if (r4 == 0) goto L15
+            return r2
+        L15:
+            return r1
+        L16:
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationType r0 = r5.mType
+            com.sonyericsson.android.camera.view.animation.AnimationRequest r3 = r4.mLastRequest
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationType r3 = r3.mType
+            if (r0 == r3) goto L1f
+            return r1
+        L1f:
+            int[] r0 = com.sonyericsson.android.camera.view.animation.TransitionAnimationController.AnonymousClass1.$SwitchMap$com$sonyericsson$android$camera$view$animation$AnimationRequest$AnimationDegree
+            com.sonyericsson.android.camera.view.animation.AnimationRequest r4 = r4.mLastRequest
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r4.mDegree
+            int r4 = r4.ordinal()
+            r4 = r0[r4]
+            switch(r4) {
+                case 1: goto L3d;
+                case 2: goto L36;
+                case 3: goto L4a;
+                case 4: goto L2f;
+                default: goto L2e;
+            }
+        L2e:
+            goto L4a
+        L2f:
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.START
+            if (r4 != r5) goto L4a
+            return r2
+        L36:
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.FINISH
+            if (r4 != r5) goto L4a
+            return r2
+        L3d:
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r0 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.EXEC
+            if (r4 == r0) goto L49
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
+            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.CANCEL
+            if (r4 != r5) goto L4a
+        L49:
+            return r2
+        L4a:
+            return r1
+        */
+        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.view.animation.TransitionAnimationController.verifyLastRequest(com.sonyericsson.android.camera.view.animation.AnimationRequest):boolean");
+    }
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.ApplicationNavigator android:gravity="center" android:id="@id/application_navigator" android:focusable="false" android:focusableInTouchMode="false" android:visibility="gone" android:clickable="false" android:layout_width="wrap_content" android:layout_height="fill_parent" android:layoutDirection="ltr" android:transitionName="application_navigator"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ViewStub android:id="@id/stub_mode_switch_container" android:layout="@layout/mode_switch_container" android:inflatedId="@id/mode_switch_animation_container" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+    <FrameLayout android:layout_width="@dimen/navigator_container_width" android:layout_height="fill_parent">
+        <FrameLayout android:layout_gravity="left" android:id="@id/mode_icons" android:layout_width="wrap_content" android:layout_height="fill_parent" />
+        <ImageView android:layout_gravity="right" android:id="@id/current_mode_indicator" android:background="@drawable/cam_core_application_navigator_apps_bar_thick_line_icn" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <ImageView android:layout_gravity="center|right" android:id="@id/apps_bar" android:background="@drawable/cam_core_application_navigator_apps_bar_icn" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+    </FrameLayout>
+</com.sonyericsson.android.camera.view.ApplicationNavigator>

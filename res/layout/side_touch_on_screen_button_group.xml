@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButtonGroup android:id="@id/side_screen_button_group" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="@dimen/side_icon_size_wh"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="@dimen/side_icon_recording_time_text_size" android:gravity="center_horizontal" android:id="@id/recording_time_on_side_touch" android:visibility="gone" android:layout_width="@dimen/side_icon_size_wh" android:layout_height="@dimen/side_icon_recording_time_size" android:includeFontPadding="false" android:shadowColor="@color/side_icon_recording_time_shadow" android:shadowDx="0.0" android:shadowDy="1.0" android:shadowRadius="3.0" />
+    <LinearLayout android:gravity="center" android:orientation="horizontal" android:id="@id/capture_button_group_layout" android:layout_width="wrap_content" android:layout_height="wrap_content">
+        <com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButton android:id="@id/extra_button" android:visibility="gone" android:layout_width="@dimen/side_icon_size_wh" android:layout_height="@dimen/side_icon_size_wh" />
+        <com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButton android:id="@id/main_button" android:visibility="gone" android:layout_width="@dimen/side_icon_size_wh" android:layout_height="@dimen/side_icon_size_wh" />
+        <com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButton android:id="@id/sub_button" android:visibility="gone" android:layout_width="@dimen/side_icon_size_wh" android:layout_height="@dimen/side_icon_size_wh" />
+    </LinearLayout>
+</com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButtonGroup>

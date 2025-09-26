@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.cameracommon.rotatableview.EdgeRotatableContainerView android:id="@id/predictive_capture_indicator_container" android:visibility="visible" android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:id="@id/predictive_capture_indicator_background" android:background="@drawable/cam_core_photo_predictive_capture_feedback_bg_icn" android:layout_width="wrap_content" android:layout_height="@dimen/predictive_capture_indicator_height" android:paddingStart="@dimen/predictive_capture_indicator_padding_start" android:paddingEnd="@dimen/predictive_capture_indicator_padding_end">
+        <ImageView android:gravity="center" android:layout_gravity="center_vertical" android:layout_width="@dimen/predictive_capture_indicator_image_width" android:layout_height="@dimen/predictive_capture_indicator_image_height" android:src="@drawable/cam_core_photo_predictive_capture_feedback_check_icn" />
+        <TextView android:textSize="@dimen/predictive_capture_indicator_text_size" android:textColor="@color/predictive_capture_indicator_text_color" android:gravity="center" android:layout_gravity="center_vertical" android:id="@id/predictive_capture_indicator_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="@dimen/predictive_capture_indicator_max_text_size" android:text="@string/cam_strings_predictive_capture_feedback_txt" android:maxLines="1" android:fontFamily="sans-serif-medium" />
+    </LinearLayout>
+</com.sonyericsson.cameracommon.rotatableview.EdgeRotatableContainerView>

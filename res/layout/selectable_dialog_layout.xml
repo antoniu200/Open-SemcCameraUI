@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@id/selectable_dialog_inner_background" android:layout_width="wrap_content" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.sonyericsson.android.camera.view.selectabledialog.ScrollContainer android:id="@id/somc_scroller" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <LinearLayout android:orientation="vertical" android:id="@id/somc_scroller_content_binder" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+    </com.sonyericsson.android.camera.view.selectabledialog.ScrollContainer>
+    <ScrollView android:id="@id/default_scroller" android:focusable="false" android:focusableInTouchMode="false" android:visibility="gone" android:layout_width="fill_parent" android:layout_height="wrap_content">
+        <LinearLayout android:orientation="vertical" android:id="@id/default_scroller_content_binder" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+    </ScrollView>
+</FrameLayout>

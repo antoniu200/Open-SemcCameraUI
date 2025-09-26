@@ -1,0 +1,5 @@
+package com.duolingo.open.rtlviewpager;
+
+/* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
+public final class R {
+}

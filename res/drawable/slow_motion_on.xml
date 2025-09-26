@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <selector>
+        <item android:state_pressed="true" android:drawable="@drawable/cam_core_shortcut_bg_pressed_icn" />
+        <item android:drawable="@drawable/cam_core_shortcut_bg_icn" />
+    </selector>
+    <item android:state_pressed="false" android:drawable="@drawable/cam_core_capture_button_small_slow_motion_icn" />
+</layer-list>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <View android:id="@id/more_separator" android:background="#00ffffff" android:focusable="false" android:visibility="gone" android:clickable="false" android:layout_width="wrap_content" android:layout_height="@dimen/setting_more_separator_height" />
+    <com.sonyericsson.cameracommon.widget.CategorySwitch android:gravity="center_vertical" android:orientation="horizontal" android:id="@id/background" android:background="@drawable/setting_item_ripple_selector" android:clickable="true" android:layout_width="fill_parent" android:layout_height="@dimen/setting_common_height">
+        <ImageView android:id="@id/icon" android:visibility="gone" android:layout_width="@dimen/viewfinder_dialog_camera_icon_size" android:layout_height="wrap_content" android:scaleType="center" android:layout_marginStart="@dimen/setting_1st_layer_icon_name_margin" />
+        <TextView android:textSize="18.0sp" android:textColor="#ffffffff" android:id="@id/text" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:lines="1" android:layout_marginStart="@dimen/setting_1st_layer_icon_name_margin" />
+        <Space android:layout_width="0.0dip" android:layout_height="fill_parent" android:layout_weight="1.0" />
+        <TextView android:textSize="18.0sp" android:textColor="#ffffffff" android:gravity="center_vertical" android:id="@id/value" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:maxWidth="108.0dip" android:lines="2" android:layout_marginEnd="@dimen/setting_1st_layer_value_right_padding_parameter" />
+        <TextView android:id="@id/switch_category" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+        <FrameLayout android:layout_gravity="center_vertical" android:id="@id/switch_bundle" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layoutDirection="ltr" android:layout_marginEnd="@dimen/setting_1st_layer_value_right_padding_switch">
+            <ImageView android:id="@id/switch_track" android:layout_width="wrap_content" android:layout_height="fill_parent" />
+            <ImageView android:id="@id/switch_knob" android:layout_width="wrap_content" android:layout_height="fill_parent" />
+        </FrameLayout>
+    </com.sonyericsson.cameracommon.widget.CategorySwitch>
+    <View android:id="@id/separator" android:background="@drawable/cam_core_dialog_separator_icn" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="@dimen/setting_common_separator_height" />
+</LinearLayout>

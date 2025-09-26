@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:layout_gravity="right" android:id="@id/capturing_button_container" android:paddingTop="@dimen/right_icon_area_top_mergin" android:paddingBottom="@dimen/right_icon_area_bottom_mergin" android:layout_width="wrap_content" android:layout_height="fill_parent" android:layoutDirection="ltr">
+        <FrameLayout android:layout_gravity="center" android:id="@id/preloaded_capture_button_container" android:layout_width="wrap_content" android:layout_height="wrap_content">
+            <include layout="@layout/baselayout_on_screen_button_group" />
+        </FrameLayout>
+    </FrameLayout>
+</FrameLayout>

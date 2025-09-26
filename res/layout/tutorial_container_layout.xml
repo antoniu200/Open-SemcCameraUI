@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.tutorial.TutorialContainerView android:id="@id/tutorial_container_view" android:background="#ffffffff" android:visibility="invisible" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layoutDirection="ltr"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <ViewFlipper android:id="@id/flipper_view" android:visibility="visible" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+</com.sonyericsson.android.camera.view.tutorial.TutorialContainerView>

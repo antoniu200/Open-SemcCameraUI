@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.overlaycontrol.imagequality.ImageQualityControlResetButton android:background="@drawable/setting_tab_selector" android:layout_width="wrap_content" android:layout_height="wrap_content" android:contentDescription="@string/cam_strings_accessibility_image_quality_control_reset_button_txt" android:layoutDirection="ltr"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:orientation="vertical" android:id="@id/container" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_marginLeft="@dimen/image_quality_control_tab__margin" android:layout_marginRight="@dimen/image_quality_control_tab__margin" android:layoutDirection="ltr">
+        <TextView android:textSize="@dimen/image_quality_control_parameter_reset_text_size" android:gravity="center" android:layout_gravity="center" android:id="@id/reset_button_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="@dimen/image_quality_control_reset_button_margin" android:layout_marginRight="@dimen/image_quality_control_reset_button_margin" android:text="@string/cam_strings_image_quality_control_button_reset_txt" android:layout_centerInParent="true" style="@style/ImageQualityControlTextDropShadow" />
+    </RelativeLayout>
+</com.sonyericsson.android.camera.view.overlaycontrol.imagequality.ImageQualityControlResetButton>

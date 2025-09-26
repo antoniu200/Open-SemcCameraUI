@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="abc_action_bar_embed_tabs">true</bool>
+    <bool name="abc_allow_stacked_button_bar">false</bool>
+    <bool name="abc_config_actionMenuItemAllCaps">true</bool>
+    <bool name="config_materialPreferenceIconSpaceReserved">false</bool>
+    <bool name="display_frontcamera_location_indication">false</bool>
+    <bool name="enable_4k_videosize">true</bool>
+    <bool name="enable_information_entry">false</bool>
+    <bool name="is_superior_auto_supported">true</bool>
+    <bool name="is_tablet">false</bool>
+    <bool name="is_ten_inch">false</bool>
+    <bool name="use_max_still_capture_resolution_as_default_regardless_of_display_aspect">false</bool>
+</resources>

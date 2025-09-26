@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.modeselector.view.CapturingModePanelView android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_marginTop="@dimen/mode_selector_grid_item_contents_area_top_margin">
+        <ImageView android:layout_gravity="center" android:id="@id/selector_app_icon" android:layout_width="@dimen/mode_selector_grid_item_icon_wh" android:layout_height="@dimen/mode_selector_grid_item_icon_wh" android:scaleType="fitCenter" />
+        <TextView android:textSize="@dimen/mode_selector_grid_item_name_text_size" android:textColor="@color/mode_selector_grid_item_name_text_color" android:gravity="center" android:id="@id/selector_app_name_label" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_marginTop="@dimen/mode_selector_grid_item_name_text_area_top_margin" android:maxLines="2" style="@style/OnScreenTextDropShadow" />
+    </LinearLayout>
+</com.sonyericsson.android.camera.view.modeselector.view.CapturingModePanelView>

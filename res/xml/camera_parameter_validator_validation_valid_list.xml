@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<validation-set-list>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="com.sonymobile.statistics.objectSelectTrigger" value="1" />
+            <key-value-set key="android.control.afMode" value="4" />
+            <key-value-set key="com.sonymobile.control.afRegionMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.afRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="com.sonymobile.statistics.objectSelectTrigger" value="1" />
+            <key-value-set key="android.control.afMode" value="3" />
+            <key-value-set key="com.sonymobile.control.afRegionMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.afRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.statistics.faceDetectMode" value="1" />
+            <key-value-set key="android.control.afMode" value="4" />
+            <key-value-set key="com.sonymobile.control.afRegionMode" value="2" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="com.sonymobile.statistics.faceSmileScoresMode" value="1" />
+            <key-value-set key="android.control.afRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.statistics.faceDetectMode" value="1" />
+            <key-value-set key="android.control.afMode" value="3" />
+            <key-value-set key="com.sonymobile.control.afRegionMode" value="2" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="com.sonymobile.statistics.faceSmileScoresMode" value="1" />
+            <key-value-set key="android.control.afRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="com.sonymobile.statistics.faceSmileScoresMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.statistics.faceDetectMode" value="0" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="sonymobile.statistics.conditionDetectMode" value="1" />
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="com.sonymobile.statistics.sceneDetectMode" value="1" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="com.sonymobile.control.stillHdrMode" value="2" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="android.control.afMode" value="4" />
+            <key-value-set key="com.sonymobile.control.afRegionMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.afRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="android.control.afMode" value="3" />
+            <key-value-set key="com.sonymobile.control.afRegionMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.afRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="com.sonymobile.control.stillHdrMode" value="1" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="com.sonymobile.statistics.sceneDetectMode" value="0" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="com.sonymobile.control.stillHdrMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="com.sonymobile.statistics.sceneDetectMode" value="0" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="com.sonymobile.control.aeRegionMode" value="4" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.aeRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="com.sonymobile.control.aeRegionMode" value="3" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.aeRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="com.sonymobile.control.aeRegionMode" value="0" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.aeRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+    <validation-set>
+        <base-condition>
+            <key-value-set key="android.control.mode" value="1" />
+            <key-value-set key="com.sonymobile.control.aeRegionMode" value="2" />
+        </base-condition>
+        <check-condition>
+            <key-value-set key="android.control.aeRegions" value="active-array-size" />
+        </check-condition>
+    </validation-set>
+</validation-set-list>

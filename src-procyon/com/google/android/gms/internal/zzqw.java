@@ -1,0 +1,25 @@
+// 
+// Decompiled by Procyon v0.6.0
+// 
+
+package com.google.android.gms.internal;
+
+import com.google.android.gms.common.internal.zzt;
+import com.google.android.gms.signin.internal.zze;
+import com.google.android.gms.common.api.Scope;
+import java.util.Set;
+import com.google.android.gms.common.internal.zzp;
+import com.google.android.gms.common.api.Api;
+
+public interface zzqw extends zzb
+{
+    void connect();
+    
+    void zzCe();
+    
+    void zza(final zzp p0, final Set<Scope> p1, final com.google.android.gms.signin.internal.zze p2);
+    
+    void zza(final zzp p0, final boolean p1);
+    
+    void zza(final zzt p0);
+}

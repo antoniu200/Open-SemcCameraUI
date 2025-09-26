@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButtonGroup android:id="@id/capture_button_group" android:visibility="invisible" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="center" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content">
+        <com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButton android:id="@id/extra_button" android:visibility="invisible" android:layout_width="@dimen/common_button_container_side_length" android:layout_height="@dimen/common_button_container_side_length" />
+        <com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButton android:id="@id/main_button" android:visibility="visible" android:layout_width="@dimen/capture_button_container_side_length" android:layout_height="@dimen/capture_button_container_side_length" />
+        <com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButton android:id="@id/sub_button" android:visibility="invisible" android:layout_width="@dimen/common_button_container_side_length" android:layout_height="@dimen/common_button_container_side_length" />
+    </LinearLayout>
+</com.sonyericsson.android.camera.view.baselayout.onscreenbutton.OnScreenButtonGroup>

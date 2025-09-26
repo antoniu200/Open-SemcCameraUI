@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.sonymobile.cameracommon.view.SelfTimerCountDownView android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <LinearLayout android:gravity="left" android:layout_gravity="left" android:id="@id/selftimer_countdown_layout_base_landscape" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <RelativeLayout android:layout_gravity="center" android:orientation="vertical" android:id="@id/selftimer_countdown_layout" android:layout_width="168.0dip" android:layout_height="fill_parent">
+            <TextView android:textSize="16.0dip" android:textColor="#ffffffff" android:gravity="center" android:id="@id/selftimer_hint_text" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="16.0dip" android:layout_marginRight="16.0dip" android:layout_marginBottom="24.0dip" android:text="@string/cam_strings_self_timer_hint_countdown_txt" android:maxLines="4" android:layout_above="@id/selftimer_countdown_base" android:lineSpacingMultiplier="1.2" android:fontFamily="sans-serif-medium" style="@style/SelfTimerTextDropShadow" />
+            <FrameLayout android:id="@id/selftimer_countdown_base" android:layout_width="120.0dip" android:layout_height="120.0dip" android:layout_centerInParent="true">
+                <ImageView android:layout_gravity="center" android:id="@id/selftimer_countdown_bg" android:layout_width="@dimen/viewfinder_countdown_outside_diameter" android:layout_height="@dimen/viewfinder_countdown_outside_diameter" android:src="@drawable/selftimer_countdown_bg" />
+                <com.sonymobile.cameracommon.view.SelfTimerCountDownCircleView android:layout_gravity="center" android:id="@id/selftimer_countdown_circle" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                <com.sonymobile.cameracommon.view.SelfTimerCountDownNumberView android:layout_gravity="center" android:id="@id/left_selftimer_countdown_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:scaleType="centerCrop" android:shadowColor="#00000000" style="@style/OnScreenTextDropShadow" />
+                <com.sonymobile.cameracommon.view.SelfTimerCountDownNumberView android:layout_gravity="center" android:id="@id/right_selftimer_countdown_text" android:layout_width="wrap_content" android:layout_height="wrap_content" android:scaleType="centerCrop" android:shadowColor="#00000000" style="@style/OnScreenTextDropShadow" />
+            </FrameLayout>
+        </RelativeLayout>
+    </LinearLayout>
+    <LinearLayout android:layout_gravity="top" android:orientation="vertical" android:id="@id/selftimer_countdown_layout_base_port" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <FrameLayout android:layout_gravity="center" android:layout_width="fill_parent" android:layout_height="56.0dip">
+            <TextView android:textSize="16.0dip" android:textColor="#ffffffff" android:layout_gravity="center" android:id="@id/selftimer_hint_text_port" android:visibility="invisible" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="16.0dip" android:layout_marginRight="16.0dip" android:text="@string/cam_strings_self_timer_hint_countdown_txt" android:maxLines="1" android:lineSpacingMultiplier="1.2" android:fontFamily="sans-serif-medium" style="@style/SelfTimerTextDropShadow" />
+        </FrameLayout>
+        <FrameLayout android:layout_gravity="center_horizontal" android:id="@id/selftimer_countdown_base" android:layout_width="120.0dip" android:layout_height="120.0dip">
+            <ImageView android:layout_gravity="center" android:id="@id/selftimer_countdown_bg" android:layout_width="@dimen/viewfinder_countdown_outside_diameter" android:layout_height="@dimen/viewfinder_countdown_outside_diameter" android:src="@drawable/selftimer_countdown_bg" />
+            <com.sonymobile.cameracommon.view.SelfTimerCountDownCircleView android:layout_gravity="center" android:id="@id/selftimer_countdown_circle_port" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+            <com.sonymobile.cameracommon.view.SelfTimerCountDownNumberView android:layout_gravity="center" android:id="@id/left_selftimer_countdown_text_port" android:layout_width="wrap_content" android:layout_height="wrap_content" android:scaleType="centerCrop" android:shadowColor="#00000000" style="@style/OnScreenTextDropShadow" />
+            <com.sonymobile.cameracommon.view.SelfTimerCountDownNumberView android:layout_gravity="center" android:id="@id/right_selftimer_countdown_text_port" android:layout_width="wrap_content" android:layout_height="wrap_content" android:scaleType="centerCrop" android:shadowColor="#00000000" style="@style/OnScreenTextDropShadow" />
+        </FrameLayout>
+    </LinearLayout>
+</com.sonymobile.cameracommon.view.SelfTimerCountDownView>
