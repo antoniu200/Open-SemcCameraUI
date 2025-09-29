@@ -378,85 +378,99 @@ public class JsonReader implements Closeable {
         return i;
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:51:0x0093, code lost:
-    
-        if (isLiteral(r14) != false) goto L72;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:52:0x0095, code lost:
-    
-        if (r9 != 2) goto L62;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:53:0x0097, code lost:
-    
-        if (r10 == false) goto L62;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:55:0x009d, code lost:
-    
-        if (r11 != Long.MIN_VALUE) goto L57;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:56:0x009f, code lost:
-    
-        if (r13 == false) goto L62;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:57:0x00a1, code lost:
-    
-        if (r13 == false) goto L59;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:59:0x00a4, code lost:
-    
-        r11 = -r11;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:60:0x00a5, code lost:
-    
-        r19.peekedLong = r11;
-        r19.pos += r3;
-        r19.peeked = 15;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:61:0x00b0, code lost:
-    
-        return 15;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:62:0x00b1, code lost:
-    
-        if (r9 == 2) goto L70;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:64:0x00b4, code lost:
-    
-        if (r9 == 4) goto L70;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:66:0x00b7, code lost:
-    
-        if (r9 != 7) goto L68;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:68:0x00ba, code lost:
-    
-        return 0;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:70:0x00bc, code lost:
-    
-        r19.peekedNumberLength = r3;
-        r19.peeked = 16;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:71:0x00c2, code lost:
-    
-        return 16;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:72:0x00c3, code lost:
-    
-        return 0;
-     */
-    /* JADX WARN: Removed duplicated region for block: B:14:0x0032  */
-    /* JADX WARN: Removed duplicated region for block: B:91:0x00e5  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
     private int peekNumber() throws java.io.IOException {
-        /*
-            Method dump skipped, instructions count: 250
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.gson.stream.JsonReader.peekNumber():int");
+        final char[] buf = this.buffer;
+        int p = this.pos;
+        int l = this.limit;
+
+        long value = 0L;            // accumulate as negative to detect MIN_VALUE
+        boolean negative = false;
+        boolean fitsInLong = true;
+
+        // parsing state:
+        // 0: none, 1: sign, 2: digits, 3: dot, 4: frac digits, 5: exp, 6: exp sign, 7: exp digits
+        int state = 0;
+        int i = 0;
+
+        for (;;) {
+            int idx = p + i;
+            if (idx == l) {
+                // need more characters
+                if (i == buf.length) return 0; // too long to be a number literal
+                if (!fillBuffer(i + 1)) break; // out of input
+                p = this.pos;
+                l = this.limit;
+                idx = p + i;
+            }
+
+            char c = buf[idx];
+            switch (c) {
+                case '+':
+                    if (state == 5) { state = 6; i++; continue; }
+                    return 0;
+
+                case 'e': case 'E':
+                    if (state == 2 || state == 4) { state = 5; i++; continue; }
+                    return 0;
+
+                case '.':
+                    if (state == 2) { state = 3; i++; continue; }
+                    return 0;
+
+                case '-':
+                    if (state == 0) { negative = true; state = 1; i++; continue; }
+                    if (state == 5) { state = 6; i++; continue; }
+                    return 0;
+
+                default:
+                    if (c >= '0' && c <= '9') {
+                        int digit = c - '0';
+                        if (state == 1 || state == 0) {
+                            // first digit of the integral part
+                            value = -digit;
+                            state = 2;
+                        } else if (state == 2) {
+                            // accumulate integral digits: value = value * 10 - digit;
+                            long newValue = value * 10L - digit;
+                            // overflow check
+                            if (value < -922337203685477580L || (value == -922337203685477580L && newValue < value)) {
+                                fitsInLong = false;
+                            } else {
+                                value = newValue;
+                            }
+                        } else if (state == 3) {
+                            state = 4; // first fractional digit
+                        } else if (state == 5 || state == 6) {
+                            state = 7; // first exponent digit
+                        }
+                        i++;
+                        continue;
+                    }
+
+                    // Non-literal breaks the loop unless this char is allowed inside literals
+                    if (isLiteral(c)) return 0;
+                    // else break out of loop to finalize
+            }
+            break; // switch fell through (non-literal)
+        }
+
+        // Finalize
+        if (state == 2 && fitsInLong) {
+            if (!negative) { value = -value; } // flip sign if positive
+            this.peekedLong = value;
+            this.pos = this.pos + i;
+            this.peeked = 15; // PEEKED_LONG
+            return 15;
+        }
+
+        if (state == 2 || state == 4 || state == 7) {
+            // a valid number that doesn't fit in long or has frac/exp → as double
+            this.peekedNumberLength = i;
+            this.peeked = 16; // PEEKED_NUMBER
+            return 16;
+        }
+
+        return 0; // not a number
     }
 
     private boolean isLiteral(char c) throws IOException {
@@ -622,166 +636,90 @@ public class JsonReader implements Closeable {
         return j2;
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:18:0x0045, code lost:
-    
-        r1.append(r0, r4, r2 - r4);
-        r8.pos = r2;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private java.lang.String nextQuotedValue(char r9) throws java.io.IOException {
-        /*
-            r8 = this;
-            char[] r0 = r8.buffer
-            java.lang.StringBuilder r1 = new java.lang.StringBuilder
-            r1.<init>()
-        L7:
-            int r2 = r8.pos
-            int r3 = r8.limit
-        Lb:
-            r4 = r2
-        Lc:
-            r5 = 1
-            if (r2 >= r3) goto L45
-            int r6 = r2 + 1
-            char r2 = r0[r2]
-            if (r2 != r9) goto L21
-            r8.pos = r6
-            int r6 = r6 - r4
-            int r6 = r6 - r5
-            r1.append(r0, r4, r6)
-            java.lang.String r8 = r1.toString()
-            return r8
-        L21:
-            r7 = 92
-            if (r2 != r7) goto L38
-            r8.pos = r6
-            int r6 = r6 - r4
-            int r6 = r6 - r5
-            r1.append(r0, r4, r6)
-            char r2 = r8.readEscapeCharacter()
-            r1.append(r2)
-            int r2 = r8.pos
-            int r3 = r8.limit
-            goto Lb
-        L38:
-            r7 = 10
-            if (r2 != r7) goto L43
-            int r2 = r8.lineNumber
-            int r2 = r2 + r5
-            r8.lineNumber = r2
-            r8.lineStart = r6
-        L43:
-            r2 = r6
-            goto Lc
-        L45:
-            int r3 = r2 - r4
-            r1.append(r0, r4, r3)
-            r8.pos = r2
-            boolean r2 = r8.fillBuffer(r5)
-            if (r2 != 0) goto L7
-            java.lang.String r9 = "Unterminated string"
-            java.io.IOException r8 = r8.syntaxError(r9)
-            throw r8
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.gson.stream.JsonReader.nextQuotedValue(char):java.lang.String");
+    private String nextQuotedValue(char quote) throws java.io.IOException {
+        final char[] buf = this.buffer;
+        final StringBuilder sb = new StringBuilder();
+
+        for (;;) {
+            int start = this.pos;
+            int end = this.limit;
+
+            int i = start;
+            while (i < end) {
+                char c = buf[i++];
+
+                if (c == quote) {
+                    // append chunk before quote (excluding the quote)
+                    sb.append(buf, start, (i - 1) - start);
+                    this.pos = i;
+                    return sb.toString();
+                } else if (c == '\\') {
+                    // append chunk before backslash (excluding the backslash)
+                    sb.append(buf, start, (i - 1) - start);
+                    this.pos = i;
+                    // read escaped char and append
+                    char escaped = readEscapeCharacter();
+                    sb.append(escaped);
+                    // refresh window
+                    start = this.pos;
+                    end = this.limit;
+                    i = start;
+                } else if (c == '\n') {
+                    this.lineNumber++;
+                    this.lineStart = i;
+                }
+            }
+
+            // ran out of buffer, append chunk and refill
+            sb.append(buf, start, i - start);
+            this.pos = i;
+            if (!fillBuffer(1)) {
+                throw syntaxError("Unterminated string");
+            }
+        }
     }
 
-    /* JADX WARN: Failed to find 'out' block for switch in B:7:0x0012. Please report as an issue. */
-    /* JADX WARN: Removed duplicated region for block: B:21:0x0048  */
-    /* JADX WARN: Removed duplicated region for block: B:22:0x0052  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private java.lang.String nextUnquotedValue() throws java.io.IOException {
-        /*
-            r5 = this;
-            r0 = 0
-            r1 = 0
-            r2 = r1
-        L3:
-            r1 = r0
-        L4:
-            int r3 = r5.pos
-            int r3 = r3 + r1
-            int r4 = r5.limit
-            if (r3 >= r4) goto L1c
-            char[] r3 = r5.buffer
-            int r4 = r5.pos
-            int r4 = r4 + r1
-            char r3 = r3[r4]
-            switch(r3) {
-                case 9: goto L2a;
-                case 10: goto L2a;
-                case 12: goto L2a;
-                case 13: goto L2a;
-                case 32: goto L2a;
-                case 35: goto L18;
-                case 44: goto L2a;
-                case 47: goto L18;
-                case 58: goto L2a;
-                case 59: goto L18;
-                case 61: goto L18;
-                case 91: goto L2a;
-                case 92: goto L18;
-                case 93: goto L2a;
-                case 123: goto L2a;
-                case 125: goto L2a;
-                default: goto L15;
+    private String nextQuotedValue(char quote) throws java.io.IOException {
+        final char[] buf = this.buffer;
+        final StringBuilder sb = new StringBuilder();
+
+        for (;;) {
+            int start = this.pos;
+            int end = this.limit;
+
+            int i = start;
+            while (i < end) {
+                char c = buf[i++];
+
+                if (c == quote) {
+                    // append chunk before quote (excluding the quote)
+                    sb.append(buf, start, (i - 1) - start);
+                    this.pos = i;
+                    return sb.toString();
+                } else if (c == '\\') {
+                    // append chunk before backslash (excluding the backslash)
+                    sb.append(buf, start, (i - 1) - start);
+                    this.pos = i;
+                    // read escaped char and append
+                    char escaped = readEscapeCharacter();
+                    sb.append(escaped);
+                    // refresh window
+                    start = this.pos;
+                    end = this.limit;
+                    i = start;
+                } else if (c == '\n') {
+                    this.lineNumber++;
+                    this.lineStart = i;
+                }
             }
-        L15:
-            int r1 = r1 + 1
-            goto L4
-        L18:
-            r5.checkLenient()
-            goto L2a
-        L1c:
-            char[] r3 = r5.buffer
-            int r3 = r3.length
-            if (r1 >= r3) goto L2c
-            int r3 = r1 + 1
-            boolean r3 = r5.fillBuffer(r3)
-            if (r3 == 0) goto L2a
-            goto L4
-        L2a:
-            r0 = r1
-            goto L46
-        L2c:
-            if (r2 != 0) goto L33
-            java.lang.StringBuilder r2 = new java.lang.StringBuilder
-            r2.<init>()
-        L33:
-            char[] r3 = r5.buffer
-            int r4 = r5.pos
-            r2.append(r3, r4, r1)
-            int r3 = r5.pos
-            int r3 = r3 + r1
-            r5.pos = r3
-            r1 = 1
-            boolean r1 = r5.fillBuffer(r1)
-            if (r1 != 0) goto L3
-        L46:
-            if (r2 != 0) goto L52
-            java.lang.String r1 = new java.lang.String
-            char[] r2 = r5.buffer
-            int r3 = r5.pos
-            r1.<init>(r2, r3, r0)
-            goto L5d
-        L52:
-            char[] r1 = r5.buffer
-            int r3 = r5.pos
-            r2.append(r1, r3, r0)
-            java.lang.String r1 = r2.toString()
-        L5d:
-            int r2 = r5.pos
-            int r2 = r2 + r0
-            r5.pos = r2
-            return r1
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.gson.stream.JsonReader.nextUnquotedValue():java.lang.String");
+
+            // ran out of buffer, append chunk and refill
+            sb.append(buf, start, i - start);
+            this.pos = i;
+            if (!fillBuffer(1)) {
+                throw syntaxError("Unterminated string");
+            }
+        }
     }
 
     private void skipQuotedValue(char c) throws IOException {

@@ -681,29 +681,97 @@ public class SavingTaskManager {
             this.mRequest = videoSavingRequest;
         }
 
-        /* JADX WARN: Multi-variable type inference failed */
-        /* JADX WARN: Removed duplicated region for block: B:39:0x00dc  */
-        /* JADX WARN: Removed duplicated region for block: B:42:0x010c  */
-        /* JADX WARN: Type inference failed for: r0v13 */
-        /* JADX WARN: Type inference failed for: r0v15 */
-        /* JADX WARN: Type inference failed for: r0v16 */
-        /* JADX WARN: Type inference failed for: r0v3, types: [com.sonyericsson.cameracommon.mediasaving.MediaSavingResult] */
-        /* JADX WARN: Type inference failed for: r0v4, types: [com.sonyericsson.cameracommon.mediasaving.MediaSavingResult] */
-        /* JADX WARN: Type inference failed for: r0v7, types: [android.net.Uri] */
-        /* JADX WARN: Type inference failed for: r0v8 */
-        /* JADX WARN: Type inference failed for: r0v9 */
-        @Override // java.lang.Runnable
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        public void run() throws java.lang.InterruptedException {
-            /*
-                Method dump skipped, instructions count: 320
-                To view this dump change 'Code comments level' option to 'DEBUG'
-            */
-            throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.storage.SavingTaskManager.SavingVideoTask.run():void");
-        }
+		@Override
+		public void run() {
+			com.sonyericsson.cameracommon.mediasaving.MediaSavingResult result =
+					com.sonyericsson.cameracommon.mediasaving.MediaSavingResult.FAIL;
+
+			android.net.Uri extraOutput = mRequest.getExtraOutput();
+			com.sonyericsson.cameracommon.storage.Storage.StorageType storageType =
+					mRequest.getStorageType();
+
+			if (com.sonyericsson.android.camera.util.CamLog.VERBOSE) {
+				com.sonyericsson.android.camera.util.CamLog.d(
+						new String[] { "Saving video started: ID: " + mRequest.getRequestId() });
+			}
+
+			java.util.concurrent.Semaphore sem =
+					(java.util.concurrent.Semaphore) SavingTaskManager.this
+							.mStorageAccessSemaphoreMap.get(storageType);
+			try {
+				sem.acquire();
+				if (com.sonyericsson.android.camera.util.CamLog.DEBUG) {
+					com.sonyericsson.android.camera.util.CamLog.d(
+							new String[] { "SavingVideoTask[" + storageType + "]: E" });
+				}
+			} catch (InterruptedException e) {
+				com.sonyericsson.android.camera.util.CamLog.e(
+						new String[] { "Failed to acquire of storage access permit." });
+				return;
+			}
+
+			android.net.Uri savedUri = null;
+
+			if (extraOutput != null) {
+				try {
+					boolean addToMediaStore = mRequest.common.addToMediaStore;
+					if (addToMediaStore) {
+						String scheme = extraOutput.getScheme();
+						if ("file".equalsIgnoreCase(scheme) || "content".equalsIgnoreCase(scheme)) {
+							mRequest.setFilePath(extraOutput.getPath());
+						}
+						savedUri = SavingTaskManager.this.mUpdator
+								.insertVideoAndSendIntent(mRequest);
+					} else {
+						savedUri = extraOutput;
+					}
+
+					if (savedUri != null
+							|| "content".equalsIgnoreCase(extraOutput.getScheme())) {
+						result = com.sonyericsson.cameracommon.mediasaving.MediaSavingResult.SUCCESS;
+					} else {
+						result = com.sonyericsson.cameracommon.mediasaving.MediaSavingResult.FAIL;
+					}
+				} catch (android.database.sqlite.SQLiteFullException full) {
+					savedUri = null;
+					result = com.sonyericsson.cameracommon.mediasaving.MediaSavingResult.FAIL_MEMORY_FULL;
+				}
+			} else {
+				try {
+					android.net.Uri u = SavingTaskManager.this.mUpdator
+							.insertVideoAndSendIntent(mRequest);
+					result = (u != null)
+							? com.sonyericsson.cameracommon.mediasaving.MediaSavingResult.SUCCESS
+							: com.sonyericsson.cameracommon.mediasaving.MediaSavingResult.FAIL;
+					savedUri = u;
+				} catch (android.database.sqlite.SQLiteFullException full) {
+					result = com.sonyericsson.cameracommon.mediasaving.MediaSavingResult.FAIL_MEMORY_FULL;
+				}
+			}
+
+			if (com.sonyericsson.android.camera.util.CamLog.VERBOSE) {
+				com.sonyericsson.android.camera.util.CamLog.d(
+						new String[] { "Saving video finished: ID: " + mRequest.getRequestId() });
+			}
+
+			SavingTaskManager.this.mStorageManager.updateStorageState(
+					storageType,
+					com.sonyericsson.cameracommon.storage.CameraStorageManager
+							.UpdateRequestReason.VIDEO_STORING_COMPLETED);
+
+			sem.release();
+
+			if (com.sonyericsson.android.camera.util.CamLog.DEBUG) {
+				com.sonyericsson.android.camera.util.CamLog.d(
+						new String[] { "SavingVideoTask[" + storageType + "]: X" });
+			}
+
+			SavingTaskManager.this.notifyStoreComplete(
+					result, savedUri,
+					(com.sonyericsson.cameracommon.storage.SavingRequest) mRequest);
+			SavingTaskManager.this.mStoreVideoThread = null;
+		}
+
     }
 
     public boolean canPushStoreTask(Storage.StorageType storageType) throws IOException {

@@ -39,32 +39,82 @@ public class ImageLoader {
         this.mOption = new BitmapFactory.Options();
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
-    /* JADX WARN: Removed duplicated region for block: B:100:0x0150 A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:102:0x00bc A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:104:0x0177 A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:106:0x008c A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:112:? A[RETURN, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:114:? A[RETURN, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:115:? A[RETURN, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:116:? A[RETURN, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:24:0x007a A[Catch: all -> 0x005d, IllegalArgumentException -> 0x0061, IOException -> 0x0066, FileNotFoundException -> 0x006b, InvalidObjectException -> 0x0070, TryCatch #13 {FileNotFoundException -> 0x006b, InvalidObjectException -> 0x0070, IOException -> 0x0066, IllegalArgumentException -> 0x0061, all -> 0x005d, blocks: (B:14:0x0044, B:22:0x0076, B:24:0x007a, B:25:0x0082), top: B:111:0x0044 }] */
-    /* JADX WARN: Removed duplicated region for block: B:25:0x0082 A[Catch: all -> 0x005d, IllegalArgumentException -> 0x0061, IOException -> 0x0066, FileNotFoundException -> 0x006b, InvalidObjectException -> 0x0070, TRY_LEAVE, TryCatch #13 {FileNotFoundException -> 0x006b, InvalidObjectException -> 0x0070, IOException -> 0x0066, IllegalArgumentException -> 0x0061, all -> 0x005d, blocks: (B:14:0x0044, B:22:0x0076, B:24:0x007a, B:25:0x0082), top: B:111:0x0044 }] */
-    /* JADX WARN: Removed duplicated region for block: B:45:0x00b1 A[Catch: all -> 0x0099, IllegalArgumentException -> 0x009d, IOException -> 0x00a0, FileNotFoundException -> 0x00a4, InvalidObjectException -> 0x00a8, TRY_LEAVE, TryCatch #20 {all -> 0x0099, blocks: (B:27:0x008c, B:28:0x0092, B:43:0x00ad, B:45:0x00b1), top: B:106:0x008c }] */
-    /* JADX WARN: Removed duplicated region for block: B:94:0x00eb A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:96:0x0128 A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:98:0x0186 A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public android.graphics.Bitmap load() throws java.lang.Throwable {
-        /*
-            Method dump skipped, instructions count: 420
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.storage.ImageLoader.load():android.graphics.Bitmap");
-    }
+	public android.graphics.Bitmap load() throws java.lang.Throwable {
+		if (CamLog.VERBOSE) {
+			CamLog.d(new String[] { "Loading full size image started" });
+		}
+
+		android.graphics.Bitmap result = null;
+		java.io.InputStream current = null;
+
+		try {
+			if (CamLog.VERBOSE) {
+				CamLog.d(new String[] { "Start loading original image:" + mUri });
+			}
+
+			// === Phase 1: bounds-only open ===
+			current = (mImageData != null)
+					? new java.io.ByteArrayInputStream(mImageData)
+					: com.sonyericsson.cameracommon.storage.ContentResolverUtil
+							.crOpenInputStream(mContext, mUri);
+
+			if (current != null) {
+				try {
+					calcBounds(current, mOption);
+					mOption.inSampleSize = calcRatio(mOption, mOption.inSampleSize, 0x401);
+				} finally {
+					try { current.close(); } catch (Exception ignore) {}
+					current = null;
+				}
+			}
+
+			// === Phase 2: decode open ===
+			java.io.InputStream decodeIn = (mImageData != null)
+					? new java.io.ByteArrayInputStream(mImageData)
+					: com.sonyericsson.cameracommon.storage.ContentResolverUtil
+							.crOpenInputStream(mContext, mUri);
+
+			if (decodeIn != null) {
+				try {
+					result = loadFullSize(decodeIn, mOption);
+				} catch (java.io.InvalidObjectException ioe) {
+					CamLog.e(new String[] { "Load full size error:" + ioe });
+				} finally {
+					try { decodeIn.close(); }
+					catch (Exception ex) { CamLog.e("Close stream failed:" + ex.toString(), ex); }
+				}
+			}
+
+			if (CamLog.VERBOSE) {
+				CamLog.d(new String[] { "Loading full size image finished" });
+			}
+			return result;
+
+		} catch (java.io.InvalidObjectException e) {
+			CamLog.e(new String[] { "Load full size error:" + e });
+			if (current != null) try { current.close(); } catch (Exception ex) { CamLog.e("Close stream failed:" + ex.toString(), ex); }
+			return result;
+
+		} catch (java.io.FileNotFoundException e) {
+			CamLog.e(new String[] { "File not found:" + mUri });
+			if (current != null) try { current.close(); } catch (Exception ex) { CamLog.e("Close stream failed:" + ex.toString(), ex); }
+			return result;
+
+		} catch (java.io.IOException e) {
+			CamLog.e(new String[] { "Close failed:" + mUri });
+			if (current != null) try { current.close(); } catch (Exception ex) { CamLog.e("Close stream failed:" + ex.toString(), ex); }
+			return result;
+
+		} catch (java.lang.IllegalArgumentException e) {
+			CamLog.e(new String[] { "Maybe File access error." });
+			if (current != null) try { current.close(); } catch (Exception ex) { CamLog.e("Close stream failed:" + ex.toString(), ex); }
+			return result;
+
+		} catch (java.lang.Throwable t) {
+			if (current != null) try { current.close(); } catch (Exception ex) { CamLog.e("Close stream failed:" + ex.toString(), ex); }
+			throw t; // required by the signature you asked to keep
+		}
+	}
 
     private void calcBounds(InputStream inputStream, BitmapFactory.Options options) throws InvalidObjectException, FileNotFoundException {
         if (CamLog.VERBOSE) {

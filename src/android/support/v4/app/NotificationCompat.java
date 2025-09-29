@@ -23,6 +23,7 @@ import android.support.annotation.RequiresApi;
 import android.support.annotation.RestrictTo;
 import android.support.compat.R;
 import android.support.v4.app.Person;
+import android.support.v4.media.app.NotificationCompat.DecoratedCustomViewStyle;
 import android.support.v4.text.BidiFormatter;
 import android.support.v4.view.ViewCompat;
 import android.text.SpannableStringBuilder;
@@ -652,23 +653,120 @@ public class NotificationCompat {
             return null;
         }
 
-        /* JADX WARN: Removed duplicated region for block: B:67:0x01b8  */
-        /* JADX WARN: Removed duplicated region for block: B:72:0x01c1  */
-        /* JADX WARN: Removed duplicated region for block: B:76:0x01e3  */
-        /* JADX WARN: Removed duplicated region for block: B:85:0x0228  */
-        /* JADX WARN: Removed duplicated region for block: B:86:0x022a  */
-        /* JADX WARN: Removed duplicated region for block: B:89:0x0232  */
-        @android.support.annotation.RestrictTo({android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP})
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        public android.widget.RemoteViews applyStandardTemplate(boolean r13, int r14, boolean r15) throws android.content.res.Resources.NotFoundException {
-            /*
-                Method dump skipped, instructions count: 567
-                To view this dump change 'Code comments level' option to 'DEBUG'
-            */
-            throw new UnsupportedOperationException("Method not decompiled: android.support.v4.app.NotificationCompat.Style.applyStandardTemplate(boolean, int, boolean):android.widget.RemoteViews");
+        @RestrictTo(LIBRARY_GROUP_PREFIX)
+        public @NonNull RemoteViews applyStandardTemplate(boolean showSmallIcon,
+                int resId, boolean fitIn1U) {
+            Resources res = mBuilder.mContext.getResources();
+            RemoteViews contentView = new RemoteViews(mBuilder.mContext.getPackageName(), resId);
+            boolean showLine3 = false;
+            boolean showLine2 = false;
+            if (mBuilder.mLargeIcon != null) {
+                // On versions before Jellybean, the large icon was shown by SystemUI, so we need
+                // to hide it here.
+                contentView.setViewVisibility(R.id.icon, View.VISIBLE);
+                contentView.setImageViewBitmap(R.id.icon,
+                            createColoredBitmap(mBuilder.mLargeIcon, Color.TRANSPARENT));
+                if (showSmallIcon && mBuilder.mNotification.icon != 0) {
+                    int backgroundSize = res.getDimensionPixelSize(
+                            R.dimen.notification_right_icon_size);
+                    int iconSize = backgroundSize - res.getDimensionPixelSize(
+                            R.dimen.notification_small_icon_background_padding) * 2;
+                    Bitmap smallBit = createIconWithBackground(
+                            mBuilder.mNotification.icon,
+                            backgroundSize,
+                            iconSize,
+                            mBuilder.getColor());
+                    contentView.setImageViewBitmap(R.id.right_icon, smallBit);
+                    contentView.setViewVisibility(R.id.right_icon, View.VISIBLE);
+                }
+            } else if (showSmallIcon && mBuilder.mNotification.icon != 0) { // small icon at left
+                contentView.setViewVisibility(R.id.icon, View.VISIBLE);
+                int backgroundSize = res.getDimensionPixelSize(
+                        R.dimen.notification_large_icon_width)
+                        - res.getDimensionPixelSize(R.dimen.notification_big_circle_margin);
+                int iconSize = res.getDimensionPixelSize(
+                        R.dimen.notification_small_icon_size_as_large);
+                Bitmap smallBit = createIconWithBackground(
+                        mBuilder.mNotification.icon,
+                        backgroundSize,
+                        iconSize,
+                        mBuilder.getColor());
+                contentView.setImageViewBitmap(R.id.icon, smallBit);
+            }
+            if (mBuilder.mContentTitle != null) {
+                contentView.setTextViewText(R.id.title, mBuilder.mContentTitle);
+            }
+            if (mBuilder.mContentText != null) {
+                contentView.setTextViewText(R.id.text, mBuilder.mContentText);
+                showLine3 = true;
+            }
+            // If there is a large icon we have a right side
+            boolean hasRightSide = false;
+            if (mBuilder.mContentInfo != null) {
+                contentView.setTextViewText(R.id.info, mBuilder.mContentInfo);
+                contentView.setViewVisibility(R.id.info, View.VISIBLE);
+                showLine3 = true;
+                hasRightSide = true;
+            } else if (mBuilder.mNumber > 0) {
+                final int tooBig = res.getInteger(
+                        R.integer.status_bar_notification_info_maxnum);
+                if (mBuilder.mNumber > tooBig) {
+                    contentView.setTextViewText(R.id.info, ((Resources) res).getString(
+                            R.string.status_bar_notification_info_overflow));
+                } else {
+                    NumberFormat f = NumberFormat.getIntegerInstance();
+                    contentView.setTextViewText(R.id.info, f.format(mBuilder.mNumber));
+                }
+                contentView.setViewVisibility(R.id.info, View.VISIBLE);
+                showLine3 = true;
+                hasRightSide = true;
+            } else {
+                contentView.setViewVisibility(R.id.info, View.GONE);
+            }
+            // Need to show three lines?
+            if (mBuilder.mSubText != null) {
+                contentView.setTextViewText(R.id.text, mBuilder.mSubText);
+                if (mBuilder.mContentText != null) {
+                    contentView.setTextViewText(R.id.text2, mBuilder.mContentText);
+                    contentView.setViewVisibility(R.id.text2, View.VISIBLE);
+                    showLine2 = true;
+                } else {
+                    contentView.setViewVisibility(R.id.text2, View.GONE);
+                }
+            }
+            // RemoteViews.setViewPadding and RemoteViews.setTextViewTextSize is not available on
+            // ICS-
+            if (showLine2) {
+                if (fitIn1U) {
+                    // need to shrink all the type to make sure everything fits
+                    final float subTextSize = res.getDimensionPixelSize(
+                            R.dimen.notification_subtext_size);
+                    contentView.setTextViewTextSize(R.id.text, TypedValue.COMPLEX_UNIT_PX,
+                            subTextSize);
+                }
+                // vertical centering
+                contentView.setViewPadding(R.id.line1, 0, 0, 0, 0);
+            }
+            if (mBuilder.getWhenIfShowing() != 0) {
+                if (mBuilder.mUseChronometer) {
+                    contentView.setViewVisibility(R.id.chronometer, View.VISIBLE);
+                    contentView.setLong(R.id.chronometer, "setBase",
+                            mBuilder.getWhenIfShowing()
+                                    + (SystemClock.elapsedRealtime() - System.currentTimeMillis()));
+                    contentView.setBoolean(R.id.chronometer, "setStarted", true);
+                    if (mBuilder.mChronometerCountDown && Build.VERSION.SDK_INT >= 24) {
+                        Api24Impl.setChronometerCountDown(contentView, R.id.chronometer,
+                                mBuilder.mChronometerCountDown);
+                    }
+                } else {
+                    contentView.setViewVisibility(R.id.time, View.VISIBLE);
+                    contentView.setLong(R.id.time, "setTime", mBuilder.getWhenIfShowing());
+                }
+                hasRightSide = true;
+            }
+            contentView.setViewVisibility(R.id.right_side, hasRightSide ? View.VISIBLE : View.GONE);
+            contentView.setViewVisibility(R.id.line3, showLine3 ? View.VISIBLE : View.GONE);
+            return contentView;
         }
 
         @RestrictTo({RestrictTo.Scope.LIBRARY_GROUP})

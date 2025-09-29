@@ -78,63 +78,41 @@ public class JpegImageMetadata implements ImageMetadata {
         return null;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:28:0x005b A[SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:31:0x0010 A[SYNTHETIC] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public java.awt.image.BufferedImage getEXIFThumbnail() throws java.io.IOException, org.apache.commons.imaging.ImageReadException {
-        /*
-            r3 = this;
-            org.apache.commons.imaging.formats.tiff.TiffImageMetadata r0 = r3.exif
-            r1 = 0
-            if (r0 != 0) goto L6
-            return r1
-        L6:
-            org.apache.commons.imaging.formats.tiff.TiffImageMetadata r3 = r3.exif
-            java.util.List r3 = r3.getDirectories()
-            java.util.Iterator r3 = r3.iterator()
-        L10:
-            boolean r0 = r3.hasNext()
-            if (r0 == 0) goto L5c
-            java.lang.Object r0 = r3.next()
-            org.apache.commons.imaging.common.ImageMetadata$ImageMetadataItem r0 = (org.apache.commons.imaging.common.ImageMetadata.ImageMetadataItem) r0
-            org.apache.commons.imaging.formats.tiff.TiffImageMetadata$Directory r0 = (org.apache.commons.imaging.formats.tiff.TiffImageMetadata.Directory) r0
-            java.awt.image.BufferedImage r2 = r0.getThumbnail()
-            if (r2 == 0) goto L25
-            return r2
-        L25:
-            org.apache.commons.imaging.formats.tiff.JpegImageData r0 = r0.getJpegImageData()
-            if (r0 == 0) goto L10
-            byte[] r2 = r0.getData()     // Catch: java.lang.Throwable -> L34 java.io.IOException -> L42 org.apache.commons.imaging.ImagingException -> L4c
-            java.awt.image.BufferedImage r2 = org.apache.commons.imaging.Imaging.getBufferedImage(r2)     // Catch: java.lang.Throwable -> L34 java.io.IOException -> L42 org.apache.commons.imaging.ImagingException -> L4c
-            goto L59
-        L34:
-            r3 = move-exception
-            java.io.ByteArrayInputStream r1 = new java.io.ByteArrayInputStream
-            byte[] r0 = r0.getData()
-            r1.<init>(r0)
-            javax.imageio.ImageIO.read(r1)
-            throw r3
-        L42:
-            java.io.ByteArrayInputStream r2 = new java.io.ByteArrayInputStream
-            byte[] r0 = r0.getData()
-            r2.<init>(r0)
-            goto L55
-        L4c:
-            java.io.ByteArrayInputStream r2 = new java.io.ByteArrayInputStream
-            byte[] r0 = r0.getData()
-            r2.<init>(r0)
-        L55:
-            java.awt.image.BufferedImage r2 = javax.imageio.ImageIO.read(r2)
-        L59:
-            if (r2 == 0) goto L10
-            return r2
-        L5c:
-            return r1
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.formats.jpeg.JpegImageMetadata.getEXIFThumbnail():java.awt.image.BufferedImage");
+    public BufferedImage getEXIFThumbnail() throws ImageReadException, IOException {
+        if (this.exif == null) {
+            return null;
+        }
+        for (final TiffImageMetadata.Directory directory : this.exif.getDirectories()) {
+            final BufferedImage thumbnail = directory.getThumbnail();
+            if (thumbnail != null) {
+                return thumbnail;
+            }
+            final JpegImageData jpegImageData = directory.getJpegImageData();
+            if (jpegImageData == null) {
+                continue;
+            }
+            Object read = null;
+            Label_0127: {
+                try {
+                    Imaging.getBufferedImage(((TiffElement.DataElement)jpegImageData).getData());
+                    break Label_0127;
+                }
+                catch (final IOException ex) {
+                    final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(((TiffElement.DataElement)jpegImageData).getData());
+                }
+                catch (final ImagingException ex2) {
+                    read = new ByteArrayInputStream(((TiffElement.DataElement)jpegImageData).getData());
+                }
+                finally {
+                    ImageIO.read(new ByteArrayInputStream(((TiffElement.DataElement)jpegImageData).getData()));
+                }
+                read = ImageIO.read((InputStream)read);
+            }
+            if (read != null) {
+                return (BufferedImage)read;
+            }
+        }
+        return null;
     }
 
     public TiffImageData getRawImageData() {

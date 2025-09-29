@@ -34,110 +34,57 @@ public class DrawableUtils {
     private DrawableUtils() {
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:29:0x0074  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static android.graphics.Rect getOpticalBounds(android.graphics.drawable.Drawable r10) throws java.lang.IllegalAccessException, java.lang.SecurityException, java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException {
-        /*
-            java.lang.Class<?> r0 = android.support.v7.widget.DrawableUtils.sInsetsClazz
-            if (r0 == 0) goto L9f
-            android.graphics.drawable.Drawable r10 = android.support.v4.graphics.drawable.DrawableCompat.unwrap(r10)     // Catch: java.lang.Exception -> L98
-            java.lang.Class r0 = r10.getClass()     // Catch: java.lang.Exception -> L98
-            java.lang.String r1 = "getOpticalInsets"
-            r2 = 0
-            java.lang.Class[] r3 = new java.lang.Class[r2]     // Catch: java.lang.Exception -> L98
-            java.lang.reflect.Method r0 = r0.getMethod(r1, r3)     // Catch: java.lang.Exception -> L98
-            java.lang.Object[] r1 = new java.lang.Object[r2]     // Catch: java.lang.Exception -> L98
-            java.lang.Object r10 = r0.invoke(r10, r1)     // Catch: java.lang.Exception -> L98
-            if (r10 == 0) goto L9f
-            android.graphics.Rect r0 = new android.graphics.Rect     // Catch: java.lang.Exception -> L98
-            r0.<init>()     // Catch: java.lang.Exception -> L98
-            java.lang.Class<?> r1 = android.support.v7.widget.DrawableUtils.sInsetsClazz     // Catch: java.lang.Exception -> L98
-            java.lang.reflect.Field[] r1 = r1.getFields()     // Catch: java.lang.Exception -> L98
-            int r3 = r1.length     // Catch: java.lang.Exception -> L98
-            r4 = r2
-        L2a:
-            if (r4 >= r3) goto L97
-            r5 = r1[r4]     // Catch: java.lang.Exception -> L98
-            java.lang.String r6 = r5.getName()     // Catch: java.lang.Exception -> L98
-            r7 = -1
-            int r8 = r6.hashCode()     // Catch: java.lang.Exception -> L98
-            r9 = -1383228885(0xffffffffad8d9a2b, float:-1.6098308E-11)
-            if (r8 == r9) goto L6a
-            r9 = 115029(0x1c155, float:1.6119E-40)
-            if (r8 == r9) goto L60
-            r9 = 3317767(0x32a007, float:4.649182E-39)
-            if (r8 == r9) goto L56
-            r9 = 108511772(0x677c21c, float:4.6598146E-35)
-            if (r8 == r9) goto L4c
-            goto L74
-        L4c:
-            java.lang.String r8 = "right"
-            boolean r6 = r6.equals(r8)     // Catch: java.lang.Exception -> L98
-            if (r6 == 0) goto L74
-            r6 = 2
-            goto L75
-        L56:
-            java.lang.String r8 = "left"
-            boolean r6 = r6.equals(r8)     // Catch: java.lang.Exception -> L98
-            if (r6 == 0) goto L74
-            r6 = r2
-            goto L75
-        L60:
-            java.lang.String r8 = "top"
-            boolean r6 = r6.equals(r8)     // Catch: java.lang.Exception -> L98
-            if (r6 == 0) goto L74
-            r6 = 1
-            goto L75
-        L6a:
-            java.lang.String r8 = "bottom"
-            boolean r6 = r6.equals(r8)     // Catch: java.lang.Exception -> L98
-            if (r6 == 0) goto L74
-            r6 = 3
-            goto L75
-        L74:
-            r6 = r7
-        L75:
-            switch(r6) {
-                case 0: goto L8e;
-                case 1: goto L87;
-                case 2: goto L80;
-                case 3: goto L79;
-                default: goto L78;
-            }     // Catch: java.lang.Exception -> L98
-        L78:
-            goto L94
-        L79:
-            int r5 = r5.getInt(r10)     // Catch: java.lang.Exception -> L98
-            r0.bottom = r5     // Catch: java.lang.Exception -> L98
-            goto L94
-        L80:
-            int r5 = r5.getInt(r10)     // Catch: java.lang.Exception -> L98
-            r0.right = r5     // Catch: java.lang.Exception -> L98
-            goto L94
-        L87:
-            int r5 = r5.getInt(r10)     // Catch: java.lang.Exception -> L98
-            r0.top = r5     // Catch: java.lang.Exception -> L98
-            goto L94
-        L8e:
-            int r5 = r5.getInt(r10)     // Catch: java.lang.Exception -> L98
-            r0.left = r5     // Catch: java.lang.Exception -> L98
-        L94:
-            int r4 = r4 + 1
-            goto L2a
-        L97:
-            return r0
-        L98:
-            java.lang.String r10 = "DrawableUtils"
-            java.lang.String r0 = "Couldn't obtain the optical insets. Ignoring."
-            android.util.Log.e(r10, r0)
-        L9f:
-            android.graphics.Rect r10 = android.support.v7.widget.DrawableUtils.INSETS_NONE
-            return r10
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.DrawableUtils.getOpticalBounds(android.graphics.drawable.Drawable):android.graphics.Rect");
+    /**
+     * Allows us to get the optical insets for a {@link Drawable}. Since this is hidden we need to
+     * use reflection. Since the {@code Insets} class is hidden also, we return a Rect instead.
+     */
+    public static Rect getOpticalBounds(Drawable drawable) {
+        if (Build.VERSION.SDK_INT >= 29) {
+            final android.graphics.Insets insets = drawable.getOpticalInsets();
+            final Rect result = new Rect();
+            result.left = insets.left;
+            result.right = insets.right;
+            result.top = insets.top;
+            result.bottom = insets.bottom;
+            return result;
+        }
+        if (sInsetsClazz != null) {
+            try {
+                // If the Drawable is wrapped, we need to manually unwrap it and process
+                // the wrapped drawable.
+                drawable = DrawableCompat.unwrap(drawable);
+                final Method getOpticalInsetsMethod = drawable.getClass()
+                        .getMethod("getOpticalInsets");
+                final Object insets = getOpticalInsetsMethod.invoke(drawable);
+                if (insets != null) {
+                    // If the drawable has some optical insets, let's copy them into a Rect
+                    final Rect result = new Rect();
+                    for (Field field : sInsetsClazz.getFields()) {
+                        switch (field.getName()) {
+                            case "left":
+                               result.left = field.getInt(insets);
+                                break;
+                            case "top":
+                                result.top = field.getInt(insets);
+                                break;
+                            case "right":
+                                result.right = field.getInt(insets);
+                                break;
+                            case "bottom":
+                                result.bottom = field.getInt(insets);
+                                break;
+                        }
+                    }
+                    return result;
+                }
+            } catch (Exception e) {
+                // Eugh, we hit some kind of reflection issue...
+                Log.e(TAG, "Couldn't obtain the optical insets. Ignoring.");
+            }
+        }
+        // If we reach here, either we're running on a device pre-v18, the Drawable didn't have
+        // any optical insets, or a reflection issue, so we'll just return an empty rect
+        return INSETS_NONE;
     }
 
     static void fixDrawable(@NonNull Drawable drawable) {
@@ -145,37 +92,42 @@ public class DrawableUtils {
             fixVectorDrawableTinting(drawable);
         }
     }
-
-    /* JADX WARN: Multi-variable type inference failed */
+    
+    /**
+     * Some drawable implementations have problems with mutation. This method returns false if
+     * there is a known issue in the given drawable's implementation.
+     */
     public static boolean canSafelyMutateDrawable(@NonNull Drawable drawable) {
-        if (Build.VERSION.SDK_INT < 15 && (drawable instanceof InsetDrawable)) {
+        if (Build.VERSION.SDK_INT < 15 && drawable instanceof InsetDrawable) {
             return false;
-        }
-        if (Build.VERSION.SDK_INT < 15 && (drawable instanceof GradientDrawable)) {
+        }  else if (Build.VERSION.SDK_INT < 15 && drawable instanceof GradientDrawable) {
+            // GradientDrawable has a bug pre-ICS which results in mutate() resulting
+            // in loss of color
             return false;
-        }
-        if (Build.VERSION.SDK_INT < 17 && (drawable instanceof LayerDrawable)) {
+        } else if (Build.VERSION.SDK_INT < 17 && drawable instanceof LayerDrawable) {
             return false;
         }
         if (drawable instanceof DrawableContainer) {
-            Drawable.ConstantState constantState = drawable.getConstantState();
-            if (!(constantState instanceof DrawableContainer.DrawableContainerState)) {
-                return true;
-            }
-            for (Drawable drawable2 : ((DrawableContainer.DrawableContainerState) constantState).getChildren()) {
-                if (!canSafelyMutateDrawable(drawable2)) {
-                    return false;
+            // If we have a DrawableContainer, let's traverse its child array
+            final Drawable.ConstantState state = drawable.getConstantState();
+            if (state instanceof DrawableContainer.DrawableContainerState) {
+                final DrawableContainer.DrawableContainerState containerState =
+                        (DrawableContainer.DrawableContainerState) state;
+                for (final Drawable child : containerState.getChildren()) {
+                    if (!canSafelyMutateDrawable(child)) {
+                        return false;
+                    }
                 }
             }
-            return true;
-        }
-        if (drawable instanceof WrappedDrawable) {
-            return canSafelyMutateDrawable(((WrappedDrawable) drawable).getWrappedDrawable());
-        }
-        if (drawable instanceof DrawableWrapper) {
-            return canSafelyMutateDrawable(((DrawableWrapper) drawable).getWrappedDrawable());
-        }
-        if (drawable instanceof ScaleDrawable) {
+        } else if (drawable instanceof WrappedDrawable) {
+            return canSafelyMutateDrawable(
+                    ((WrappedDrawable) drawable)
+                            .getWrappedDrawable());
+        } else if (drawable instanceof androidx.appcompat.graphics.drawable.DrawableWrapper) {
+            return canSafelyMutateDrawable(
+                    ((androidx.appcompat.graphics.drawable.DrawableWrapper) drawable)
+                            .getWrappedDrawable());
+        } else if (drawable instanceof ScaleDrawable) {
             return canSafelyMutateDrawable(((ScaleDrawable) drawable).getDrawable());
         }
         return true;

@@ -8,6 +8,8 @@ import android.provider.DocumentsContract;
 import com.sonyericsson.android.camera.configuration.IntentReader;
 import com.sonyericsson.android.camera.configuration.SharedPreferencesConstants;
 import com.sonyericsson.android.camera.configuration.parameters.CapturingMode;
+import com.sonyericsson.android.camera.configuration.parameters.SelfTimer;
+import com.sonyericsson.android.camera.device.CameraInfo;
 import com.sonyericsson.android.camera.setting.ExtraSettings;
 import com.sonyericsson.android.camera.setting.SharedPreferencesAccessor;
 import com.sonyericsson.android.camera.util.CamLog;
@@ -16,6 +18,7 @@ import com.sonyericsson.android.camera.view.modeselector.ModeSelectorInternalMod
 import com.sonyericsson.cameracommon.storage.Storage;
 import com.sonyericsson.cameracommon.storage.StorageUtil;
 import com.sonyericsson.cameracommon.utility.OneShotUtility;
+import com.sonymobile.cameracommon.research.ResearchUtil;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
 public class LaunchCondition {
@@ -505,17 +508,88 @@ public class LaunchCondition {
         this.mLaunchCameraMode = launchCameraMode;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:36:0x0095  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private void checkLaunchCameraModeFromGoogleAssistant(java.lang.String r8, android.content.Intent r9, boolean r10) {
-        /*
-            Method dump skipped, instructions count: 364
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.LaunchCondition.checkLaunchCameraModeFromGoogleAssistant(java.lang.String, android.content.Intent, boolean):void");
+    // Mirrors the fallback control flow 1:1
+    private void checkLaunchCameraModeFromGoogleAssistant(String action, Intent intent, boolean isVoiceInteractionRootFlag) {
+        // Voice-interaction root gating (only true when both extras & flag are true)
+        boolean fromAssistantVoiceRoot =
+                intent.getBooleanExtra("is_voice_interaction_root", false) && isVoiceInteractionRootFlag;
+
+        // Explicit launchTrigger extra takes precedence
+        String trig = intent.getStringExtra("com.sonyericsson.android.camera.extra.launchTrigger");
+        if (LaunchTrigger.APP_SHORTCUT.toString().equals(trig)) {
+            setLaunchTrigger(LaunchTrigger.APP_SHORTCUT);
+        } else {
+            // Set GOOGLE_ASSISTANT unless launched by lock screen / power double-tap / lift
+            boolean hasVoiceCat = intent.hasCategory("android.intent.category.VOICE");
+            if (hasVoiceCat
+                    || (!isLaunchedByLockScreen(intent)
+                        && !isLaunchedByPowerKeyDoubleTap(intent)
+                        && !isLaunchedByLiftTrigger(intent))) {
+                setLaunchTrigger(LaunchTrigger.GOOGLE_ASSISTANT);
+            }
+
+            if (fromAssistantVoiceRoot) {
+                mIsGoogleAssistantLaunchOnly =
+                        intent.getBooleanExtra("com.google.assistant.extra.CAMERA_OPEN_ONLY", false);
+            }
+        }
+
+        // Camera mode string (Google first, fallback to AOSP extra)
+        final String mode = intent.hasExtra("com.google.assistant.extra.CAMERA_MODE")
+                ? intent.getStringExtra("com.google.assistant.extra.CAMERA_MODE")
+                : intent.getStringExtra("android.intent.extra.CAMERA_MODE");
+
+        // Front camera request (Google or AOSP key)
+        final boolean useFront =
+                intent.getBooleanExtra("android.intent.extra.USE_FRONT_CAMERA", false)
+             || intent.getBooleanExtra("com.google.assistant.extra.USE_FRONT_CAMERA", false);
+
+        // Action dispatch
+        if ("android.media.action.VIDEO_CAMERA".equals(action)) {
+            // VIDEO branch
+            if ("HDR_WITH_4K_RESOLUTION".equals(mode)
+                    && PlatformCapability.isVideoHdrSupported(CameraInfo.CameraId.BACK)) {
+                setLaunchCameraMode(LaunchCameraMode.FOUR_K_HDR);
+            } else if ("SLOW_MOTION".equals(mode)) {
+                setCapturingMode(CapturingMode.SLOW_MOTION, OneShotMode.NONE);
+                setLaunchCameraMode(LaunchCameraMode.SLOW_MOTION);
+            } else if ("SUPER_SLOW_MOTION".equals(mode)) {
+                if (PlatformCapability.isSuperSlowMotionSupported(CameraInfo.CameraId.BACK)) {
+                    setCapturingMode(CapturingMode.SLOW_MOTION, OneShotMode.NONE);
+                    setLaunchCameraMode(LaunchCameraMode.SUPER_SLOW_MOTION);
+                }
+            } else if (useFront && PlatformCapability.isFrontCameraSupported()) {
+                setCapturingMode(CapturingMode.FRONT_VIDEO, OneShotMode.NONE);
+            }
+
+        } else if ("android.media.action.STILL_IMAGE_CAMERA".equals(action)) {
+            // STILL branch
+            if (fromAssistantVoiceRoot) {
+                if (intent.hasExtra("com.google.assistant.extra.TIMER_DURATION_SECONDS")) {
+                    int sec = intent.getIntExtra("com.google.assistant.extra.TIMER_DURATION_SECONDS", 0);
+                    ResearchUtil.getInstance().setAssistSelfTimer(sec);
+                    // clamp between 3 and 30
+                    if (sec <= 3) sec = 3;
+                    else if (sec >= 30) sec = 30;
+                    mIsGoogleAssistantLaunchOnly = false;
+                    mGoogleAssistantSelfTimer = sec * 1000;
+                } else if (!isGoogleAssistantLaunchOnly()) {
+                    mGoogleAssistantSelfTimer = 3000; // default 3s
+                }
+                SelfTimer.LAUNCH_AND_CAPTURE_COUNT_DOWN
+                        .setDurationInMillisecond(getGoogleAssistantSelfTimer());
+            }
+
+            if (useFront && PlatformCapability.isFrontCameraSupported()) {
+                if ("MANUAL_MODE".equals(mode)) {
+                    setCapturingMode(CapturingMode.FRONT_PHOTO, OneShotMode.NONE);
+                } else {
+                    setCapturingMode(CapturingMode.SUPERIOR_FRONT, OneShotMode.NONE);
+                }
+            } else if ("MANUAL_MODE".equals(mode)) {
+                setCapturingMode(CapturingMode.NORMAL, OneShotMode.NONE);
+            }
+        }
     }
 
     public boolean isCorrectExtraOutputPath() {

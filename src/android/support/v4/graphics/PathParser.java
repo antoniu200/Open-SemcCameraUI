@@ -141,74 +141,57 @@ public class PathParser {
         }
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Removed duplicated region for block: B:21:0x0035  */
-    /* JADX WARN: Removed duplicated region for block: B:24:0x003a A[LOOP:0: B:3:0x0007->B:24:0x003a, LOOP_END] */
-    /* JADX WARN: Removed duplicated region for block: B:28:0x003d A[SYNTHETIC] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static void extract(java.lang.String r8, int r9, android.support.v4.graphics.PathParser.ExtractFloatResult r10) {
-        /*
-            r0 = 0
-            r10.mEndWithNegOrDot = r0
-            r1 = r9
-            r2 = r0
-            r3 = r2
-            r4 = r3
-        L7:
-            int r5 = r8.length()
-            if (r1 >= r5) goto L3d
-            char r5 = r8.charAt(r1)
-            r6 = 32
-            r7 = 1
-            if (r5 == r6) goto L35
-            r6 = 69
-            if (r5 == r6) goto L33
-            r6 = 101(0x65, float:1.42E-43)
-            if (r5 == r6) goto L33
-            switch(r5) {
-                case 44: goto L35;
-                case 45: goto L2a;
-                case 46: goto L22;
-                default: goto L21;
+    /**
+     * Calculate the position of the next comma or space or negative sign
+     * @param s the string to search
+     * @param start the position to start searching
+     * @param result the result of the extraction, including the position of the
+     * the starting position of next number, whether it is ending with a '-'.
+     */
+    private static void extract(String s, int start, ExtractFloatResult result) {
+        // Now looking for ' ', ',', '.' or '-' from the start.
+        int currentIndex = start;
+        boolean foundSeparator = false;
+        result.mEndWithNegOrDot = false;
+        boolean secondDot = false;
+        boolean isExponential = false;
+        for (; currentIndex < s.length(); currentIndex++) {
+            boolean isPrevExponential = isExponential;
+            isExponential = false;
+            char currentChar = s.charAt(currentIndex);
+            switch (currentChar) {
+                case ' ':
+                case ',':
+                    foundSeparator = true;
+                    break;
+                case '-':
+                    // The negative sign following a 'e' or 'E' is not a separator.
+                    if (currentIndex != start && !isPrevExponential) {
+                        foundSeparator = true;
+                        result.mEndWithNegOrDot = true;
+                    }
+                    break;
+                case '.':
+                    if (!secondDot) {
+                        secondDot = true;
+                    } else {
+                        // This is the second dot, and it is considered as a separator.
+                        foundSeparator = true;
+                        result.mEndWithNegOrDot = true;
+                    }
+                    break;
+                case 'e':
+                case 'E':
+                    isExponential = true;
+                    break;
             }
-        L21:
-            goto L31
-        L22:
-            if (r3 != 0) goto L27
-            r2 = r0
-            r3 = r7
-            goto L37
-        L27:
-            r10.mEndWithNegOrDot = r7
-            goto L35
-        L2a:
-            if (r1 == r9) goto L31
-            if (r2 != 0) goto L31
-            r10.mEndWithNegOrDot = r7
-            goto L35
-        L31:
-            r2 = r0
-            goto L37
-        L33:
-            r2 = r7
-            goto L37
-        L35:
-            r2 = r0
-            r4 = r7
-        L37:
-            if (r4 == 0) goto L3a
-            goto L3d
-        L3a:
-            int r1 = r1 + 1
-            goto L7
-        L3d:
-            r10.mEndPosition = r1
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.graphics.PathParser.extract(java.lang.String, int, android.support.v4.graphics.PathParser$ExtractFloatResult):void");
+            if (foundSeparator) {
+                break;
+            }
+        }
+        // When there is nothing found, then we put the end position to the end
+        // of the string.
+        result.mEndPosition = currentIndex;
     }
 
     public static class PathDataNode {

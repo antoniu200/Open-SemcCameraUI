@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Xml;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.xmlpull.v1.XmlSerializer;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
 class ActivityChooserModel extends DataSetObservable {
@@ -400,127 +403,62 @@ class ActivityChooserModel extends DataSetObservable {
         }
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:17:0x003e, code lost:
-    
-        r0.close();
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:66:?, code lost:
-    
-        return;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:67:?, code lost:
-    
-        return;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
     private void readHistoricalDataImpl() throws java.io.IOException {
-        /*
-            r9 = this;
-            android.content.Context r0 = r9.mContext     // Catch: java.io.FileNotFoundException -> Lc3
-            java.lang.String r1 = r9.mHistoryFileName     // Catch: java.io.FileNotFoundException -> Lc3
-            java.io.FileInputStream r0 = r0.openFileInput(r1)     // Catch: java.io.FileNotFoundException -> Lc3
-            org.xmlpull.v1.XmlPullParser r1 = android.util.Xml.newPullParser()     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            java.lang.String r2 = "UTF-8"
-            r1.setInput(r0, r2)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            r2 = 0
-        L12:
-            r3 = 1
-            if (r2 == r3) goto L1d
-            r4 = 2
-            if (r2 == r4) goto L1d
-            int r2 = r1.next()     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            goto L12
-        L1d:
-            java.lang.String r2 = "historical-records"
-            java.lang.String r4 = r1.getName()     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            boolean r2 = r2.equals(r4)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            if (r2 != 0) goto L31
-            org.xmlpull.v1.XmlPullParserException r1 = new org.xmlpull.v1.XmlPullParserException     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            java.lang.String r2 = "Share records file does not start with historical-records tag."
-            r1.<init>(r2)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            throw r1     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-        L31:
-            java.util.List<android.support.v7.widget.ActivityChooserModel$HistoricalRecord> r2 = r9.mHistoricalRecords     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            r2.clear()     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-        L36:
-            int r4 = r1.next()     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            if (r4 != r3) goto L43
-            if (r0 == 0) goto Lbc
-        L3e:
-            r0.close()     // Catch: java.io.IOException -> Lbc
-            goto Lbc
-        L43:
-            r5 = 3
-            if (r4 == r5) goto L36
-            r5 = 4
-            if (r4 != r5) goto L4a
-            goto L36
-        L4a:
-            java.lang.String r4 = r1.getName()     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            java.lang.String r5 = "historical-record"
-            boolean r4 = r5.equals(r4)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            if (r4 != 0) goto L5e
-            org.xmlpull.v1.XmlPullParserException r1 = new org.xmlpull.v1.XmlPullParserException     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            java.lang.String r2 = "Share records file not well-formed."
-            r1.<init>(r2)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            throw r1     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-        L5e:
-            java.lang.String r4 = "activity"
-            r5 = 0
-            java.lang.String r4 = r1.getAttributeValue(r5, r4)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            java.lang.String r6 = "time"
-            java.lang.String r6 = r1.getAttributeValue(r5, r6)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            long r6 = java.lang.Long.parseLong(r6)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            java.lang.String r8 = "weight"
-            java.lang.String r5 = r1.getAttributeValue(r5, r8)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            float r5 = java.lang.Float.parseFloat(r5)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            android.support.v7.widget.ActivityChooserModel$HistoricalRecord r8 = new android.support.v7.widget.ActivityChooserModel$HistoricalRecord     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            r8.<init>(r4, r6, r5)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            r2.add(r8)     // Catch: java.lang.Throwable -> L82 java.io.IOException -> L84 org.xmlpull.v1.XmlPullParserException -> La0
-            goto L36
-        L82:
-            r9 = move-exception
-            goto Lbd
-        L84:
-            r1 = move-exception
-            java.lang.String r2 = android.support.v7.widget.ActivityChooserModel.LOG_TAG     // Catch: java.lang.Throwable -> L82
-            java.lang.StringBuilder r3 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> L82
-            r3.<init>()     // Catch: java.lang.Throwable -> L82
-            java.lang.String r4 = "Error reading historical recrod file: "
-            r3.append(r4)     // Catch: java.lang.Throwable -> L82
-            java.lang.String r9 = r9.mHistoryFileName     // Catch: java.lang.Throwable -> L82
-            r3.append(r9)     // Catch: java.lang.Throwable -> L82
-            java.lang.String r9 = r3.toString()     // Catch: java.lang.Throwable -> L82
-            android.util.Log.e(r2, r9, r1)     // Catch: java.lang.Throwable -> L82
-            if (r0 == 0) goto Lbc
-            goto L3e
-        La0:
-            r1 = move-exception
-            java.lang.String r2 = android.support.v7.widget.ActivityChooserModel.LOG_TAG     // Catch: java.lang.Throwable -> L82
-            java.lang.StringBuilder r3 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> L82
-            r3.<init>()     // Catch: java.lang.Throwable -> L82
-            java.lang.String r4 = "Error reading historical recrod file: "
-            r3.append(r4)     // Catch: java.lang.Throwable -> L82
-            java.lang.String r9 = r9.mHistoryFileName     // Catch: java.lang.Throwable -> L82
-            r3.append(r9)     // Catch: java.lang.Throwable -> L82
-            java.lang.String r9 = r3.toString()     // Catch: java.lang.Throwable -> L82
-            android.util.Log.e(r2, r9, r1)     // Catch: java.lang.Throwable -> L82
-            if (r0 == 0) goto Lbc
-            goto L3e
-        Lbc:
-            return
-        Lbd:
-            if (r0 == 0) goto Lc2
-            r0.close()     // Catch: java.io.IOException -> Lc2
-        Lc2:
-            throw r9
-        Lc3:
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.ActivityChooserModel.readHistoricalDataImpl():void");
+        java.io.FileInputStream fis = null;
+        try {
+            fis = mContext.openFileInput(mHistoryFileName);
+            org.xmlpull.v1.XmlPullParser parser = android.util.Xml.newPullParser();
+            parser.setInput(fis, "UTF-8");
+
+            // Move to the start tag
+            int type;
+            do {
+                type = parser.next();
+            } while (type != org.xmlpull.v1.XmlPullParser.START_TAG
+                    && type != org.xmlpull.v1.XmlPullParser.END_DOCUMENT);
+
+            if (!"historical-records".equals(parser.getName())) {
+                throw new org.xmlpull.v1.XmlPullParserException(
+                        "Share records file does not start with historical-records tag.");
+            }
+
+            mHistoricalRecords.clear();
+
+            while ((type = parser.next()) != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                if (type == org.xmlpull.v1.XmlPullParser.END_TAG
+                        || type == org.xmlpull.v1.XmlPullParser.TEXT) {
+                    continue;
+                }
+
+                if (!"historical-record".equals(parser.getName())) {
+                    throw new org.xmlpull.v1.XmlPullParserException("Share records file not well-formed.");
+                }
+
+                final String activity = parser.getAttributeValue(null, "activity");
+                final String timeStr = parser.getAttributeValue(null, "time");
+                final long time = java.lang.Long.parseLong(timeStr);
+                final String weightStr = parser.getAttributeValue(null, "weight");
+                final float weight = java.lang.Float.parseFloat(weightStr);
+
+                mHistoricalRecords.add(new HistoricalRecord(activity, time, weight));
+            }
+        } catch (java.io.FileNotFoundException e) {
+            // History file doesn't exist yet; nothing to read.
+            return;
+        } catch (java.io.IOException e) {
+            android.util.Log.e(android.support.v7.widget.ActivityChooserModel.LOG_TAG,
+                    "Error reading historical recrod file: " + mHistoryFileName, e);
+        } catch (org.xmlpull.v1.XmlPullParserException e) {
+            android.util.Log.e(android.support.v7.widget.ActivityChooserModel.LOG_TAG,
+                    "Error reading historical recrod file: " + mHistoryFileName, e);
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (java.io.IOException ignored) {
+                }
+            }
+        }
     }
 
     private final class PersistHistoryAsyncTask extends AsyncTask<Object, Void, Void> {

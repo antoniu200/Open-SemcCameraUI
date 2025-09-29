@@ -98,17 +98,87 @@ public class RationalNumber extends Number {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:49:0x00e9  */
-    /* JADX WARN: Removed duplicated region for block: B:60:0x00ea A[SYNTHETIC] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static org.apache.commons.imaging.common.RationalNumber valueOf(double r11) {
-        /*
-            Method dump skipped, instructions count: 249
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.common.RationalNumber.valueOf(double):org.apache.commons.imaging.common.RationalNumber");
+    public static RationalNumber valueOf(double abs) {
+        if (abs >= 2.147483647E9) {
+            return new RationalNumber(Integer.MAX_VALUE, 1);
+        }
+        if (abs <= -2.147483647E9) {
+            return new RationalNumber(-2147483647, 1);
+        }
+        int n = 0;
+        boolean b;
+        if (abs < 0.0) {
+            abs = Math.abs(abs);
+            b = true;
+        }
+        else {
+            b = false;
+        }
+        if (abs == 0.0) {
+            return new RationalNumber(0, 1);
+        }
+        RationalNumber rationalNumber;
+        RationalNumber rationalNumber2;
+        if (abs >= 1.0) {
+            final int n2 = (int)abs;
+            if (n2 < abs) {
+                rationalNumber = new RationalNumber(n2, 1);
+                rationalNumber2 = new RationalNumber(n2 + 1, 1);
+            }
+            else {
+                rationalNumber = new RationalNumber(n2 - 1, 1);
+                rationalNumber2 = new RationalNumber(n2, 1);
+            }
+        }
+        else {
+            final int n3 = (int)(1.0 / abs);
+            if (1.0 / n3 < abs) {
+                rationalNumber = new RationalNumber(1, n3);
+                rationalNumber2 = new RationalNumber(1, n3 - 1);
+            }
+            else {
+                rationalNumber = new RationalNumber(1, n3 + 1);
+                rationalNumber2 = new RationalNumber(1, n3);
+            }
+        }
+        Option factory = Option.factory(rationalNumber, abs);
+        Option factory2 = Option.factory(rationalNumber2, abs);
+        Option option;
+        if (factory.error < factory2.error) {
+            option = factory;
+        }
+        else {
+            option = factory2;
+        }
+        while (option.error > 1.0E-8 && n < 100) {
+            final RationalNumber factoryMethod = factoryMethod(factory.rationalNumber.numerator + (long)factory2.rationalNumber.numerator, factory.rationalNumber.divisor + (long)factory2.rationalNumber.divisor);
+            final Option factory3 = Option.factory(factoryMethod, abs);
+            if (abs < factoryMethod.doubleValue()) {
+                if (factory2.error <= factory3.error) {
+                    break;
+                }
+                factory2 = factory3;
+            }
+            else {
+                if (factory.error <= factory3.error) {
+                    break;
+                }
+                factory = factory3;
+            }
+            Option option2 = option;
+            if (factory3.error < option.error) {
+                option2 = factory3;
+            }
+            ++n;
+            option = option2;
+        }
+        RationalNumber rationalNumber3;
+        if (b) {
+            rationalNumber3 = option.rationalNumber.negate();
+        }
+        else {
+            rationalNumber3 = option.rationalNumber;
+        }
+        return rationalNumber3;
     }
 }

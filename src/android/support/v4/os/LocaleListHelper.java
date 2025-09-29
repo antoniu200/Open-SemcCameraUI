@@ -258,60 +258,41 @@ final class LocaleListHelper {
         return Integer.MAX_VALUE;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:16:0x0020  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private int computeFirstMatchIndex(java.util.Collection<java.lang.String> r4, boolean r5) {
-        /*
-            r3 = this;
-            java.util.Locale[] r0 = r3.mList
-            int r0 = r0.length
-            r1 = 0
-            r2 = 1
-            if (r0 != r2) goto L8
-            return r1
-        L8:
-            java.util.Locale[] r0 = r3.mList
-            int r0 = r0.length
-            if (r0 != 0) goto Lf
-            r3 = -1
-            return r3
-        Lf:
-            r0 = 2147483647(0x7fffffff, float:NaN)
-            if (r5 == 0) goto L20
-            java.util.Locale r5 = android.support.v4.os.LocaleListHelper.EN_LATN
-            int r5 = r3.findFirstMatchIndex(r5)
-            if (r5 != 0) goto L1d
-            return r1
-        L1d:
-            if (r5 >= r0) goto L20
-            goto L21
-        L20:
-            r5 = r0
-        L21:
-            java.util.Iterator r4 = r4.iterator()
-        L25:
-            boolean r2 = r4.hasNext()
-            if (r2 == 0) goto L40
-            java.lang.Object r2 = r4.next()
-            java.lang.String r2 = (java.lang.String) r2
-            java.util.Locale r2 = android.support.v4.os.LocaleHelper.forLanguageTag(r2)
-            int r2 = r3.findFirstMatchIndex(r2)
-            if (r2 != 0) goto L3c
-            return r1
-        L3c:
-            if (r2 >= r5) goto L25
-            r5 = r2
-            goto L25
-        L40:
-            if (r5 != r0) goto L43
-            return r1
-        L43:
-            return r5
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.os.LocaleListHelper.computeFirstMatchIndex(java.util.Collection, boolean):int");
+    private int computeFirstMatchIndex(Collection<String> supportedLanguageTags, boolean assumeEnglishLatin) {
+        final java.util.Locale[] list = this.mList;
+        final int N = list.length;
+
+        if (N == 1) {
+            return 0;
+        }
+        if (N == 0) {
+            return -1;
+        }
+
+        int bestIndex = Integer.MAX_VALUE;
+
+        if (assumeEnglishLatin) {
+            final int enLatnIndex = findFirstMatchIndex(EN_LATN);
+            if (enLatnIndex == 0) {
+                return 0;
+            }
+            if (enLatnIndex < bestIndex) {
+                bestIndex = enLatnIndex;
+            }
+        }
+
+        for (String tag : supportedLanguageTags) {
+            final java.util.Locale locale = android.support.v4.os.LocaleHelper.forLanguageTag(tag);
+            final int idx = findFirstMatchIndex(locale);
+            if (idx == 0) {
+                return 0;
+            }
+            if (idx < bestIndex) {
+                bestIndex = idx;
+            }
+        }
+
+        return (bestIndex == Integer.MAX_VALUE) ? 0 : bestIndex;
     }
 
     private Locale computeFirstMatch(Collection<String> collection, boolean z) {

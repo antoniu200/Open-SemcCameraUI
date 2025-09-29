@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -29,6 +30,8 @@ import android.support.annotation.RequiresApi;
 import android.support.annotation.RestrictTo;
 import android.support.annotation.VisibleForTesting;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.res.ResourcesCompat;
+import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.util.Preconditions;
 import android.support.v4.view.ViewCompat;
 import android.util.Log;
@@ -311,138 +314,80 @@ public class IconCompat extends CustomVersionedParcelable {
         return drawableLoadDrawableInner;
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Removed duplicated region for block: B:22:0x0083  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private android.graphics.drawable.Drawable loadDrawableInner(android.content.Context r7) throws java.io.FileNotFoundException {
-        /*
-            r6 = this;
-            int r0 = r6.mType
-            r1 = 0
-            r2 = 0
-            switch(r0) {
-                case 1: goto Le1;
-                case 2: goto La7;
-                case 3: goto L91;
-                case 4: goto L1b;
-                case 5: goto L9;
-                default: goto L7;
-            }
-        L7:
-            goto Lef
-        L9:
-            android.graphics.drawable.BitmapDrawable r0 = new android.graphics.drawable.BitmapDrawable
-            android.content.res.Resources r7 = r7.getResources()
-            java.lang.Object r6 = r6.mObj1
-            android.graphics.Bitmap r6 = (android.graphics.Bitmap) r6
-            android.graphics.Bitmap r6 = createLegacyIconFromAdaptiveIcon(r6, r2)
-            r0.<init>(r7, r6)
-            return r0
-        L1b:
-            java.lang.Object r0 = r6.mObj1
-            java.lang.String r0 = (java.lang.String) r0
-            android.net.Uri r0 = android.net.Uri.parse(r0)
-            java.lang.String r2 = r0.getScheme()
-            java.lang.String r3 = "content"
-            boolean r3 = r3.equals(r2)
-            if (r3 != 0) goto L60
-            java.lang.String r3 = "file"
-            boolean r2 = r3.equals(r2)
-            if (r2 == 0) goto L38
-            goto L60
-        L38:
-            java.io.FileInputStream r2 = new java.io.FileInputStream     // Catch: java.io.FileNotFoundException -> L48
-            java.io.File r3 = new java.io.File     // Catch: java.io.FileNotFoundException -> L48
-            java.lang.Object r6 = r6.mObj1     // Catch: java.io.FileNotFoundException -> L48
-            java.lang.String r6 = (java.lang.String) r6     // Catch: java.io.FileNotFoundException -> L48
-            r3.<init>(r6)     // Catch: java.io.FileNotFoundException -> L48
-            r2.<init>(r3)     // Catch: java.io.FileNotFoundException -> L48
-            r6 = r2
-            goto L81
-        L48:
-            r6 = move-exception
-            java.lang.String r2 = "IconCompat"
-            java.lang.StringBuilder r3 = new java.lang.StringBuilder
-            r3.<init>()
-            java.lang.String r4 = "Unable to load image from path: "
-            r3.append(r4)
-            r3.append(r0)
-            java.lang.String r0 = r3.toString()
-            android.util.Log.w(r2, r0, r6)
-            goto L80
-        L60:
-            android.content.ContentResolver r6 = r7.getContentResolver()     // Catch: java.lang.Exception -> L69
-            java.io.InputStream r6 = r6.openInputStream(r0)     // Catch: java.lang.Exception -> L69
-            goto L81
-        L69:
-            r6 = move-exception
-            java.lang.String r2 = "IconCompat"
-            java.lang.StringBuilder r3 = new java.lang.StringBuilder
-            r3.<init>()
-            java.lang.String r4 = "Unable to load image from URI: "
-            r3.append(r4)
-            r3.append(r0)
-            java.lang.String r0 = r3.toString()
-            android.util.Log.w(r2, r0, r6)
-        L80:
-            r6 = r1
-        L81:
-            if (r6 == 0) goto Lef
-            android.graphics.drawable.BitmapDrawable r0 = new android.graphics.drawable.BitmapDrawable
-            android.content.res.Resources r7 = r7.getResources()
-            android.graphics.Bitmap r6 = android.graphics.BitmapFactory.decodeStream(r6)
-            r0.<init>(r7, r6)
-            return r0
-        L91:
-            android.graphics.drawable.BitmapDrawable r0 = new android.graphics.drawable.BitmapDrawable
-            android.content.res.Resources r7 = r7.getResources()
-            java.lang.Object r1 = r6.mObj1
-            byte[] r1 = (byte[]) r1
-            int r2 = r6.mInt1
-            int r6 = r6.mInt2
-            android.graphics.Bitmap r6 = android.graphics.BitmapFactory.decodeByteArray(r1, r2, r6)
-            r0.<init>(r7, r6)
-            return r0
-        La7:
-            java.lang.String r0 = r6.getResPackage()
-            boolean r3 = android.text.TextUtils.isEmpty(r0)
-            if (r3 == 0) goto Lb5
-            java.lang.String r0 = r7.getPackageName()
-        Lb5:
-            android.content.res.Resources r0 = getResources(r7, r0)
-            int r3 = r6.mInt1     // Catch: java.lang.RuntimeException -> Lc4
-            android.content.res.Resources$Theme r7 = r7.getTheme()     // Catch: java.lang.RuntimeException -> Lc4
-            android.graphics.drawable.Drawable r7 = android.support.v4.content.res.ResourcesCompat.getDrawable(r0, r3, r7)     // Catch: java.lang.RuntimeException -> Lc4
-            return r7
-        Lc4:
-            r7 = move-exception
-            java.lang.String r0 = "IconCompat"
-            java.lang.String r3 = "Unable to load resource 0x%08x from pkg=%s"
-            r4 = 2
-            java.lang.Object[] r4 = new java.lang.Object[r4]
-            int r5 = r6.mInt1
-            java.lang.Integer r5 = java.lang.Integer.valueOf(r5)
-            r4[r2] = r5
-            r2 = 1
-            java.lang.Object r6 = r6.mObj1
-            r4[r2] = r6
-            java.lang.String r6 = java.lang.String.format(r3, r4)
-            android.util.Log.e(r0, r6, r7)
-            goto Lef
-        Le1:
-            android.graphics.drawable.BitmapDrawable r0 = new android.graphics.drawable.BitmapDrawable
-            android.content.res.Resources r7 = r7.getResources()
-            java.lang.Object r6 = r6.mObj1
-            android.graphics.Bitmap r6 = (android.graphics.Bitmap) r6
-            r0.<init>(r7, r6)
-            return r0
-        Lef:
-            return r1
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.graphics.drawable.IconCompat.loadDrawableInner(android.content.Context):android.graphics.drawable.Drawable");
+    /**
+     * Do the heavy lifting of loading the drawable, but stop short of applying any tint.
+     */
+    private Drawable loadDrawableInner(Context context) {
+        switch (mType) {
+            case TYPE_BITMAP:
+                return new BitmapDrawable(context.getResources(), (Bitmap) mObj1);
+            case TYPE_ADAPTIVE_BITMAP:
+                return new BitmapDrawable(context.getResources(),
+                        createLegacyIconFromAdaptiveIcon((Bitmap) mObj1, false));
+            case TYPE_RESOURCE:
+                Resources res;
+                // figure out where to load resources from
+                String resPackage = (String) mObj1;
+                if (TextUtils.isEmpty(resPackage)) {
+                    // if none is specified, try the given context
+                    resPackage = context.getPackageName();
+                }
+                if ("android".equals(resPackage)) {
+                    res = Resources.getSystem();
+                } else {
+                    final PackageManager pm = context.getPackageManager();
+                    try {
+                        ApplicationInfo ai = pm.getApplicationInfo(
+                                resPackage, PackageManager.MATCH_UNINSTALLED_PACKAGES);
+                        if (ai != null) {
+                            res = pm.getResourcesForApplication(ai);
+                        } else {
+                            break;
+                        }
+                    } catch (PackageManager.NameNotFoundException e) {
+                        Log.e(TAG, String.format("Unable to find pkg=%s for icon %s",
+                                resPackage, this), e);
+                        break;
+                    }
+                }
+                try {
+                    return ResourcesCompat.getDrawable(res, mInt1, context.getTheme());
+                } catch (RuntimeException e) {
+                    Log.e(TAG, String.format("Unable to load resource 0x%08x from pkg=%s",
+                            mInt1,
+                            mObj1),
+                            e);
+                }
+                break;
+            case TYPE_DATA:
+                return new BitmapDrawable(context.getResources(),
+                        BitmapFactory.decodeByteArray((byte[]) mObj1, mInt1, mInt2)
+                );
+            case TYPE_URI:
+                final Uri uri = Uri.parse((String) mObj1);
+                final String scheme = uri.getScheme();
+                InputStream is = null;
+                if (ContentResolver.SCHEME_CONTENT.equals(scheme)
+                        || ContentResolver.SCHEME_FILE.equals(scheme)) {
+                    try {
+                        is = context.getContentResolver().openInputStream(uri);
+                    } catch (Exception e) {
+                        Log.w(TAG, "Unable to load image from URI: " + uri, e);
+                    }
+                } else {
+                    try {
+                        is = new FileInputStream(new File((String) mObj1));
+                    } catch (FileNotFoundException e) {
+                        Log.w(TAG, "Unable to load image from path: " + uri, e);
+                    }
+                }
+                if (is != null) {
+                    return new BitmapDrawable(context.getResources(),
+                            BitmapFactory.decodeStream(is));
+                }
+                break;
+        }
+        return null;
     }
 
     private static Resources getResources(Context context, String str) throws PackageManager.NameNotFoundException {
@@ -664,79 +609,39 @@ public class IconCompat extends CustomVersionedParcelable {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:15:0x0071  */
-    @android.support.annotation.Nullable
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static android.support.v4.graphics.drawable.IconCompat createFromBundle(@android.support.annotation.NonNull android.os.Bundle r3) {
-        /*
-            java.lang.String r0 = "type"
-            int r0 = r3.getInt(r0)
-            android.support.v4.graphics.drawable.IconCompat r1 = new android.support.v4.graphics.drawable.IconCompat
-            r1.<init>(r0)
-            java.lang.String r2 = "int1"
-            int r2 = r3.getInt(r2)
-            r1.mInt1 = r2
-            java.lang.String r2 = "int2"
-            int r2 = r3.getInt(r2)
-            r1.mInt2 = r2
-            java.lang.String r2 = "tint_list"
-            boolean r2 = r3.containsKey(r2)
-            if (r2 == 0) goto L2d
-            java.lang.String r2 = "tint_list"
-            android.os.Parcelable r2 = r3.getParcelable(r2)
-            android.content.res.ColorStateList r2 = (android.content.res.ColorStateList) r2
-            r1.mTintList = r2
-        L2d:
-            java.lang.String r2 = "tint_mode"
-            boolean r2 = r3.containsKey(r2)
-            if (r2 == 0) goto L41
-            java.lang.String r2 = "tint_mode"
-            java.lang.String r2 = r3.getString(r2)
-            android.graphics.PorterDuff$Mode r2 = android.graphics.PorterDuff.Mode.valueOf(r2)
-            r1.mTintMode = r2
-        L41:
-            r2 = -1
-            if (r0 == r2) goto L71
-            switch(r0) {
-                case 1: goto L71;
-                case 2: goto L68;
-                case 3: goto L5f;
-                case 4: goto L68;
-                case 5: goto L71;
-                default: goto L47;
-            }
-        L47:
-            java.lang.String r3 = "IconCompat"
-            java.lang.StringBuilder r1 = new java.lang.StringBuilder
-            r1.<init>()
-            java.lang.String r2 = "Unknown type "
-            r1.append(r2)
-            r1.append(r0)
-            java.lang.String r0 = r1.toString()
-            android.util.Log.w(r3, r0)
-            r3 = 0
-            return r3
-        L5f:
-            java.lang.String r0 = "obj"
-            byte[] r3 = r3.getByteArray(r0)
-            r1.mObj1 = r3
-            goto L79
-        L68:
-            java.lang.String r0 = "obj"
-            java.lang.String r3 = r3.getString(r0)
-            r1.mObj1 = r3
-            goto L79
-        L71:
-            java.lang.String r0 = "obj"
-            android.os.Parcelable r3 = r3.getParcelable(r0)
-            r1.mObj1 = r3
-        L79:
-            return r1
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.graphics.drawable.IconCompat.createFromBundle(android.os.Bundle):android.support.v4.graphics.drawable.IconCompat");
+    /**
+     * Extracts an icon from a bundle that was added using {@link #toBundle()}.
+     */
+    public static @Nullable IconCompat createFromBundle(@NonNull Bundle bundle) {
+        int type = bundle.getInt(EXTRA_TYPE);
+        IconCompat icon = new IconCompat(type);
+        icon.mInt1 = bundle.getInt(EXTRA_INT1);
+        icon.mInt2 = bundle.getInt(EXTRA_INT2);
+        if (bundle.containsKey(EXTRA_TINT_LIST)) {
+            icon.mTintList = bundle.getParcelable(EXTRA_TINT_LIST);
+        }
+        if (bundle.containsKey(EXTRA_TINT_MODE)) {
+            icon.mTintMode = PorterDuff.Mode.valueOf(
+                    bundle.getString(EXTRA_TINT_MODE));
+        }
+        switch (type) {
+            case TYPE_BITMAP:
+            case TYPE_ADAPTIVE_BITMAP:
+            case TYPE_UNKOWN:
+                icon.mObj1 = bundle.getParcelable(EXTRA_OBJ);
+                break;
+            case TYPE_RESOURCE:
+            case TYPE_URI:
+                icon.mObj1 = bundle.getString(EXTRA_OBJ);
+                break;
+            case TYPE_DATA:
+                icon.mObj1 = bundle.getByteArray(EXTRA_OBJ);
+                break;
+            default:
+                Log.w(TAG, "Unknown type " + type);
+                return null;
+        }
+        return icon;
     }
 
     @RequiresApi(23)

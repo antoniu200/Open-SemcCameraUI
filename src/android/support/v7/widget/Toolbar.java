@@ -966,39 +966,236 @@ public class Toolbar extends ViewGroup {
         }
         setMeasuredDimension(iResolveSizeAndState, iResolveSizeAndState2);
     }
-
-    /* JADX WARN: Removed duplicated region for block: B:105:0x02aa A[LOOP:0: B:104:0x02a8->B:105:0x02aa, LOOP_END] */
-    /* JADX WARN: Removed duplicated region for block: B:108:0x02cc A[LOOP:1: B:107:0x02ca->B:108:0x02cc, LOOP_END] */
-    /* JADX WARN: Removed duplicated region for block: B:112:0x02f7  */
-    /* JADX WARN: Removed duplicated region for block: B:117:0x0306 A[LOOP:2: B:116:0x0304->B:117:0x0306, LOOP_END] */
-    /* JADX WARN: Removed duplicated region for block: B:19:0x005f  */
-    /* JADX WARN: Removed duplicated region for block: B:24:0x0076  */
-    /* JADX WARN: Removed duplicated region for block: B:29:0x00b3  */
-    /* JADX WARN: Removed duplicated region for block: B:34:0x00ca  */
-    /* JADX WARN: Removed duplicated region for block: B:39:0x00e7  */
-    /* JADX WARN: Removed duplicated region for block: B:40:0x0100  */
-    /* JADX WARN: Removed duplicated region for block: B:42:0x0105  */
-    /* JADX WARN: Removed duplicated region for block: B:43:0x011d  */
-    /* JADX WARN: Removed duplicated region for block: B:49:0x012b  */
-    /* JADX WARN: Removed duplicated region for block: B:50:0x012d  */
-    /* JADX WARN: Removed duplicated region for block: B:51:0x0130  */
-    /* JADX WARN: Removed duplicated region for block: B:53:0x0134  */
-    /* JADX WARN: Removed duplicated region for block: B:54:0x0137  */
-    /* JADX WARN: Removed duplicated region for block: B:66:0x016a  */
-    /* JADX WARN: Removed duplicated region for block: B:76:0x01a9  */
-    /* JADX WARN: Removed duplicated region for block: B:78:0x01b8  */
-    /* JADX WARN: Removed duplicated region for block: B:91:0x022b  */
+    
     @Override // android.view.ViewGroup, android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected void onLayout(boolean r25, int r26, int r27, int r28, int r29) {
-        /*
-            Method dump skipped, instructions count: 795
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.Toolbar.onLayout(boolean, int, int, int, int):void");
+    protected void onLayout(boolean changed, int leftPos, int topPos, int rightPos, int bottomPos) {
+        final boolean isRtl = android.support.v4.view.ViewCompat.getLayoutDirection(this) == 1; // LAYOUT_DIRECTION_RTL
+        final int width = getWidth();
+        final int height = getHeight();
+        final int paddingLeft = getPaddingLeft();
+        final int paddingRight = getPaddingRight();
+        final int paddingTop = getPaddingTop();
+        final int paddingBottom = getPaddingBottom();
+
+        int left = paddingLeft;
+        int right = width - paddingRight;
+
+        final int[] collapsingMargins = mTempMargins;
+        collapsingMargins[0] = 0;
+        collapsingMargins[1] = 0;
+
+        final int minHeight = android.support.v4.view.ViewCompat.getMinimumHeight(this);
+        final int alignmentHeight = minHeight >= 0 ? Math.min(minHeight, bottomPos - topPos) : 0;
+
+        // Navigation button
+        if (shouldLayout(mNavButtonView)) {
+            if (isRtl) {
+                right = layoutChildRight(mNavButtonView, right, collapsingMargins, alignmentHeight);
+            } else {
+                left = layoutChildLeft(mNavButtonView, left, collapsingMargins, alignmentHeight);
+            }
+        }
+
+        // Collapse button
+        if (shouldLayout(mCollapseButtonView)) {
+            if (isRtl) {
+                right = layoutChildRight(mCollapseButtonView, right, collapsingMargins, alignmentHeight);
+            } else {
+                left = layoutChildLeft(mCollapseButtonView, left, collapsingMargins, alignmentHeight);
+            }
+        }
+
+        // Action menu
+        if (shouldLayout(mMenuView)) {
+            if (isRtl) {
+                left = layoutChildLeft(mMenuView, left, collapsingMargins, alignmentHeight);
+            } else {
+                right = layoutChildRight(mMenuView, right, collapsingMargins, alignmentHeight);
+            }
+        }
+
+        // Content insets
+        final int contentInsetLeft = getCurrentContentInsetLeft();
+        final int contentInsetRight = getCurrentContentInsetRight();
+
+        final int extraLeft = Math.max(0, contentInsetLeft - left);
+        collapsingMargins[0] = extraLeft;
+
+        final int usedRight = (width - paddingRight) - right;
+        final int extraRight = Math.max(0, contentInsetRight - usedRight);
+        collapsingMargins[1] = extraRight;
+
+        left = Math.max(left, contentInsetLeft);
+        right = Math.min(right, (width - paddingRight) - contentInsetRight);
+
+        // Expanded action view
+        if (shouldLayout(mExpandedActionView)) {
+            if (isRtl) {
+                right = layoutChildRight(mExpandedActionView, right, collapsingMargins, alignmentHeight);
+            } else {
+                left = layoutChildLeft(mExpandedActionView, left, collapsingMargins, alignmentHeight);
+            }
+        }
+
+        // Logo
+        if (shouldLayout(mLogoView)) {
+            if (isRtl) {
+                right = layoutChildRight(mLogoView, right, collapsingMargins, alignmentHeight);
+            } else {
+                left = layoutChildLeft(mLogoView, left, collapsingMargins, alignmentHeight);
+            }
+        }
+
+        // Title & subtitle
+        final boolean hasTitle = shouldLayout(mTitleTextView);
+        final boolean hasSubtitle = shouldLayout(mSubtitleTextView);
+
+        int titleTotalHeight = 0;
+        if (hasTitle) {
+            final LayoutParams tlp = (LayoutParams) mTitleTextView.getLayoutParams();
+            titleTotalHeight += tlp.topMargin + mTitleTextView.getMeasuredHeight() + tlp.bottomMargin;
+        }
+        if (hasSubtitle) {
+            final LayoutParams slp = (LayoutParams) mSubtitleTextView.getLayoutParams();
+            titleTotalHeight += slp.topMargin + mSubtitleTextView.getMeasuredHeight() + slp.bottomMargin;
+        }
+
+        if (hasTitle || hasSubtitle) {
+            final android.view.View topView = hasTitle ? mTitleTextView : mSubtitleTextView;
+            final android.view.View bottomView = hasSubtitle ? mSubtitleTextView : mTitleTextView;
+
+            final LayoutParams topLp = (LayoutParams) topView.getLayoutParams();
+            final LayoutParams bottomLp = (LayoutParams) bottomView.getLayoutParams();
+
+            final boolean titleHasWidth =
+                    (hasTitle && mTitleTextView.getMeasuredWidth() > 0) ||
+                    (hasSubtitle && mSubtitleTextView.getMeasuredWidth() > 0);
+
+            final int vgrav = mGravity & 0x70; // 112
+            int titleTop;
+
+            if (vgrav == android.view.Gravity.TOP) { // 48
+                titleTop = getPaddingTop() + topLp.topMargin + mTitleMarginTop;
+            } else if (vgrav == android.view.Gravity.BOTTOM) { // 80
+                final int bottomY = height - paddingBottom - bottomLp.bottomMargin - mTitleMarginBottom;
+                titleTop = bottomY - titleTotalHeight;
+            } else {
+                int space = height - paddingTop - paddingBottom - titleTotalHeight;
+                int y = space / 2;
+
+                final int topMin = topLp.topMargin + mTitleMarginTop;
+                if (y < topMin) {
+                    y = topMin;
+                } else {
+                    final int bottomSpace = height - paddingBottom - titleTotalHeight - y - paddingTop;
+                    final int bottomMin = bottomLp.bottomMargin + mTitleMarginBottom;
+                    if (bottomSpace < bottomMin) {
+                        final int adj = bottomMin - bottomSpace;
+                        y = Math.max(0, y - adj);
+                    }
+                }
+                titleTop = paddingTop + y;
+            }
+
+            if (isRtl) {
+                final int marginStart = titleHasWidth ? mTitleMarginStart : 0;
+                final int idx = 1;
+                final int delta = marginStart - collapsingMargins[idx];
+                final int adjust = Math.max(0, delta);
+                right -= adjust;
+                collapsingMargins[idx] = Math.max(0, -delta);
+
+                int titleLeftEdge = right;
+                if (hasTitle) {
+                    final LayoutParams lp = (LayoutParams) mTitleTextView.getLayoutParams();
+                    final int titleLeft = right - mTitleTextView.getMeasuredWidth();
+                    final int titleBottom = titleTop + mTitleTextView.getMeasuredHeight();
+                    mTitleTextView.layout(titleLeft, titleTop, right, titleBottom);
+                    titleLeftEdge = titleLeft - mTitleMarginEnd;
+                    titleTop = titleBottom + lp.bottomMargin;
+                }
+                int subtitleLeftEdge = right;
+                if (hasSubtitle) {
+                    final LayoutParams lp = (LayoutParams) mSubtitleTextView.getLayoutParams();
+                    titleTop += lp.topMargin;
+                    final int subLeft = right - mSubtitleTextView.getMeasuredWidth();
+                    final int subBottom = titleTop + mSubtitleTextView.getMeasuredHeight();
+                    mSubtitleTextView.layout(subLeft, titleTop, right, subBottom);
+                    subtitleLeftEdge = right - mTitleMarginEnd;
+                    titleTop = subBottom + lp.bottomMargin;
+                }
+                if (titleHasWidth) {
+                    right = Math.min(titleLeftEdge, subtitleLeftEdge);
+                }
+            } else {
+                final int marginStart = titleHasWidth ? mTitleMarginStart : 0;
+                final int idx = 0;
+                final int delta = marginStart - collapsingMargins[idx];
+                final int adjust = Math.max(0, delta);
+                left += adjust;
+                collapsingMargins[idx] = Math.max(0, -delta);
+
+                int titleRightEdge = left;
+                if (hasTitle) {
+                    final LayoutParams lp = (LayoutParams) mTitleTextView.getLayoutParams();
+                    final int titleRight = left + mTitleTextView.getMeasuredWidth();
+                    final int titleBottom = titleTop + mTitleTextView.getMeasuredHeight();
+                    mTitleTextView.layout(left, titleTop, titleRight, titleBottom);
+                    titleRightEdge = titleRight + mTitleMarginEnd;
+                    titleTop = titleBottom + lp.bottomMargin;
+                }
+                int subtitleRightEdge = left;
+                if (hasSubtitle) {
+                    final LayoutParams lp = (LayoutParams) mSubtitleTextView.getLayoutParams();
+                    titleTop += lp.topMargin;
+                    final int subRight = left + mSubtitleTextView.getMeasuredWidth();
+                    final int subBottom = titleTop + mSubtitleTextView.getMeasuredHeight();
+                    mSubtitleTextView.layout(left, titleTop, subRight, subBottom);
+                    subtitleRightEdge = subRight + mTitleMarginEnd;
+                    titleTop = subBottom + lp.bottomMargin;
+                }
+                if (titleHasWidth) {
+                    left = Math.max(titleRightEdge, subtitleRightEdge);
+                }
+            }
+        }
+
+        // Custom views: LEFT
+        mTempViews.clear();
+        addCustomViewsWithGravity(mTempViews, 3);
+        int leftStart = left;
+        for (int i = 0, count = mTempViews.size(); i < count; i++) {
+            final android.view.View v = mTempViews.get(i);
+            leftStart = layoutChildLeft(v, leftStart, collapsingMargins, alignmentHeight);
+        }
+
+        // Custom views: RIGHT
+        mTempViews.clear();
+        addCustomViewsWithGravity(mTempViews, 5);
+        for (int i = 0, count = mTempViews.size(); i < count; i++) {
+            final android.view.View v = mTempViews.get(i);
+            right = layoutChildRight(v, right, collapsingMargins, alignmentHeight);
+        }
+
+        // Custom views: CENTER (1)
+        mTempViews.clear();
+        addCustomViewsWithGravity(mTempViews, 1);
+        final int centerWidth = getViewListMeasuredWidth(mTempViews, collapsingMargins);
+        final int totalInnerWidth = (width - paddingLeft - paddingRight);
+        final int centerStart = paddingLeft + totalInnerWidth / 2 - centerWidth / 2;
+        int clampedStart = centerStart;
+        int centerEnd = clampedStart + centerWidth;
+        if (clampedStart < leftStart) {
+            clampedStart = leftStart;
+        } else if (centerEnd > right) {
+            clampedStart -= (centerEnd - right);
+        }
+        for (int i = 0, count = mTempViews.size(); i < count; i++) {
+            final android.view.View v = mTempViews.get(i);
+            clampedStart = layoutChildLeft(v, clampedStart, collapsingMargins, alignmentHeight);
+        }
+
+        mTempViews.clear();
     }
 
     private int getViewListMeasuredWidth(List<View> list, int[] iArr) {

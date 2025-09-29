@@ -2,6 +2,8 @@ package android.support.graphics.drawable;
 
 import android.animation.Animator;
 import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.animation.Keyframe;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
@@ -9,6 +11,7 @@ import android.animation.TypeEvaluator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
+import android.content.res.Resources.Theme;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.graphics.Path;
@@ -23,6 +26,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.InflateException;
+import android.view.animation.Interpolator;
 import java.io.IOException;
 import java.util.ArrayList;
 import org.xmlpull.v1.XmlPullParser;
@@ -316,55 +320,65 @@ public class AnimatorInflaterCompat {
         return createAnimatorFromXml(context, resources, theme, xmlPullParser, Xml.asAttributeSet(xmlPullParser), null, 0, f);
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:38:0x00d7, code lost:
-    
-        if (r23 == null) goto L47;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:39:0x00d9, code lost:
-    
-        if (r13 == null) goto L47;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:40:0x00db, code lost:
-    
-        r1 = new android.animation.Animator[r13.size()];
-        r2 = r13.iterator();
-        r17 = 0;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:42:0x00eb, code lost:
-    
-        if (r2.hasNext() == false) goto L59;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:43:0x00ed, code lost:
-    
-        r1[r17] = (android.animation.Animator) r2.next();
-        r17 = r17 + 1;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:44:0x00fa, code lost:
-    
-        if (r24 != 0) goto L46;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:45:0x00fc, code lost:
-    
-        r23.playTogether(r1);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:46:0x0100, code lost:
-    
-        r23.playSequentially(r1);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:47:0x0103, code lost:
-    
-        return r0;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static android.animation.Animator createAnimatorFromXml(android.content.Context r18, android.content.res.Resources r19, android.content.res.Resources.Theme r20, org.xmlpull.v1.XmlPullParser r21, android.util.AttributeSet r22, android.animation.AnimatorSet r23, int r24, float r25) throws org.xmlpull.v1.XmlPullParserException, android.content.res.Resources.NotFoundException, java.io.IOException {
-        /*
-            Method dump skipped, instructions count: 260
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.graphics.drawable.AnimatorInflaterCompat.createAnimatorFromXml(android.content.Context, android.content.res.Resources, android.content.res.Resources$Theme, org.xmlpull.v1.XmlPullParser, android.util.AttributeSet, android.animation.AnimatorSet, int, float):android.animation.Animator");
+    private static Animator createAnimatorFromXml(Context context, Resources res, Theme theme,
+            XmlPullParser parser,
+            AttributeSet attrs, AnimatorSet parent, int sequenceOrdering, float pixelSize)
+            throws XmlPullParserException, IOException {
+        Animator anim = null;
+        ArrayList<Animator> childAnims = null;
+        // Make sure we are on a start tag.
+        int type;
+        int depth = parser.getDepth();
+        while (((type = parser.next()) != XmlPullParser.END_TAG || parser.getDepth() > depth)
+                && type != XmlPullParser.END_DOCUMENT) {
+            if (type != XmlPullParser.START_TAG) {
+                continue;
+            }
+            String name = parser.getName();
+            boolean gotValues = false;
+            if (name.equals("objectAnimator")) {
+                anim = loadObjectAnimator(context, res, theme, attrs, pixelSize, parser);
+            } else if (name.equals("animator")) {
+                anim = loadAnimator(context, res, theme, attrs, null, pixelSize, parser);
+            } else if (name.equals("set")) {
+                anim = new AnimatorSet();
+                TypedArray a = TypedArrayUtils.obtainAttributes(res, theme, attrs,
+                        AndroidResources.STYLEABLE_ANIMATOR_SET);
+                int ordering = TypedArrayUtils.getNamedInt(a, parser, "ordering",
+                        AndroidResources.STYLEABLE_ANIMATOR_SET_ORDERING, TOGETHER);
+                createAnimatorFromXml(context, res, theme, parser, attrs, (AnimatorSet) anim,
+                        ordering, pixelSize);
+                a.recycle();
+            } else if (name.equals("propertyValuesHolder")) {
+                PropertyValuesHolder[] values = loadValues(context, res, theme, parser,
+                        Xml.asAttributeSet(parser));
+                if (values != null && anim != null && (anim instanceof ValueAnimator)) {
+                    ((ValueAnimator) anim).setValues(values);
+                }
+                gotValues = true;
+            } else {
+                throw new RuntimeException("Unknown animator name: " + parser.getName());
+            }
+            if (parent != null && !gotValues) {
+                if (childAnims == null) {
+                    childAnims = new ArrayList<Animator>();
+                }
+                childAnims.add(anim);
+            }
+        }
+        if (parent != null && childAnims != null) {
+            Animator[] animsArray = new Animator[childAnims.size()];
+            int index = 0;
+            for (Animator a : childAnims) {
+                animsArray[index++] = a;
+            }
+            if (sequenceOrdering == TOGETHER) {
+                parent.playTogether(animsArray);
+            } else {
+                parent.playSequentially(animsArray);
+            }
+        }
+        return anim;
     }
 
     private static PropertyValuesHolder[] loadValues(Context context, Resources resources, Resources.Theme theme, XmlPullParser xmlPullParser, AttributeSet attributeSet) throws XmlPullParserException, IOException {
@@ -540,78 +554,53 @@ public class AnimatorInflaterCompat {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:18:0x0041  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static android.animation.Keyframe loadKeyframe(android.content.Context r5, android.content.res.Resources r6, android.content.res.Resources.Theme r7, android.util.AttributeSet r8, int r9, org.xmlpull.v1.XmlPullParser r10) throws org.xmlpull.v1.XmlPullParserException, java.io.IOException {
-        /*
-            int[] r0 = android.support.graphics.drawable.AndroidResources.STYLEABLE_KEYFRAME
-            android.content.res.TypedArray r6 = android.support.v4.content.res.TypedArrayUtils.obtainAttributes(r6, r7, r8, r0)
-            java.lang.String r7 = "fraction"
-            r8 = 3
-            r0 = -1082130432(0xffffffffbf800000, float:-1.0)
-            float r7 = android.support.v4.content.res.TypedArrayUtils.getNamedFloat(r6, r10, r7, r8, r0)
-            java.lang.String r0 = "value"
-            r1 = 0
-            android.util.TypedValue r0 = android.support.v4.content.res.TypedArrayUtils.peekNamedValue(r6, r10, r0, r1)
-            r2 = 1
-            if (r0 == 0) goto L1b
-            r3 = r2
-            goto L1c
-        L1b:
-            r3 = r1
-        L1c:
-            r4 = 4
-            if (r9 != r4) goto L2c
-            if (r3 == 0) goto L2b
-            int r9 = r0.type
-            boolean r9 = isColorType(r9)
-            if (r9 == 0) goto L2b
-            r9 = r8
-            goto L2c
-        L2b:
-            r9 = r1
-        L2c:
-            if (r3 == 0) goto L4c
-            if (r9 == r8) goto L41
-            switch(r9) {
-                case 0: goto L35;
-                case 1: goto L41;
-                default: goto L33;
+    private static Keyframe loadKeyframe(Context context, Resources res, Theme theme,
+            AttributeSet attrs,
+            int valueType, XmlPullParser parser)
+            throws XmlPullParserException, IOException {
+        TypedArray a = TypedArrayUtils.obtainAttributes(res, theme, attrs,
+                AndroidResources.STYLEABLE_KEYFRAME);
+        Keyframe keyframe = null;
+        float fraction = TypedArrayUtils.getNamedFloat(a, parser, "fraction",
+                AndroidResources.STYLEABLE_KEYFRAME_FRACTION, -1);
+        TypedValue keyframeValue = TypedArrayUtils.peekNamedValue(a, parser, "value",
+                AndroidResources.STYLEABLE_KEYFRAME_VALUE);
+        boolean hasValue = (keyframeValue != null);
+        if (valueType == VALUE_TYPE_UNDEFINED) {
+            // When no value type is provided, check whether it's a color type first.
+            // If not, fall back to default value type (i.e. float type).
+            if (hasValue && isColorType(keyframeValue.type)) {
+                valueType = VALUE_TYPE_COLOR;
+            } else {
+                valueType = VALUE_TYPE_FLOAT;
             }
-        L33:
-            r7 = 0
-            goto L57
-        L35:
-            java.lang.String r8 = "value"
-            r9 = 0
-            float r8 = android.support.v4.content.res.TypedArrayUtils.getNamedFloat(r6, r10, r8, r1, r9)
-            android.animation.Keyframe r7 = android.animation.Keyframe.ofFloat(r7, r8)
-            goto L57
-        L41:
-            java.lang.String r8 = "value"
-            int r8 = android.support.v4.content.res.TypedArrayUtils.getNamedInt(r6, r10, r8, r1, r1)
-            android.animation.Keyframe r7 = android.animation.Keyframe.ofInt(r7, r8)
-            goto L57
-        L4c:
-            if (r9 != 0) goto L53
-            android.animation.Keyframe r7 = android.animation.Keyframe.ofFloat(r7)
-            goto L57
-        L53:
-            android.animation.Keyframe r7 = android.animation.Keyframe.ofInt(r7)
-        L57:
-            java.lang.String r8 = "interpolator"
-            int r8 = android.support.v4.content.res.TypedArrayUtils.getNamedResourceId(r6, r10, r8, r2, r1)
-            if (r8 <= 0) goto L66
-            android.view.animation.Interpolator r5 = android.support.graphics.drawable.AnimationUtilsCompat.loadInterpolator(r5, r8)
-            r7.setInterpolator(r5)
-        L66:
-            r6.recycle()
-            return r7
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.graphics.drawable.AnimatorInflaterCompat.loadKeyframe(android.content.Context, android.content.res.Resources, android.content.res.Resources$Theme, android.util.AttributeSet, int, org.xmlpull.v1.XmlPullParser):android.animation.Keyframe");
+        }
+        if (hasValue) {
+            switch (valueType) {
+                case VALUE_TYPE_FLOAT:
+                    float value = TypedArrayUtils.getNamedFloat(a, parser, "value",
+                            AndroidResources.STYLEABLE_KEYFRAME_VALUE, 0);
+                    keyframe = Keyframe.ofFloat(fraction, value);
+                    break;
+                case VALUE_TYPE_COLOR:
+                case VALUE_TYPE_INT:
+                    int intValue = TypedArrayUtils.getNamedInt(a, parser, "value",
+                            AndroidResources.STYLEABLE_KEYFRAME_VALUE, 0);
+                    keyframe = Keyframe.ofInt(fraction, intValue);
+                    break;
+            }
+        } else {
+            keyframe = (valueType == VALUE_TYPE_FLOAT) ? Keyframe.ofFloat(fraction) :
+                    Keyframe.ofInt(fraction);
+        }
+        final int resID = TypedArrayUtils.getNamedResourceId(a, parser, "interpolator",
+                AndroidResources.STYLEABLE_KEYFRAME_INTERPOLATOR, 0);
+        if (resID > 0) {
+            final Interpolator interpolator = AnimationUtilsCompat.loadInterpolator(context, resID);
+            keyframe.setInterpolator(interpolator);
+        }
+        a.recycle();
+        return keyframe;
     }
 
     private static ObjectAnimator loadObjectAnimator(Context context, Resources resources, Resources.Theme theme, AttributeSet attributeSet, float f, XmlPullParser xmlPullParser) throws Resources.NotFoundException {

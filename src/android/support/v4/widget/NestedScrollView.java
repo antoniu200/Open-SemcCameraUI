@@ -776,76 +776,77 @@ public class NestedScrollView extends FrameLayout implements NestedScrollingPare
         return Math.max(0, ((childAt.getHeight() + layoutParams.topMargin) + layoutParams.bottomMargin) - ((getHeight() - getPaddingTop()) - getPaddingBottom()));
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:28:0x0050  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private android.view.View findFocusableViewInBounds(boolean r12, int r13, int r14) {
+    /**
+     * <p>
+     * Finds the next focusable component that fits in the specified bounds.
+     * </p>
+     *
+     * @param topFocus look for a candidate is the one at the top of the bounds
+     *                 if topFocus is true, or at the bottom of the bounds if topFocus is
+     *                 false
+     * @param top      the top offset of the bounds in which a focusable must be
+     *                 found
+     * @param bottom   the bottom offset of the bounds in which a focusable must
+     *                 be found
+     * @return the next focusable component in the bounds or null if none can
+     *         be found
+     */
+    private View findFocusableViewInBounds(boolean topFocus, int top, int bottom) {
+        List<View> focusables = getFocusables(View.FOCUS_FORWARD);
+        View focusCandidate = null;
         /*
-            r11 = this;
-            r0 = 2
-            java.util.ArrayList r11 = r11.getFocusables(r0)
-            int r0 = r11.size()
-            r1 = 0
-            r2 = 0
-            r4 = r1
-            r3 = r2
-            r2 = r4
-        Le:
-            if (r2 >= r0) goto L54
-            java.lang.Object r5 = r11.get(r2)
-            android.view.View r5 = (android.view.View) r5
-            int r6 = r5.getTop()
-            int r7 = r5.getBottom()
-            r8 = 1
-            if (r13 >= r7) goto L51
-            if (r6 >= r14) goto L51
-            if (r13 >= r6) goto L29
-            if (r7 >= r14) goto L29
-            r9 = r8
-            goto L2a
-        L29:
-            r9 = r1
-        L2a:
-            if (r3 != 0) goto L2f
-            r3 = r5
-            r4 = r9
-            goto L51
-        L2f:
-            if (r12 == 0) goto L37
-            int r10 = r3.getTop()
-            if (r6 < r10) goto L3f
-        L37:
-            if (r12 != 0) goto L41
-            int r6 = r3.getBottom()
-            if (r7 <= r6) goto L41
-        L3f:
-            r6 = r8
-            goto L42
-        L41:
-            r6 = r1
-        L42:
-            if (r4 == 0) goto L49
-            if (r9 == 0) goto L51
-            if (r6 == 0) goto L51
-            goto L50
-        L49:
-            if (r9 == 0) goto L4e
-            r3 = r5
-            r4 = r8
-            goto L51
-        L4e:
-            if (r6 == 0) goto L51
-        L50:
-            r3 = r5
-        L51:
-            int r2 = r2 + 1
-            goto Le
-        L54:
-            return r3
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.widget.NestedScrollView.findFocusableViewInBounds(boolean, int, int):android.view.View");
+         * A fully contained focusable is one where its top is below the bound's
+         * top, and its bottom is above the bound's bottom. A partially
+         * contained focusable is one where some part of it is within the
+         * bounds, but it also has some part that is not within bounds.  A fully contained
+         * focusable is preferred to a partially contained focusable.
+         */
+        boolean foundFullyContainedFocusable = false;
+        int count = focusables.size();
+        for (int i = 0; i < count; i++) {
+            View view = focusables.get(i);
+            int viewTop = view.getTop();
+            int viewBottom = view.getBottom();
+            if (top < viewBottom && viewTop < bottom) {
+                /*
+                 * the focusable is in the target area, it is a candidate for
+                 * focusing
+                 */
+                final boolean viewIsFullyContained = (top < viewTop) && (viewBottom < bottom);
+                if (focusCandidate == null) {
+                    /* No candidate, take this one */
+                    focusCandidate = view;
+                    foundFullyContainedFocusable = viewIsFullyContained;
+                } else {
+                    final boolean viewIsCloserToBoundary =
+                            (topFocus && viewTop < focusCandidate.getTop())
+                                    || (!topFocus && viewBottom > focusCandidate.getBottom());
+                    if (foundFullyContainedFocusable) {
+                        if (viewIsFullyContained && viewIsCloserToBoundary) {
+                            /*
+                             * We're dealing with only fully contained views, so
+                             * it has to be closer to the boundary to beat our
+                             * candidate
+                             */
+                            focusCandidate = view;
+                        }
+                    } else {
+                        if (viewIsFullyContained) {
+                            /* Any fully contained view beats a partially contained view */
+                            focusCandidate = view;
+                            foundFullyContainedFocusable = true;
+                        } else if (viewIsCloserToBoundary) {
+                            /*
+                             * Partially contained view beats another partially
+                             * contained view if it's closer
+                             */
+                            focusCandidate = view;
+                        }
+                    }
+                }
+            }
+        }
+        return focusCandidate;
     }
 
     public boolean pageScroll(int i) {

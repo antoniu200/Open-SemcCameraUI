@@ -247,68 +247,34 @@ public class JsonWriter implements Closeable, Flushable {
         this.stackSize = 0;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:20:0x0034  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private void string(java.lang.String r8) throws java.io.IOException {
-        /*
-            r7 = this;
-            boolean r0 = r7.htmlSafe
-            if (r0 == 0) goto L7
-            java.lang.String[] r0 = com.google.gson.stream.JsonWriter.HTML_SAFE_REPLACEMENT_CHARS
-            goto L9
-        L7:
-            java.lang.String[] r0 = com.google.gson.stream.JsonWriter.REPLACEMENT_CHARS
-        L9:
-            java.io.Writer r1 = r7.out
-            java.lang.String r2 = "\""
-            r1.write(r2)
-            int r1 = r8.length()
-            r2 = 0
-            r3 = r2
-        L16:
-            if (r2 >= r1) goto L45
-            char r4 = r8.charAt(r2)
-            r5 = 128(0x80, float:1.8E-43)
-            if (r4 >= r5) goto L25
-            r4 = r0[r4]
-            if (r4 != 0) goto L32
-            goto L42
-        L25:
-            r5 = 8232(0x2028, float:1.1535E-41)
-            if (r4 != r5) goto L2c
-            java.lang.String r4 = "\\u2028"
-            goto L32
-        L2c:
-            r5 = 8233(0x2029, float:1.1537E-41)
-            if (r4 != r5) goto L42
-            java.lang.String r4 = "\\u2029"
-        L32:
-            if (r3 >= r2) goto L3b
-            java.io.Writer r5 = r7.out
-            int r6 = r2 - r3
-            r5.write(r8, r3, r6)
-        L3b:
-            java.io.Writer r3 = r7.out
-            r3.write(r4)
-            int r3 = r2 + 1
-        L42:
-            int r2 = r2 + 1
-            goto L16
-        L45:
-            if (r3 >= r1) goto L4d
-            java.io.Writer r0 = r7.out
-            int r1 = r1 - r3
-            r0.write(r8, r3, r1)
-        L4d:
-            java.io.Writer r7 = r7.out
-            java.lang.String r8 = "\""
-            r7.write(r8)
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.gson.stream.JsonWriter.string(java.lang.String):void");
+    private void string(String value) throws java.io.IOException {
+        final String[] replacements = htmlSafe ? HTML_SAFE_REPLACEMENT_CHARS : REPLACEMENT_CHARS;
+        out.write('"');
+        int last = 0;
+        final int length = value.length();
+        for (int i = 0; i < length; i++) {
+            char c = value.charAt(i);
+            String replacement;
+            if (c < 128) {
+                replacement = replacements[c];
+                if (replacement == null) continue;
+            } else if (c == 0x2028) {
+                replacement = "\\u2028";
+            } else if (c == 0x2029) {
+                replacement = "\\u2029";
+            } else {
+                continue;
+            }
+            if (last < i) {
+                out.write(value, last, i - last);
+            }
+            out.write(replacement);
+            last = i + 1;
+        }
+        if (last < length) {
+            out.write(value, last, length - last);
+        }
+        out.write('"');
     }
 
     private void newline() throws IOException {

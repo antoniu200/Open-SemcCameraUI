@@ -333,18 +333,125 @@ public final class T4AndT6Compression {
         return bitArrayOutputStream.toByteArray();
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:43:0x00a2 A[Catch: HuffmanTreeException -> 0x0118, IOException -> 0x0121, TryCatch #2 {IOException -> 0x0121, HuffmanTreeException -> 0x0118, blocks: (B:4:0x0015, B:6:0x0023, B:7:0x002a, B:8:0x002b, B:10:0x0032, B:12:0x0043, B:14:0x004f, B:41:0x009c, B:43:0x00a2, B:46:0x00b8, B:45:0x00aa, B:16:0x0054, B:18:0x0058, B:19:0x006b, B:40:0x0094, B:22:0x0071, B:25:0x0077, B:28:0x007d, B:31:0x0083, B:34:0x0089, B:37:0x008f, B:47:0x00c3, B:48:0x00db, B:51:0x00e0, B:53:0x00e7), top: B:70:0x0015 }] */
-    /* JADX WARN: Removed duplicated region for block: B:45:0x00aa A[Catch: HuffmanTreeException -> 0x0118, IOException -> 0x0121, TryCatch #2 {IOException -> 0x0121, HuffmanTreeException -> 0x0118, blocks: (B:4:0x0015, B:6:0x0023, B:7:0x002a, B:8:0x002b, B:10:0x0032, B:12:0x0043, B:14:0x004f, B:41:0x009c, B:43:0x00a2, B:46:0x00b8, B:45:0x00aa, B:16:0x0054, B:18:0x0058, B:19:0x006b, B:40:0x0094, B:22:0x0071, B:25:0x0077, B:28:0x007d, B:31:0x0083, B:34:0x0089, B:37:0x008f, B:47:0x00c3, B:48:0x00db, B:51:0x00e0, B:53:0x00e7), top: B:70:0x0015 }] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static byte[] decompressT4_2D(byte[] r11, int r12, int r13, boolean r14) throws org.apache.commons.imaging.ImageReadException {
-        /*
-            Method dump skipped, instructions count: 303
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.common.itu_t4.T4AndT6Compression.decompressT4_2D(byte[], int, int, boolean):byte[]");
+    public static byte[] decompressT4_2D(final byte[] buf, final int n, final int n2, final boolean b) throws ImageReadException {
+        final BitInputStreamFlexible bitInputStreamFlexible = new BitInputStreamFlexible(new ByteArrayInputStream(buf));
+        final BitArrayOutputStream bitArrayOutputStream = new BitArrayOutputStream();
+        final int[] array = new int[n];
+        int i = 0;
+        while (i < n2) {
+            try {
+                if (!isEOL(T4AndT6Compression.CONTROL_CODES.decode(bitInputStreamFlexible), b)) {
+                    throw new ImageReadException("Expected EOL not found");
+                }
+                int n6;
+                if (bitInputStreamFlexible.readBits(1) == 0) {
+                    int nextChangingElement = nextChangingElement(array, 0, 0);
+                    int nextChangingElement2 = nextChangingElement(array, 1, nextChangingElement + 1);
+                    int n3 = 0;
+                    int n5;
+                    int n4 = n5 = 0;
+                    while (true) {
+                        n6 = n5;
+                        if (n4 >= n) {
+                            break;
+                        }
+                        final T4_T6_Tables.Entry entry = T4AndT6Compression.CONTROL_CODES.decode(bitInputStreamFlexible);
+                        if (entry == T4_T6_Tables.P) {
+                            fillRange(bitArrayOutputStream, array, n4, nextChangingElement2, n3);
+                        }
+                        else if (entry == T4_T6_Tables.H) {
+                            final int n7 = readTotalRunLength(bitInputStreamFlexible, n3) + n4;
+                            fillRange(bitArrayOutputStream, array, n4, n7, n3);
+                            final int n8 = 1 - n3;
+                            nextChangingElement2 = readTotalRunLength(bitInputStreamFlexible, n8) + n7;
+                            fillRange(bitArrayOutputStream, array, n7, nextChangingElement2, n8);
+                        }
+                        else {
+                            int n9;
+                            if (entry == T4_T6_Tables.V0) {
+                                n9 = 0;
+                            }
+                            else if (entry == T4_T6_Tables.VL1) {
+                                n9 = -1;
+                            }
+                            else if (entry == T4_T6_Tables.VL2) {
+                                n9 = -2;
+                            }
+                            else if (entry == T4_T6_Tables.VL3) {
+                                n9 = -3;
+                            }
+                            else if (entry == T4_T6_Tables.VR1) {
+                                n9 = 1;
+                            }
+                            else if (entry == T4_T6_Tables.VR2) {
+                                n9 = 2;
+                            }
+                            else {
+                                if (entry != T4_T6_Tables.VR3) {
+                                    final StringBuilder sb = new StringBuilder();
+                                    sb.append("Invalid/unknown T.4 control code ");
+                                    sb.append(entry.bitString);
+                                    throw new ImageReadException(sb.toString());
+                                }
+                                n9 = 3;
+                            }
+                            nextChangingElement2 = nextChangingElement + n9;
+                            fillRange(bitArrayOutputStream, array, n4, nextChangingElement2, n3);
+                            n3 = 1 - n3;
+                        }
+                        final int changingElement = changingElementAt(array, nextChangingElement2);
+                        int n10;
+                        if (n3 == changingElement) {
+                            n10 = nextChangingElement(array, changingElement, nextChangingElement2 + 1);
+                        }
+                        else {
+                            n10 = nextChangingElement(array, 1 - changingElement, nextChangingElement(array, changingElement, nextChangingElement2 + 1) + 1);
+                        }
+                        nextChangingElement = n10;
+                        final int nextChangingElement3 = nextChangingElement(array, 1 - n3, nextChangingElement + 1);
+                        n4 = nextChangingElement2;
+                        n5 = nextChangingElement2;
+                        nextChangingElement2 = nextChangingElement3;
+                    }
+                }
+                else {
+                    int n11 = 0;
+                    int n12 = 0;
+                    while (true) {
+                        n6 = n12;
+                        if (n12 >= n) {
+                            break;
+                        }
+                        final int totalRunLength = readTotalRunLength(bitInputStreamFlexible, n11);
+                        for (int j = 0; j < totalRunLength; ++j) {
+                            bitArrayOutputStream.writeBit(n11);
+                            array[n12 + j] = n11;
+                        }
+                        n11 = 1 - n11;
+                        n12 += totalRunLength;
+                    }
+                }
+                if (n6 == n) {
+                    bitArrayOutputStream.flush();
+                }
+                else if (n6 > n) {
+                    final StringBuilder sb2 = new StringBuilder();
+                    sb2.append("Unrecoverable row length error in image row ");
+                    sb2.append(i);
+                    throw new ImageReadException(sb2.toString());
+                }
+                ++i;
+                continue;
+            }
+            catch (final HuffmanTreeException ex) {
+                throw new ImageReadException("Decompression error", ex);
+            }
+            catch (final IOException ex2) {
+                throw new ImageReadException("Decompression error", ex2);
+            }
+            break;
+        }
+        return bitArrayOutputStream.toByteArray();
     }
 
     public static byte[] compressT6(byte[] bArr, int i, int i2) throws Throwable {
@@ -449,18 +556,98 @@ public final class T4AndT6Compression {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:37:0x0086 A[Catch: HuffmanTreeException -> 0x00e3, TryCatch #0 {HuffmanTreeException -> 0x00e3, blocks: (B:4:0x0015, B:6:0x0027, B:8:0x0033, B:35:0x0080, B:37:0x0086, B:40:0x009c, B:39:0x008e, B:10:0x0038, B:12:0x003c, B:13:0x004f, B:34:0x0078, B:16:0x0055, B:19:0x005b, B:22:0x0061, B:25:0x0067, B:28:0x006d, B:31:0x0073, B:41:0x00a7, B:42:0x00bf), top: B:54:0x0015 }] */
-    /* JADX WARN: Removed duplicated region for block: B:39:0x008e A[Catch: HuffmanTreeException -> 0x00e3, TryCatch #0 {HuffmanTreeException -> 0x00e3, blocks: (B:4:0x0015, B:6:0x0027, B:8:0x0033, B:35:0x0080, B:37:0x0086, B:40:0x009c, B:39:0x008e, B:10:0x0038, B:12:0x003c, B:13:0x004f, B:34:0x0078, B:16:0x0055, B:19:0x005b, B:22:0x0061, B:25:0x0067, B:28:0x006d, B:31:0x0073, B:41:0x00a7, B:42:0x00bf), top: B:54:0x0015 }] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static byte[] decompressT6(byte[] r11, int r12, int r13) throws org.apache.commons.imaging.ImageReadException {
-        /*
-            Method dump skipped, instructions count: 241
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.common.itu_t4.T4AndT6Compression.decompressT6(byte[], int, int):byte[]");
+    public static byte[] decompressT6(final byte[] buf, final int n, final int n2) throws ImageReadException {
+        final BitInputStreamFlexible bitInputStreamFlexible = new BitInputStreamFlexible(new ByteArrayInputStream(buf));
+        final BitArrayOutputStream bitArrayOutputStream = new BitArrayOutputStream();
+        final int[] array = new int[n];
+        int i = 0;
+        while (i < n2) {
+            try {
+                int nextChangingElement = nextChangingElement(array, 0, 0);
+                int nextChangingElement2 = nextChangingElement(array, 1, nextChangingElement + 1);
+                int n3 = 0;
+                int n4;
+                int n6 = 0;
+                int n10;
+                int nextChangingElement3;
+                for (int j = n4 = 0; j < n; j = nextChangingElement2, n4 = nextChangingElement2, nextChangingElement2 = nextChangingElement3, n3 = n6, nextChangingElement = n10) {
+                    final T4_T6_Tables.Entry entry = T4AndT6Compression.CONTROL_CODES.decode(bitInputStreamFlexible);
+                    Label_0284: {
+                        if (entry == T4_T6_Tables.P) {
+                            fillRange(bitArrayOutputStream, array, j, nextChangingElement2, n3);
+                        }
+                        else {
+                            if (entry != T4_T6_Tables.H) {
+                                int n5;
+                                if (entry == T4_T6_Tables.V0) {
+                                    n5 = 0;
+                                }
+                                else if (entry == T4_T6_Tables.VL1) {
+                                    n5 = -1;
+                                }
+                                else if (entry == T4_T6_Tables.VL2) {
+                                    n5 = -2;
+                                }
+                                else if (entry == T4_T6_Tables.VL3) {
+                                    n5 = -3;
+                                }
+                                else if (entry == T4_T6_Tables.VR1) {
+                                    n5 = 1;
+                                }
+                                else if (entry == T4_T6_Tables.VR2) {
+                                    n5 = 2;
+                                }
+                                else {
+                                    if (entry != T4_T6_Tables.VR3) {
+                                        final StringBuilder sb = new StringBuilder();
+                                        sb.append("Invalid/unknown T.6 control code ");
+                                        sb.append(entry.bitString);
+                                        throw new ImageReadException(sb.toString());
+                                    }
+                                    n5 = 3;
+                                }
+                                nextChangingElement2 = nextChangingElement + n5;
+                                fillRange(bitArrayOutputStream, array, j, nextChangingElement2, n3);
+                                n6 = 1 - n3;
+                                break Label_0284;
+                            }
+                            final int n7 = readTotalRunLength(bitInputStreamFlexible, n3) + j;
+                            fillRange(bitArrayOutputStream, array, j, n7, n3);
+                            final int n8 = 1 - n3;
+                            nextChangingElement2 = readTotalRunLength(bitInputStreamFlexible, n8) + n7;
+                            fillRange(bitArrayOutputStream, array, n7, nextChangingElement2, n8);
+                        }
+                        n6 = n3;
+                    }
+                    final int changingElement = changingElementAt(array, nextChangingElement2);
+                    int n9;
+                    if (n6 == changingElement) {
+                        n9 = nextChangingElement(array, changingElement, nextChangingElement2 + 1);
+                    }
+                    else {
+                        n9 = nextChangingElement(array, 1 - changingElement, nextChangingElement(array, changingElement, nextChangingElement2 + 1) + 1);
+                    }
+                    n10 = n9;
+                    nextChangingElement3 = nextChangingElement(array, 1 - n6, n10 + 1);
+                }
+                if (n4 == n) {
+                    bitArrayOutputStream.flush();
+                }
+                else if (n4 > n) {
+                    final StringBuilder sb2 = new StringBuilder();
+                    sb2.append("Unrecoverable row length error in image row ");
+                    sb2.append(i);
+                    throw new ImageReadException(sb2.toString());
+                }
+                ++i;
+                continue;
+            }
+            catch (final HuffmanTreeException ex) {
+                throw new ImageReadException("Decompression error", ex);
+            }
+            break;
+        }
+        return bitArrayOutputStream.toByteArray();
     }
 
     private static boolean isEOL(T4_T6_Tables.Entry entry, boolean z) {

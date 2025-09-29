@@ -145,93 +145,58 @@ class OpReorderer {
         list.set(i2, updateOp);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:11:0x002f  */
-    /* JADX WARN: Removed duplicated region for block: B:12:0x0035  */
-    /* JADX WARN: Removed duplicated region for block: B:17:0x005d  */
-    /* JADX WARN: Removed duplicated region for block: B:18:0x0061  */
-    /* JADX WARN: Removed duplicated region for block: B:20:0x006b  */
-    /* JADX WARN: Removed duplicated region for block: B:22:0x0070  */
-    /* JADX WARN: Removed duplicated region for block: B:24:? A[RETURN, SYNTHETIC] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    void swapMoveUpdate(java.util.List<android.support.v7.widget.AdapterHelper.UpdateOp> r8, int r9, android.support.v7.widget.AdapterHelper.UpdateOp r10, int r11, android.support.v7.widget.AdapterHelper.UpdateOp r12) {
-        /*
-            r7 = this;
-            int r0 = r10.itemCount
-            int r1 = r12.positionStart
-            r2 = 4
-            r3 = 0
-            r4 = 1
-            if (r0 >= r1) goto Lf
-            int r0 = r12.positionStart
-            int r0 = r0 - r4
-            r12.positionStart = r0
-            goto L28
-        Lf:
-            int r0 = r10.itemCount
-            int r1 = r12.positionStart
-            int r5 = r12.itemCount
-            int r1 = r1 + r5
-            if (r0 >= r1) goto L28
-            int r0 = r12.itemCount
-            int r0 = r0 - r4
-            r12.itemCount = r0
-            android.support.v7.widget.OpReorderer$Callback r0 = r7.mCallback
-            int r1 = r10.positionStart
-            java.lang.Object r5 = r12.payload
-            android.support.v7.widget.AdapterHelper$UpdateOp r0 = r0.obtainUpdateOp(r2, r1, r4, r5)
-            goto L29
-        L28:
-            r0 = r3
-        L29:
-            int r1 = r10.positionStart
-            int r5 = r12.positionStart
-            if (r1 > r5) goto L35
-            int r1 = r12.positionStart
-            int r1 = r1 + r4
-            r12.positionStart = r1
-            goto L56
-        L35:
-            int r1 = r10.positionStart
-            int r5 = r12.positionStart
-            int r6 = r12.itemCount
-            int r5 = r5 + r6
-            if (r1 >= r5) goto L56
-            int r1 = r12.positionStart
-            int r3 = r12.itemCount
-            int r1 = r1 + r3
-            int r3 = r10.positionStart
-            int r1 = r1 - r3
-            android.support.v7.widget.OpReorderer$Callback r3 = r7.mCallback
-            int r5 = r10.positionStart
-            int r5 = r5 + r4
-            java.lang.Object r4 = r12.payload
-            android.support.v7.widget.AdapterHelper$UpdateOp r3 = r3.obtainUpdateOp(r2, r5, r1, r4)
-            int r2 = r12.itemCount
-            int r2 = r2 - r1
-            r12.itemCount = r2
-        L56:
-            r8.set(r11, r10)
-            int r10 = r12.itemCount
-            if (r10 <= 0) goto L61
-            r8.set(r9, r12)
-            goto L69
-        L61:
-            r8.remove(r9)
-            android.support.v7.widget.OpReorderer$Callback r7 = r7.mCallback
-            r7.recycleUpdateOp(r12)
-        L69:
-            if (r0 == 0) goto L6e
-            r8.add(r9, r0)
-        L6e:
-            if (r3 == 0) goto L73
-            r8.add(r9, r3)
-        L73:
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.OpReorderer.swapMoveUpdate(java.util.List, int, android.support.v7.widget.AdapterHelper$UpdateOp, int, android.support.v7.widget.AdapterHelper$UpdateOp):void");
+    void swapMoveUpdate(List<UpdateOp> ops, int movePos,
+                        UpdateOp moveOp, int updatePos,
+                        UpdateOp updateOp) {
+        // Based on fallback logic: adjust the UPDATE range around the MOVE, possibly split into up to two UPDATE ops.
+        UpdateOp extraFirst = null;
+        UpdateOp extraSecond = null;
+
+        // If the MOVE's destination index falls before the UPDATE start, shift UPDATE start left.
+        if (moveOp.itemCount < updateOp.positionStart) {
+            updateOp.positionStart -= 1;
+        } else {
+            // If MOVE destination is inside UPDATE range, shrink UPDATE by one and create a single-item UPDATE at moveOp.positionStart
+            final int updateEnd = updateOp.positionStart + updateOp.itemCount;
+            if (moveOp.itemCount < updateEnd) {
+                updateOp.itemCount -= 1;
+                extraFirst = mCallback.obtainUpdateOp(UpdateOp.UPDATE,
+                                                      moveOp.positionStart, 1, updateOp.payload);
+            }
+        }
+
+        // If the MOVE's source index is <= UPDATE start, the UPDATE start shifts right by one.
+        if (moveOp.positionStart <= updateOp.positionStart) {
+            updateOp.positionStart += 1;
+        } else {
+            // If MOVE source falls inside UPDATE, split tail part out as another UPDATE starting after the MOVE source.
+            final int updateEnd = updateOp.positionStart + updateOp.itemCount;
+            if (moveOp.positionStart < updateEnd) {
+                final int tailCount = updateOp.positionStart + updateOp.itemCount - moveOp.positionStart;
+                extraSecond = mCallback.obtainUpdateOp(UpdateOp.UPDATE,
+                                                       moveOp.positionStart + 1, tailCount, updateOp.payload);
+                updateOp.itemCount -= tailCount;
+            }
+        }
+
+        // Replace the UPDATE position with the MOVE op
+        ops.set(updatePos, moveOp);
+
+        // Keep or drop the original UPDATE depending on its remaining size
+        if (updateOp.itemCount > 0) {
+            ops.set(movePos, updateOp);
+        } else {
+            ops.remove(movePos);
+            mCallback.recycleUpdateOp(updateOp);
+        }
+
+        // Insert any split UPDATEs back in order
+        if (extraFirst != null) {
+            ops.add(movePos, extraFirst);
+        }
+        if (extraSecond != null) {
+            ops.add(movePos, extraSecond);
+        }
     }
 
     private int getLastMoveOutOfOrder(List<AdapterHelper.UpdateOp> list) {

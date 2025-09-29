@@ -113,31 +113,91 @@ public class DiffUtil {
         return new DiffResult(callback, arrayList, iArr, iArr2, z);
     }
 
-    /*  JADX ERROR: JadxRuntimeException in pass: RegionMakerVisitor
-        jadx.core.utils.exceptions.JadxRuntimeException: Not found exit edge by exit block: B:23:0x0062
-        	at jadx.core.dex.visitors.regions.maker.LoopRegionMaker.checkLoopExits(LoopRegionMaker.java:225)
-        	at jadx.core.dex.visitors.regions.maker.LoopRegionMaker.makeLoopRegion(LoopRegionMaker.java:195)
-        	at jadx.core.dex.visitors.regions.maker.LoopRegionMaker.process(LoopRegionMaker.java:62)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.traverse(RegionMaker.java:89)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.makeRegion(RegionMaker.java:66)
-        	at jadx.core.dex.visitors.regions.maker.LoopRegionMaker.process(LoopRegionMaker.java:124)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.traverse(RegionMaker.java:89)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.makeRegion(RegionMaker.java:66)
-        	at jadx.core.dex.visitors.regions.maker.LoopRegionMaker.process(LoopRegionMaker.java:124)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.traverse(RegionMaker.java:89)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.makeRegion(RegionMaker.java:66)
-        	at jadx.core.dex.visitors.regions.maker.IfRegionMaker.process(IfRegionMaker.java:101)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.traverse(RegionMaker.java:106)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.makeRegion(RegionMaker.java:66)
-        	at jadx.core.dex.visitors.regions.maker.RegionMaker.makeMthRegion(RegionMaker.java:48)
-        	at jadx.core.dex.visitors.regions.RegionMakerVisitor.visit(RegionMakerVisitor.java:25)
-        */
-    private static android.support.v7.util.DiffUtil.Snake diffPartial(android.support.v7.util.DiffUtil.Callback r22, int r23, int r24, int r25, int r26, int[] r27, int[] r28, int r29) {
-        /*
-            Method dump skipped, instructions count: 348
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.util.DiffUtil.diffPartial(android.support.v7.util.DiffUtil$Callback, int, int, int, int, int[], int[], int):android.support.v7.util.DiffUtil$Snake");
+    private static Snake diffPartial(Callback cb, int startOld, int endOld,
+            int startNew, int endNew, int[] forward, int[] backward, int kOffset) {
+        final int oldSize = endOld - startOld;
+        final int newSize = endNew - startNew;
+        if (endOld - startOld < 1 || endNew - startNew < 1) {
+            return null;
+        }
+        final int delta = oldSize - newSize;
+        final int dLimit = (oldSize + newSize + 1) / 2;
+        Arrays.fill(forward, kOffset - dLimit - 1, kOffset + dLimit + 1, 0);
+        Arrays.fill(backward, kOffset - dLimit - 1 + delta, kOffset + dLimit + 1 + delta, oldSize);
+        final boolean checkInFwd = delta % 2 != 0;
+        for (int d = 0; d <= dLimit; d++) {
+            for (int k = -d; k <= d; k += 2) {
+                // find forward path
+                // we can reach k from k - 1 or k + 1. Check which one is further in the graph
+                int x;
+                final boolean removal;
+                if (k == -d || k != d && forward[kOffset + k - 1] < forward[kOffset + k + 1]) {
+                    x = forward[kOffset + k + 1];
+                    removal = false;
+                } else {
+                    x = forward[kOffset + k - 1] + 1;
+                    removal = true;
+                }
+                // set y based on x
+                int y = x - k;
+                // move diagonal as long as items match
+                while (x < oldSize && y < newSize
+                        && cb.areItemsTheSame(startOld + x, startNew + y)) {
+                    x++;
+                    y++;
+                }
+                forward[kOffset + k] = x;
+                if (checkInFwd && k >= delta - d + 1 && k <= delta + d - 1) {
+                    if (forward[kOffset + k] >= backward[kOffset + k]) {
+                        Snake outSnake = new Snake();
+                        outSnake.x = backward[kOffset + k];
+                        outSnake.y = outSnake.x - k;
+                        outSnake.size = forward[kOffset + k] - backward[kOffset + k];
+                        outSnake.removal = removal;
+                        outSnake.reverse = false;
+                        return outSnake;
+                    }
+                }
+            }
+            for (int k = -d; k <= d; k += 2) {
+                // find reverse path at k + delta, in reverse
+                final int backwardK = k + delta;
+                int x;
+                final boolean removal;
+                if (backwardK == d + delta || backwardK != -d + delta
+                        && backward[kOffset + backwardK - 1] < backward[kOffset + backwardK + 1]) {
+                    x = backward[kOffset + backwardK - 1];
+                    removal = false;
+                } else {
+                    x = backward[kOffset + backwardK + 1] - 1;
+                    removal = true;
+                }
+                // set y based on x
+                int y = x - backwardK;
+                // move diagonal as long as items match
+                while (x > 0 && y > 0
+                        && cb.areItemsTheSame(startOld + x - 1, startNew + y - 1)) {
+                    x--;
+                    y--;
+                }
+                backward[kOffset + backwardK] = x;
+                if (!checkInFwd && k + delta >= -d && k + delta <= d) {
+                    if (forward[kOffset + backwardK] >= backward[kOffset + backwardK]) {
+                        Snake outSnake = new Snake();
+                        outSnake.x = backward[kOffset + backwardK];
+                        outSnake.y = outSnake.x - backwardK;
+                        outSnake.size =
+                                forward[kOffset + backwardK] - backward[kOffset + backwardK];
+                        outSnake.removal = removal;
+                        outSnake.reverse = true;
+                        return outSnake;
+                    }
+                }
+            }
+        }
+        throw new IllegalStateException("DiffUtil hit an unexpected case while trying to calculate"
+                + " the optimal path. Please make sure your data is not changing during the"
+                + " diff calculation.");
     }
 
     static class Snake {

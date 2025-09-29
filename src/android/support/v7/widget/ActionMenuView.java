@@ -138,29 +138,178 @@ public class ActionMenuView extends LinearLayoutCompat implements MenuBuilder.It
         super.onMeasure(i, i2);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:135:0x0241  */
-    /* JADX WARN: Removed duplicated region for block: B:138:0x024a A[ADDED_TO_REGION, LOOP:5: B:138:0x024a->B:143:0x026c, LOOP_START, PHI: r5 r32
-  0x024a: PHI (r5v7 int) = (r5v6 int), (r5v8 int) binds: [B:137:0x0248, B:143:0x026c] A[DONT_GENERATE, DONT_INLINE]
-  0x024a: PHI (r32v1 int) = (r32v0 int), (r32v2 int) binds: [B:137:0x0248, B:143:0x026c] A[DONT_GENERATE, DONT_INLINE]] */
-    /* JADX WARN: Removed duplicated region for block: B:145:0x0273  */
-    /* JADX WARN: Removed duplicated region for block: B:146:0x0278  */
-    /* JADX WARN: Type inference failed for: r2v19 */
-    /* JADX WARN: Type inference failed for: r2v20, types: [boolean, int] */
-    /* JADX WARN: Type inference failed for: r2v35 */
-    /* JADX WARN: Type inference failed for: r6v19 */
-    /* JADX WARN: Type inference failed for: r6v20, types: [boolean, int] */
-    /* JADX WARN: Type inference failed for: r6v22 */
-    /* JADX WARN: Type inference failed for: r6v24 */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private void onMeasureExactFormat(int r35, int r36) {
-        /*
-            Method dump skipped, instructions count: 640
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.ActionMenuView.onMeasureExactFormat(int, int):void");
+    private void onMeasureExactFormat(int widthMeasureSpec, int heightMeasureSpec) {
+        // We already know the width mode is EXACTLY if we're here.
+        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        final int widthPadding = getPaddingLeft() + getPaddingRight();
+        final int heightPadding = getPaddingTop() + getPaddingBottom();
+        final int itemHeightSpec = getChildMeasureSpec(heightMeasureSpec, heightPadding,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        widthSize -= widthPadding;
+        // Divide the view into cells.
+        final int cellCount = widthSize / mMinCellSize;
+        final int cellSizeRemaining = widthSize % mMinCellSize;
+        if (cellCount == 0) {
+            // Give up, nothing fits.
+            setMeasuredDimension(widthSize, 0);
+            return;
+        }
+        final int cellSize = mMinCellSize + cellSizeRemaining / cellCount;
+        int cellsRemaining = cellCount;
+        int maxChildHeight = 0;
+        int maxCellsUsed = 0;
+        int expandableItemCount = 0;
+        int visibleItemCount = 0;
+        boolean hasOverflow = false;
+        // This is used as a bitfield to locate the smallest items present. Assumes childCount < 64.
+        long smallestItemsAt = 0;
+        final int childCount = getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            final View child = getChildAt(i);
+            if (child.getVisibility() == GONE) continue;
+            final boolean isGeneratedItem = child instanceof ActionMenuItemView;
+            visibleItemCount++;
+            if (isGeneratedItem) {
+                // Reset padding for generated menu item views; it may change below
+                // and views are recycled.
+                child.setPadding(mGeneratedItemPadding, 0, mGeneratedItemPadding, 0);
+            }
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            lp.expanded = false;
+            lp.extraPixels = 0;
+            lp.cellsUsed = 0;
+            lp.expandable = false;
+            lp.leftMargin = 0;
+            lp.rightMargin = 0;
+            lp.preventEdgeOffset = isGeneratedItem && ((ActionMenuItemView) child).hasText();
+            // Overflow always gets 1 cell. No more, no less.
+            final int cellsAvailable = lp.isOverflowButton ? 1 : cellsRemaining;
+            final int cellsUsed = measureChildForCells(child, cellSize, cellsAvailable,
+                    itemHeightSpec, heightPadding);
+            maxCellsUsed = Math.max(maxCellsUsed, cellsUsed);
+            if (lp.expandable) expandableItemCount++;
+            if (lp.isOverflowButton) hasOverflow = true;
+            cellsRemaining -= cellsUsed;
+            maxChildHeight = Math.max(maxChildHeight, child.getMeasuredHeight());
+            if (cellsUsed == 1) smallestItemsAt |= (1 << i);
+        }
+        // When we have overflow and a single expanded (text) item, we want to try centering it
+        // visually in the available space even though overflow consumes some of it.
+        final boolean centerSingleExpandedItem = hasOverflow && visibleItemCount == 2;
+        // Divide space for remaining cells if we have items that can expand.
+        // Try distributing whole leftover cells to smaller items first.
+        boolean needsExpansion = false;
+        while (expandableItemCount > 0 && cellsRemaining > 0) {
+            int minCells = Integer.MAX_VALUE;
+            long minCellsAt = 0; // Bit locations are indices of relevant child views
+            int minCellsItemCount = 0;
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                // Don't try to expand items that shouldn't.
+                if (!lp.expandable) continue;
+                // Mark indices of children that can receive an extra cell.
+                if (lp.cellsUsed < minCells) {
+                    minCells = lp.cellsUsed;
+                    minCellsAt = 1 << i;
+                    minCellsItemCount = 1;
+                } else if (lp.cellsUsed == minCells) {
+                    minCellsAt |= 1 << i;
+                    minCellsItemCount++;
+                }
+            }
+            // Items that get expanded will always be in the set of smallest items when we're done.
+            smallestItemsAt |= minCellsAt;
+            if (minCellsItemCount > cellsRemaining) break; // Couldn't expand anything evenly. Stop.
+            // We have enough cells, all minimum size items will be incremented.
+            minCells++;
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if ((minCellsAt & (1 << i)) == 0) {
+                    // If this item is already at our small item count, mark it for later.
+                    if (lp.cellsUsed == minCells) smallestItemsAt |= 1 << i;
+                    continue;
+                }
+                if (centerSingleExpandedItem && lp.preventEdgeOffset && cellsRemaining == 1) {
+                    // Add padding to this item such that it centers.
+                    child.setPadding(mGeneratedItemPadding + cellSize, 0, mGeneratedItemPadding, 0);
+                }
+                lp.cellsUsed++;
+                lp.expanded = true;
+                cellsRemaining--;
+            }
+            needsExpansion = true;
+        }
+        // Divide any space left that wouldn't divide along cell boundaries
+        // evenly among the smallest items
+        final boolean singleItem = !hasOverflow && visibleItemCount == 1;
+        if (cellsRemaining > 0 && smallestItemsAt != 0 &&
+                (cellsRemaining < visibleItemCount - 1 || singleItem || maxCellsUsed > 1)) {
+            float expandCount = Long.bitCount(smallestItemsAt);
+            if (!singleItem) {
+                // The items at the far edges may only expand by half in order to pin to either side.
+                if ((smallestItemsAt & 1) != 0) {
+                    LayoutParams lp = (LayoutParams) getChildAt(0).getLayoutParams();
+                    if (!lp.preventEdgeOffset) expandCount -= 0.5f;
+                }
+                if ((smallestItemsAt & (1 << (childCount - 1))) != 0) {
+                    LayoutParams lp = ((LayoutParams) getChildAt(childCount - 1).getLayoutParams());
+                    if (!lp.preventEdgeOffset) expandCount -= 0.5f;
+                }
+            }
+            final int extraPixels = expandCount > 0 ?
+                    (int) (cellsRemaining * cellSize / expandCount) : 0;
+            for (int i = 0; i < childCount; i++) {
+                if ((smallestItemsAt & (1 << i)) == 0) continue;
+                final View child = getChildAt(i);
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (child instanceof ActionMenuItemView) {
+                    // If this is one of our views, expand and measure at the larger size.
+                    lp.extraPixels = extraPixels;
+                    lp.expanded = true;
+                    if (i == 0 && !lp.preventEdgeOffset) {
+                        // First item gets part of its new padding pushed out of sight.
+                        // The last item will get this implicitly from layout.
+                        lp.leftMargin = -extraPixels / 2;
+                    }
+                    needsExpansion = true;
+                } else if (lp.isOverflowButton) {
+                    lp.extraPixels = extraPixels;
+                    lp.expanded = true;
+                    lp.rightMargin = -extraPixels / 2;
+                    needsExpansion = true;
+                } else {
+                    // If we don't know what it is, give it some margins instead
+                    // and let it center within its space. We still want to pin
+                    // against the edges.
+                    if (i != 0) {
+                        lp.leftMargin = extraPixels / 2;
+                    }
+                    if (i != childCount - 1) {
+                        lp.rightMargin = extraPixels / 2;
+                    }
+                }
+            }
+            cellsRemaining = 0;
+        }
+        // Remeasure any items that have had extra space allocated to them.
+        if (needsExpansion) {
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (!lp.expanded) continue;
+                final int width = lp.cellsUsed * cellSize + lp.extraPixels;
+                child.measure(MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+                        itemHeightSpec);
+            }
+        }
+        if (heightMode != MeasureSpec.EXACTLY) {
+            heightSize = maxChildHeight;
+        }
+        setMeasuredDimension(widthSize, heightSize);
     }
 
     static int measureChildForCells(View view, int i, int i2, int i3, int i4) {

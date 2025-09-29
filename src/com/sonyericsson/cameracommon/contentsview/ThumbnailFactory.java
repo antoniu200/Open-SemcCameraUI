@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import com.sonyericsson.android.camera.util.CamLog;
+import com.sonyericsson.cameracommon.contentsview.contents.Content;
 import java.io.IOException;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
@@ -16,18 +17,77 @@ public class ThumbnailFactory {
     public static final int TARGET_SIZE_MICRO_THUMBNAIL = 96;
     private static final int UNCONSTRAINED = -1;
 
-    /* JADX WARN: Removed duplicated region for block: B:36:0x00d2  */
-    /* JADX WARN: Removed duplicated region for block: B:38:0x00dc  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static android.graphics.Bitmap createMicroThumbnail(com.sonyericsson.cameracommon.contentsview.contents.Content.ContentInfo r7) {
-        /*
-            Method dump skipped, instructions count: 238
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.contentsview.ThumbnailFactory.createMicroThumbnail(com.sonyericsson.cameracommon.contentsview.contents.Content$ContentInfo):android.graphics.Bitmap");
+    public static Bitmap createMicroThumbnail(Content.ContentInfo info) {
+        if (CamLog.VERBOSE) {
+            CamLog.d(new String[] {
+                "createMicroThumbnail(type:" + info.mType +
+                ",id;" + info.mId +
+                ",data:" + info.mOriginalPath + ")"
+            });
+        }
+
+        Bitmap src = null;
+        try {
+            switch (info.mType) {
+                case 2: // video
+                    src = createVideoThumbnail(info.mOriginalPath);
+                    break;
+
+                case 1: // photo
+                case 3: // (treated same as photo)
+                {
+                    BitmapFactory.Options opt = new BitmapFactory.Options();
+                    opt.inSampleSize = 1;
+                    opt.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(info.mOriginalPath, opt);
+
+                    if (opt.mCancel || opt.outWidth == -1 || opt.outHeight == -1) {
+                        return null;
+                    }
+
+                    // 96px target, 19200 max pixels
+                    opt.inSampleSize = computeSampleSize(
+                            opt, TARGET_SIZE_MICRO_THUMBNAIL, MAX_NUM_PIXELS_MICRO_THUMBNAIL);
+                    opt.inJustDecodeBounds = false;
+                    opt.inDither = false;
+                    opt.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+                    src = BitmapFactory.decodeFile(info.mOriginalPath, opt);
+                    break;
+                }
+
+                default:
+                    CamLog.e(new String[] { "createMicroThumbnail() wrong type:" + info.mType });
+                    break;
+            }
+
+            Bitmap out = null;
+            if (src != null) {
+                out = ThumbnailUtils.extractThumbnail(
+                        src, TARGET_SIZE_MICRO_THUMBNAIL, TARGET_SIZE_MICRO_THUMBNAIL);
+                try {
+                    src.recycle();
+                } catch (OutOfMemoryError oom) {
+                    CamLog.e(new String[] { String.valueOf(oom) });
+                } catch (Exception ex) {
+                    CamLog.e(new String[] { "createMicroThumbnail() got exception ex :" + ex });
+                }
+            }
+
+            if (out == null) {
+                CamLog.e(new String[] { "createMicroThumbnail() can't create a Micro thumbnail." });
+                return null;
+            }
+
+            return rotateThumbnail(out, info.mOrientation);
+
+        } catch (OutOfMemoryError oom) {
+            CamLog.e(new String[] { String.valueOf(oom) });
+            return null;
+        } catch (Exception ex) {
+            CamLog.e(new String[] { "createMicroThumbnail() got exception ex :" + ex });
+            return null;
+        }
     }
 
     public static boolean tryCreateThumbnail(String str) {

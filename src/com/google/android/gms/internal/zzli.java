@@ -371,79 +371,42 @@ public final class zzli extends GoogleApiClient {
         }
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:13:0x0036, code lost:
-    
-        r4 = new com.google.android.gms.common.ConnectionResult(14, null);
-     */
-    @Override // com.google.android.gms.common.api.GoogleApiClient
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public com.google.android.gms.common.ConnectionResult blockingConnect(long r4, java.util.concurrent.TimeUnit r6) {
-        /*
-            r3 = this;
-            android.os.Looper r0 = android.os.Looper.myLooper()
-            android.os.Looper r1 = android.os.Looper.getMainLooper()
-            if (r0 == r1) goto Lc
-            r0 = 1
-            goto Ld
-        Lc:
-            r0 = 0
-        Ld:
-            java.lang.String r1 = "blockingConnect must not be called on the UI thread"
-            com.google.android.gms.common.internal.zzx.zza(r0, r1)
-            java.lang.String r0 = "TimeUnit must not be null"
-            com.google.android.gms.common.internal.zzx.zzb(r6, r0)
-            java.util.concurrent.locks.Lock r0 = r3.zzabt
-            r0.lock()
-            r3.connect()     // Catch: java.lang.Throwable -> L6a
-            long r4 = r6.toNanos(r4)     // Catch: java.lang.Throwable -> L6a
-        L23:
-            boolean r6 = r3.isConnecting()     // Catch: java.lang.Throwable -> L6a
-            r0 = 0
-            if (r6 == 0) goto L52
-            java.util.concurrent.locks.Condition r6 = r3.zzabY     // Catch: java.lang.InterruptedException -> L43 java.lang.Throwable -> L6a
-            long r4 = r6.awaitNanos(r4)     // Catch: java.lang.InterruptedException -> L43 java.lang.Throwable -> L6a
-            r1 = 0
-            int r6 = (r4 > r1 ? 1 : (r4 == r1 ? 0 : -1))
-            if (r6 > 0) goto L23
-            com.google.android.gms.common.ConnectionResult r4 = new com.google.android.gms.common.ConnectionResult     // Catch: java.lang.InterruptedException -> L43 java.lang.Throwable -> L6a
-            r5 = 14
-            r4.<init>(r5, r0)     // Catch: java.lang.InterruptedException -> L43 java.lang.Throwable -> L6a
-        L3d:
-            java.util.concurrent.locks.Lock r3 = r3.zzabt
-            r3.unlock()
-            return r4
-        L43:
-            java.lang.Thread r4 = java.lang.Thread.currentThread()     // Catch: java.lang.Throwable -> L6a
-            r4.interrupt()     // Catch: java.lang.Throwable -> L6a
-            com.google.android.gms.common.ConnectionResult r4 = new com.google.android.gms.common.ConnectionResult     // Catch: java.lang.Throwable -> L6a
-            r5 = 15
-            r4.<init>(r5, r0)     // Catch: java.lang.Throwable -> L6a
-            goto L3d
-        L52:
-            boolean r4 = r3.isConnected()     // Catch: java.lang.Throwable -> L6a
-            if (r4 == 0) goto L5b
-            com.google.android.gms.common.ConnectionResult r4 = com.google.android.gms.common.ConnectionResult.zzZY     // Catch: java.lang.Throwable -> L6a
-            goto L3d
-        L5b:
-            com.google.android.gms.common.ConnectionResult r4 = r3.zzack     // Catch: java.lang.Throwable -> L6a
-            if (r4 == 0) goto L62
-            com.google.android.gms.common.ConnectionResult r4 = r3.zzack     // Catch: java.lang.Throwable -> L6a
-            goto L3d
-        L62:
-            com.google.android.gms.common.ConnectionResult r4 = new com.google.android.gms.common.ConnectionResult     // Catch: java.lang.Throwable -> L6a
-            r5 = 13
-            r4.<init>(r5, r0)     // Catch: java.lang.Throwable -> L6a
-            goto L3d
-        L6a:
-            r4 = move-exception
-            java.util.concurrent.locks.Lock r3 = r3.zzabt
-            r3.unlock()
-            throw r4
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.android.gms.internal.zzli.blockingConnect(long, java.util.concurrent.TimeUnit):com.google.android.gms.common.ConnectionResult");
+    @Override
+    public ConnectionResult blockingConnect(long timeout, java.util.concurrent.TimeUnit unit) {
+        boolean notUiThread = (android.os.Looper.myLooper() != android.os.Looper.getMainLooper());
+        com.google.android.gms.common.internal.zzx.zza(notUiThread,
+                "blockingConnect must not be called on the UI thread");
+        com.google.android.gms.common.internal.zzx.zzb(unit, "TimeUnit must not be null");
+
+        this.zzabt.lock();
+        try {
+            connect();
+
+            long nanos = unit.toNanos(timeout);
+            while (isConnecting()) {
+                try {
+                    nanos = this.zzabY.awaitNanos(nanos);
+                } catch (InterruptedException e) {
+                    java.lang.Thread.currentThread().interrupt();
+                    return new com.google.android.gms.common.ConnectionResult(15, null);
+                }
+                if (nanos <= 0L) {
+                    return new com.google.android.gms.common.ConnectionResult(14, null);
+                }
+            }
+
+            if (isConnected()) {
+                return com.google.android.gms.common.ConnectionResult.zzZY;
+            }
+
+            if (this.zzack != null) {
+                return this.zzack;
+            }
+
+            return new com.google.android.gms.common.ConnectionResult(13, null);
+        } finally {
+            this.zzabt.unlock();
+        }
     }
 
     @Override // com.google.android.gms.common.api.GoogleApiClient

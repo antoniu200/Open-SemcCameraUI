@@ -345,19 +345,158 @@ public class PngImageParser extends ImageParser {
         return new PngImageInfo("Png", samplesPerPixel, arrayList, imageFormats, "PNG Portable Network Graphics", i2, "image/png", 1, iRound, f, i, f2, i3, zIsProgressive, zHasAlpha, z, colorType, ImageInfo.CompressionAlgorithm.PNG_FILTER, arrayList2);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:74:0x0198  */
-    /* JADX WARN: Removed duplicated region for block: B:76:0x01b1  */
-    @Override // org.apache.commons.imaging.ImageParser
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public java.awt.image.BufferedImage getBufferedImage(org.apache.commons.imaging.common.bytesource.ByteSource r21, java.util.Map<java.lang.String, java.lang.Object> r22) throws java.lang.Throwable {
-        /*
-            Method dump skipped, instructions count: 604
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.formats.png.PngImageParser.getBufferedImage(org.apache.commons.imaging.common.bytesource.ByteSource, java.util.Map):java.awt.image.BufferedImage");
+    @Override
+    public BufferedImage getBufferedImage(final ByteSource byteSource, final Map<String, Object> m) throws ImageReadException, IOException {
+        HashMap hashMap;
+        if (m == null) {
+            hashMap = new HashMap();
+        }
+        else {
+            hashMap = new HashMap((Map<? extends K, ? extends V>)m);
+        }
+        if (hashMap.containsKey("VERBOSE")) {
+            hashMap.remove("VERBOSE");
+        }
+        final ChunkType ihdr = ChunkType.IHDR;
+        boolean b = false;
+        final List<PngChunk> chunks = this.readChunks(byteSource, new ChunkType[] { ihdr, ChunkType.PLTE, ChunkType.IDAT, ChunkType.tRNS, ChunkType.iCCP, ChunkType.gAMA, ChunkType.sRGB }, false);
+        if (chunks == null || chunks.isEmpty()) {
+            throw new ImageReadException("PNG: no chunks");
+        }
+        final List<PngChunk> filterChunks = this.filterChunks(chunks, ChunkType.IHDR);
+        if (filterChunks.size() != 1) {
+            throw new ImageReadException("PNG contains more than one Header");
+        }
+        final PngChunkIhdr pngChunkIhdr = filterChunks.get(0);
+        final List<PngChunk> filterChunks2 = this.filterChunks(chunks, ChunkType.PLTE);
+        if (filterChunks2.size() > 1) {
+            throw new ImageReadException("PNG contains more than one Palette");
+        }
+        final int size = filterChunks2.size();
+        ICC_Profile instance = null;
+        PngChunkPlte pngChunkPlte;
+        if (size == 1) {
+            pngChunkPlte = filterChunks2.get(0);
+        }
+        else {
+            pngChunkPlte = null;
+        }
+        final List<PngChunk> filterChunks3 = this.filterChunks(chunks, ChunkType.IDAT);
+        if (filterChunks3.isEmpty()) {
+            throw new ImageReadException("PNG missing image data");
+        }
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final Iterator<PngChunk> iterator = filterChunks3.iterator();
+        while (iterator.hasNext()) {
+            byteArrayOutputStream.write(iterator.next().getBytes());
+        }
+        final byte[] byteArray = byteArrayOutputStream.toByteArray();
+        final List<PngChunk> filterChunks4 = this.filterChunks(chunks, ChunkType.tRNS);
+        TransparencyFilter transparencyFilter;
+        if (!filterChunks4.isEmpty()) {
+            transparencyFilter = this.getTransparencyFilter(pngChunkIhdr.pngColorType, filterChunks4.get(0));
+        }
+        else {
+            transparencyFilter = null;
+        }
+        final List<PngChunk> filterChunks5 = this.filterChunks(chunks, ChunkType.sRGB);
+        final List<PngChunk> filterChunks6 = this.filterChunks(chunks, ChunkType.gAMA);
+        final List<PngChunk> filterChunks7 = this.filterChunks(chunks, ChunkType.iCCP);
+        if (filterChunks5.size() > 1) {
+            throw new ImageReadException("PNG: unexpected sRGB chunk");
+        }
+        if (filterChunks6.size() > 1) {
+            throw new ImageReadException("PNG: unexpected gAMA chunk");
+        }
+        if (filterChunks7.size() > 1) {
+            throw new ImageReadException("PNG: unexpected iCCP chunk");
+        }
+        GammaCorrection gammaCorrection = null;
+        Label_0612: {
+            if (filterChunks5.size() == 1) {
+                if (this.getDebug()) {
+                    System.out.println("sRGB, no color management neccesary.");
+                }
+            }
+            else {
+                if (filterChunks7.size() == 1) {
+                    if (this.getDebug()) {
+                        System.out.println("iCCP.");
+                    }
+                    instance = ICC_Profile.getInstance(((PngChunkIccp)filterChunks7.get(0)).getUncompressedProfile());
+                    gammaCorrection = null;
+                    break Label_0612;
+                }
+                if (filterChunks6.size() == 1) {
+                    final double gamma = filterChunks6.get(0).getGamma();
+                    GammaCorrection gammaCorrection2;
+                    if (Math.abs(1.0 - gamma) >= 0.5) {
+                        gammaCorrection2 = new GammaCorrection(gamma, 1.0);
+                    }
+                    else {
+                        gammaCorrection2 = null;
+                    }
+                    if (gammaCorrection2 != null && pngChunkPlte != null) {
+                        pngChunkPlte.correct(gammaCorrection2);
+                    }
+                    gammaCorrection = gammaCorrection2;
+                    break Label_0612;
+                }
+            }
+            gammaCorrection = null;
+        }
+        final int width = pngChunkIhdr.width;
+        final int height = pngChunkIhdr.height;
+        final PngColorType pngColorType = pngChunkIhdr.pngColorType;
+        final int bitDepth = pngChunkIhdr.bitDepth;
+        if (pngChunkIhdr.filterMethod != 0) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("PNG: unknown FilterMethod: ");
+            sb.append(pngChunkIhdr.filterMethod);
+            throw new ImageReadException(sb.toString());
+        }
+        final int n = bitDepth * pngColorType.getSamplesPerPixel();
+        if (pngColorType.hasAlpha() || transparencyFilter != null) {
+            b = true;
+        }
+        BufferedImage bufferedImage;
+        if (pngColorType.isGreyscale()) {
+            bufferedImage = this.getBufferedImageFactory(hashMap).getGrayscaleBufferedImage(width, height, b);
+        }
+        else {
+            bufferedImage = this.getBufferedImageFactory(hashMap).getColorBufferedImage(width, height, b);
+        }
+        final InflaterInputStream inflaterInputStream = new InflaterInputStream(new ByteArrayInputStream(byteArray));
+        ScanExpediter scanExpediter = null;
+        switch (PngImageParser$1.$SwitchMap$org$apache$commons$imaging$formats$png$InterlaceMethod[pngChunkIhdr.interlaceMethod.ordinal()]) {
+            default: {
+                final StringBuilder sb2 = new StringBuilder();
+                sb2.append("Unknown InterlaceMethod: ");
+                sb2.append(pngChunkIhdr.interlaceMethod);
+                throw new ImageReadException(sb2.toString());
+            }
+            case 2: {
+                scanExpediter = new ScanExpediterInterlaced(width, height, inflaterInputStream, bufferedImage, pngColorType, bitDepth, n, pngChunkPlte, gammaCorrection, transparencyFilter);
+                break;
+            }
+            case 1: {
+                scanExpediter = new ScanExpediterSimple(width, height, inflaterInputStream, bufferedImage, pngColorType, bitDepth, n, pngChunkPlte, gammaCorrection, transparencyFilter);
+                break;
+            }
+        }
+        scanExpediter.drive();
+        BufferedImage convertBetweenColorSpaces = bufferedImage;
+        if (instance != null) {
+            final Boolean value = new IccProfileParser().issRGB(instance);
+            if (value != null) {
+                convertBetweenColorSpaces = bufferedImage;
+                if (value) {
+                    return convertBetweenColorSpaces;
+                }
+            }
+            convertBetweenColorSpaces = new ColorTools().convertBetweenColorSpaces(bufferedImage, new ICC_ColorSpace(instance), ColorModel.getRGBdefault().getColorSpace());
+        }
+        return convertBetweenColorSpaces;
     }
 
     @Override // org.apache.commons.imaging.ImageParser

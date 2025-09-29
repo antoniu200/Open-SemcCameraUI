@@ -232,29 +232,230 @@ class PngWriter {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:104:0x0279  */
-    /* JADX WARN: Removed duplicated region for block: B:124:0x0302  */
-    /* JADX WARN: Removed duplicated region for block: B:130:0x032d  */
-    /* JADX WARN: Removed duplicated region for block: B:50:0x0127  */
-    /* JADX WARN: Removed duplicated region for block: B:53:0x0143  */
-    /* JADX WARN: Removed duplicated region for block: B:56:0x015b  */
-    /* JADX WARN: Removed duplicated region for block: B:57:0x015e  */
-    /* JADX WARN: Removed duplicated region for block: B:60:0x0163  */
-    /* JADX WARN: Removed duplicated region for block: B:63:0x0194  */
-    /* JADX WARN: Removed duplicated region for block: B:70:0x01bf A[PHI: r1
-  0x01bf: PHI (r1v16 org.apache.commons.imaging.palette.Palette) = (r1v15 org.apache.commons.imaging.palette.Palette), (r1v45 org.apache.commons.imaging.palette.Palette) binds: [B:62:0x0192, B:69:0x01bc] A[DONT_GENERATE, DONT_INLINE]] */
-    /* JADX WARN: Removed duplicated region for block: B:73:0x01ca  */
-    /* JADX WARN: Removed duplicated region for block: B:79:0x0205  */
-    /* JADX WARN: Removed duplicated region for block: B:82:0x0218  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public void writeImage(java.awt.image.BufferedImage r23, java.io.OutputStream r24, java.util.Map<java.lang.String, java.lang.Object> r25) throws org.apache.commons.imaging.ImageWriteException, java.io.IOException {
-        /*
-            Method dump skipped, instructions count: 823
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.formats.png.PngWriter.writeImage(java.awt.image.BufferedImage, java.io.OutputStream, java.util.Map):void");
+    public void writeImage(final BufferedImage bufferedImage, final OutputStream outputStream, final Map<String, Object> m) throws ImageWriteException, IOException {
+        final HashMap i = new HashMap((Map<? extends K, ? extends V>)m);
+        if (i.containsKey("FORMAT")) {
+            i.remove("FORMAT");
+        }
+        if (i.containsKey("VERBOSE")) {
+            i.remove("VERBOSE");
+        }
+        final HashMap hashMap = new HashMap(i);
+        if (i.containsKey("PNG_FORCE_TRUE_COLOR")) {
+            i.remove("PNG_FORCE_TRUE_COLOR");
+        }
+        if (i.containsKey("PNG_FORCE_INDEXED_COLOR")) {
+            i.remove("PNG_FORCE_INDEXED_COLOR");
+        }
+        if (i.containsKey("PNG_BIT_DEPTH")) {
+            i.remove("PNG_BIT_DEPTH");
+        }
+        if (i.containsKey("XMP_XML")) {
+            i.remove("XMP_XML");
+        }
+        if (i.containsKey("PNG_TEXT_CHUNKS")) {
+            i.remove("PNG_TEXT_CHUNKS");
+        }
+        i.remove("PIXEL_DENSITY");
+        if (!i.isEmpty()) {
+            final Object next = i.keySet().iterator().next();
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Unknown parameter: ");
+            sb.append(next);
+            throw new ImageWriteException(sb.toString());
+        }
+        final int width = bufferedImage.getWidth();
+        final int height = bufferedImage.getHeight();
+        final boolean hasTransparency = new PaletteFactory().hasTransparency(bufferedImage);
+        if (this.verbose) {
+            final StringBuilder sb2 = new StringBuilder();
+            sb2.append("hasAlpha: ");
+            sb2.append(hasTransparency);
+            Debug.debug(sb2.toString());
+        }
+        boolean grayscale = new PaletteFactory().isGrayscale(bufferedImage);
+        if (this.verbose) {
+            final StringBuilder sb3 = new StringBuilder();
+            sb3.append("isGrayscale: ");
+            sb3.append(grayscale);
+            Debug.debug(sb3.toString());
+        }
+        final boolean equals = Boolean.TRUE.equals(hashMap.get("PNG_FORCE_INDEXED_COLOR"));
+        final boolean equals2 = Boolean.TRUE.equals(hashMap.get("PNG_FORCE_TRUE_COLOR"));
+        if (equals && equals2) {
+            throw new ImageWriteException("Params: Cannot force both indexed and true color modes");
+        }
+        final int n = 0;
+        PngColorType obj = null;
+        Label_0467: {
+            PngColorType pngColorType;
+            if (equals) {
+                pngColorType = PngColorType.INDEXED_COLOR;
+            }
+            else {
+                if (equals2) {
+                    PngColorType pngColorType2;
+                    if (hasTransparency) {
+                        pngColorType2 = PngColorType.TRUE_COLOR_WITH_ALPHA;
+                    }
+                    else {
+                        pngColorType2 = PngColorType.TRUE_COLOR;
+                    }
+                    grayscale = false;
+                    obj = pngColorType2;
+                    break Label_0467;
+                }
+                pngColorType = PngColorType.getColorType(hasTransparency, grayscale);
+            }
+            obj = pngColorType;
+        }
+        if (this.verbose) {
+            final StringBuilder sb4 = new StringBuilder();
+            sb4.append("colorType: ");
+            sb4.append(obj);
+            Debug.debug(sb4.toString());
+        }
+        final byte bitDepth = this.getBitDepth(obj, (Map<String, Object>)hashMap);
+        if (this.verbose) {
+            final StringBuilder sb5 = new StringBuilder();
+            sb5.append("bitDepth: ");
+            sb5.append(bitDepth);
+            Debug.debug(sb5.toString());
+        }
+        int j;
+        if (obj == PngColorType.INDEXED_COLOR) {
+            j = 8;
+        }
+        else {
+            j = bitDepth;
+        }
+        if (this.verbose) {
+            final StringBuilder sb6 = new StringBuilder();
+            sb6.append("sampleDepth: ");
+            sb6.append(j);
+            Debug.debug(sb6.toString());
+        }
+        PngConstants.PNG_SIGNATURE.writeTo(outputStream);
+        this.writeChunkIHDR(outputStream, new ImageHeader(width, height, bitDepth, obj, (byte)0, (byte)0, InterlaceMethod.NONE));
+        Palette quantizedRgbPalette = null;
+        final PngColorType indexed_COLOR = PngColorType.INDEXED_COLOR;
+        final boolean b = true;
+        if (obj == indexed_COLOR) {
+            int n2;
+            if (hasTransparency) {
+                n2 = 255;
+            }
+            else {
+                n2 = 256;
+            }
+            quantizedRgbPalette = new PaletteFactory().makeQuantizedRgbPalette(bufferedImage, n2);
+            if (hasTransparency) {
+                quantizedRgbPalette = new TransparentPalette(quantizedRgbPalette);
+                this.writeChunkPLTE(outputStream, quantizedRgbPalette);
+                this.writeChunkTRNS(outputStream, new SimplePalette(new int[] { 0 }));
+            }
+            else {
+                this.writeChunkPLTE(outputStream, quantizedRgbPalette);
+            }
+        }
+        final Object value = hashMap.get("PIXEL_DENSITY");
+        if (value instanceof PixelDensity) {
+            final PixelDensity pixelDensity = (PixelDensity)value;
+            if (pixelDensity.isUnitless()) {
+                this.writeChunkPHYS(outputStream, (int)Math.round(pixelDensity.getRawHorizontalDensity()), (int)Math.round(pixelDensity.getRawVerticalDensity()), (byte)0);
+            }
+            else {
+                this.writeChunkPHYS(outputStream, (int)Math.round(pixelDensity.horizontalDensityMetres()), (int)Math.round(pixelDensity.verticalDensityMetres()), (byte)1);
+            }
+        }
+        if (hashMap.containsKey("XMP_XML")) {
+            this.writeChunkXmpiTXt(outputStream, (String)hashMap.get("XMP_XML"));
+        }
+        if (hashMap.containsKey("PNG_TEXT_CHUNKS")) {
+            for (final PngText obj2 : (List)hashMap.get("PNG_TEXT_CHUNKS")) {
+                if (obj2 instanceof PngText.Text) {
+                    this.writeChunktEXt(outputStream, (PngText.Text)obj2);
+                }
+                else if (obj2 instanceof PngText.Ztxt) {
+                    this.writeChunkzTXt(outputStream, (PngText.Ztxt)obj2);
+                }
+                else {
+                    if (!(obj2 instanceof PngText.Itxt)) {
+                        final StringBuilder sb7 = new StringBuilder();
+                        sb7.append("Unknown text to embed in PNG: ");
+                        sb7.append(obj2);
+                        throw new ImageWriteException(sb7.toString());
+                    }
+                    this.writeChunkiTXt(outputStream, (PngText.Itxt)obj2);
+                }
+            }
+        }
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        int n3 = b ? 1 : 0;
+        if (obj != PngColorType.GREYSCALE_WITH_ALPHA) {
+            if (obj == PngColorType.TRUE_COLOR_WITH_ALPHA) {
+                n3 = (b ? 1 : 0);
+            }
+            else {
+                n3 = 0;
+            }
+        }
+        final int[] rgbArray = new int[width];
+        final int n4 = 0;
+        int k = n;
+        for (int l = n4; l < height; ++l) {
+            bufferedImage.getRGB(0, l, width, 1, rgbArray, 0, width);
+            byteArrayOutputStream.write(FilterType.NONE.ordinal());
+            for (int n5 = k; n5 < width; ++n5) {
+                final int n6 = rgbArray[n5];
+                if (quantizedRgbPalette != null) {
+                    if (hasTransparency && n6 >>> 24 == 0) {
+                        byteArrayOutputStream.write(k);
+                    }
+                    else {
+                        byteArrayOutputStream.write(quantizedRgbPalette.getPaletteIndex(n6) & 0xFF);
+                    }
+                }
+                else {
+                    final int b2 = n6 >> 16 & 0xFF;
+                    final int b3 = n6 >> 8 & 0xFF;
+                    final int b4 = n6 >> 0 & 0xFF;
+                    if (grayscale) {
+                        byteArrayOutputStream.write((b2 + b3 + b4) / 3);
+                    }
+                    else {
+                        byteArrayOutputStream.write(b2);
+                        byteArrayOutputStream.write(b3);
+                        byteArrayOutputStream.write(b4);
+                    }
+                    if (n3 != 0) {
+                        byteArrayOutputStream.write(n6 >> 24 & 0xFF);
+                    }
+                }
+            }
+        }
+        final byte[] byteArray = byteArrayOutputStream.toByteArray();
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        final DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(out);
+        while (k < byteArray.length) {
+            final int length = byteArray.length;
+            final int b5 = 262144 + k;
+            deflaterOutputStream.write(byteArray, k, Math.min(length, b5) - k);
+            deflaterOutputStream.flush();
+            out.flush();
+            final byte[] byteArray2 = out.toByteArray();
+            out.reset();
+            if (byteArray2.length > 0) {
+                this.writeChunkIDAT(outputStream, byteArray2);
+            }
+            k = b5;
+        }
+        deflaterOutputStream.finish();
+        final byte[] byteArray3 = out.toByteArray();
+        if (byteArray3.length > 0) {
+            this.writeChunkIDAT(outputStream, byteArray3);
+        }
+        this.writeChunkIEND(outputStream);
+        outputStream.close();
     }
 }

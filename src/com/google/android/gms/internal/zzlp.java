@@ -167,54 +167,38 @@ public class zzlp extends Fragment implements DialogInterface.OnCancelListener {
         }
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Removed duplicated region for block: B:13:0x0022  */
-    @Override // android.support.v4.app.Fragment
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public void onActivityResult(int r1, int r2, android.content.Intent r3) {
-        /*
-            r0 = this;
-            r3 = 1
-            switch(r1) {
-                case 1: goto L12;
-                case 2: goto L5;
-                default: goto L4;
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        boolean proceed = false;
+
+        switch (requestCode) {
+            case 1:
+                if (resultCode == Activity.RESULT_OK) {
+                    proceed = true;
+                } else if (resultCode == Activity.RESULT_CANCELED) {
+                    // 13 = ConnectionResult.CANCELED
+                    this.zzacM = new ConnectionResult(13, null);
+                }
+                break;
+
+            case 2: {
+                int status = zzacJ.isGooglePlayServicesAvailable(getActivity());
+                if (status == ConnectionResult.SUCCESS) {
+                    proceed = true;
+                }
+                break;
             }
-        L4:
-            goto L22
-        L5:
-            com.google.android.gms.common.GoogleApiAvailability r1 = com.google.android.gms.internal.zzlp.zzacJ
-            android.support.v4.app.FragmentActivity r2 = r0.getActivity()
-            int r1 = r1.isGooglePlayServicesAvailable(r2)
-            if (r1 != 0) goto L22
-            goto L23
-        L12:
-            r1 = -1
-            if (r2 != r1) goto L16
-            goto L23
-        L16:
-            if (r2 != 0) goto L22
-            com.google.android.gms.common.ConnectionResult r1 = new com.google.android.gms.common.ConnectionResult
-            r2 = 13
-            r3 = 0
-            r1.<init>(r2, r3)
-            r0.zzacM = r1
-        L22:
-            r3 = 0
-        L23:
-            if (r3 == 0) goto L29
-            r0.zzok()
-            return
-        L29:
-            int r1 = r0.zzacL
-            com.google.android.gms.common.ConnectionResult r2 = r0.zzacM
-            r0.zza(r1, r2)
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.android.gms.internal.zzlp.onActivityResult(int, int, android.content.Intent):void");
+
+            default:
+                // no-op
+                break;
+        }
+
+        if (proceed) {
+            zzok();
+        } else {
+            zza(zzacL, zzacM);
+        }
     }
 
     @Override // android.content.DialogInterface.OnCancelListener

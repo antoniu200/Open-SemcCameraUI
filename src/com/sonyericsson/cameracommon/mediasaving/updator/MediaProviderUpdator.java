@@ -1,11 +1,15 @@
 package com.sonyericsson.cameracommon.mediasaving.updator;
 
+import android.database.Cursor;
+import android.content.ContentResolver;
+import android.os.SystemClock;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.provider.MediaStore;
 import com.sonyericsson.android.camera.util.CamLog;
+import com.sonyericsson.cameracommon.contentsview.PhotoStackQueryHelper;
 import com.sonyericsson.cameracommon.mediasaving.MediaSavingResult;
 import com.sonyericsson.cameracommon.storage.Storage;
 import com.sonyericsson.cameracommon.storage.StorageUtil;
@@ -14,6 +18,7 @@ import com.sonymobile.media.SomcMediaStore;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.Locale;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
 public class MediaProviderUpdator {
@@ -150,47 +155,128 @@ public class MediaProviderUpdator {
         }
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:20:0x008f, code lost:
-    
-        r12 = r11.getString(r11.getColumnIndex("_id"));
-        r12 = android.net.Uri.withAppendedPath(android.net.Uri.parse("content://media/external/video/media"), "" + r12);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:21:0x00b4, code lost:
-    
-        r11.close();
-        r3 = r12;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static android.net.Uri queryVideoFromDatabase(java.lang.String r11, android.content.Context r12) {
-        /*
-            Method dump skipped, instructions count: 299
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.mediasaving.updator.MediaProviderUpdator.queryVideoFromDatabase(java.lang.String, android.content.Context):android.net.Uri");
-    }
+	public static Uri queryVideoFromDatabase(String path, Context ctx) {
+		if (CamLog.DEBUG) {
+			CamLog.d(new String[] { "queryVideoFromDatabase: start: " + path });
+		}
 
-    /* JADX WARN: Code restructure failed: missing block: B:20:0x008f, code lost:
-    
-        r12 = r11.getString(r11.getColumnIndex("_id"));
-        r12 = android.net.Uri.withAppendedPath(android.net.Uri.parse("content://media/external/images/media"), "" + r12);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:21:0x00b4, code lost:
-    
-        r11.close();
-        r3 = r12;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static android.net.Uri queryPhotoFromDatabase(java.lang.String r11, android.content.Context r12) {
-        /*
-            Method dump skipped, instructions count: 299
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.mediasaving.updator.MediaProviderUpdator.queryPhotoFromDatabase(java.lang.String, android.content.Context):android.net.Uri");
-    }
+		MediaSavingResult result = MediaSavingResult.FAIL;
+		Uri out = null;
+
+		if (path == null || ctx == null) {
+			return out;
+		}
+
+		File f = new File(path);
+		if (!f.exists() || !f.canRead()) {
+			return out;
+		}
+
+		final ContentResolver cr = ctx.getContentResolver();
+
+		final CrQueryParameter qp = new CrQueryParameter();
+		qp.projection = new String[] { "_id", "_data" };
+		qp.sortOrder = String.format(Locale.US, "%s DESC, %s DESC", "datetaken", "_id");
+		qp.where = String.format(Locale.US, "%s like '%s'", "_data", path);
+
+		final long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < TIME_OUT_QUERY_IN_MILLI) {
+			Cursor c = PhotoStackQueryHelper.crQuery(cr, EXTENDED_FILES_CONTENT_URI, qp);
+			if (c != null) {
+				try {
+					if (c.moveToFirst()) {
+						String id = c.getString(c.getColumnIndex("_id"));
+						Uri base = Uri.parse("content://media/external/video/media");
+						out = Uri.withAppendedPath(base, "" + id);
+						// found – break the polling loop
+						break;
+					}
+				} finally {
+					c.close();
+				}
+			}
+
+			SystemClock.sleep(TIME_INTERVAL_QUERY_IN_MILLI);
+
+			if (CamLog.DEBUG) {
+				CamLog.e(new String[] { "Failed to query video:" + System.currentTimeMillis() });
+			}
+		}
+
+		if (out != null) {
+			result = MediaSavingResult.SUCCESS;
+		}
+
+		if (result != MediaSavingResult.SUCCESS && CamLog.DEBUG) {
+			CamLog.e(new String[] { "Failed to query video:" + result });
+		}
+
+		if (CamLog.DEBUG) {
+			CamLog.d(new String[] { "queryVideoFromDatabase: result: " + out });
+		}
+
+		return out;
+	}
+
+	public static Uri queryPhotoFromDatabase(String path, Context ctx) {
+		if (CamLog.DEBUG) {
+			CamLog.d(new String[] { "queryPhotoFromDatabase: start: " + path });
+		}
+
+		MediaSavingResult result = MediaSavingResult.FAIL;
+		Uri out = null;
+
+		if (path == null || ctx == null) {
+			return out;
+		}
+
+		File f = new File(path);
+		if (!f.exists() || !f.canRead()) {
+			return out;
+		}
+
+		final ContentResolver cr = ctx.getContentResolver();
+
+		final CrQueryParameter qp = new CrQueryParameter();
+		qp.projection = new String[] { "_id", "_data" };
+		qp.sortOrder = String.format(Locale.US, "%s DESC, %s DESC", "datetaken", "_id");
+		qp.where = String.format(Locale.US, "%s like '%s'", "_data", path);
+
+		final long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < TIME_OUT_QUERY_IN_MILLI) {
+			Cursor c = PhotoStackQueryHelper.crQuery(cr, EXTENDED_FILES_CONTENT_URI, qp);
+			if (c != null) {
+				try {
+					if (c.moveToFirst()) {
+						String id = c.getString(c.getColumnIndex("_id"));
+						Uri base = Uri.parse("content://media/external/images/media");
+						out = Uri.withAppendedPath(base, "" + id);
+						break;
+					}
+				} finally {
+					c.close();
+				}
+			}
+
+			SystemClock.sleep(TIME_INTERVAL_QUERY_IN_MILLI);
+
+			if (CamLog.DEBUG) {
+				CamLog.e(new String[] { "Failed to query:" + System.currentTimeMillis() });
+			}
+		}
+
+		if (out != null) {
+			result = MediaSavingResult.SUCCESS;
+		}
+
+		if (result != MediaSavingResult.SUCCESS && CamLog.DEBUG) {
+			CamLog.e(new String[] { "Failed to query photo:" + result });
+		}
+
+		if (CamLog.DEBUG) {
+			CamLog.d(new String[] { "queryPhotoFromDatabase: result: " + out });
+		}
+
+		return out;
+	}
 }

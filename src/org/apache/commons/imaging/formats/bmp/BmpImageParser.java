@@ -375,24 +375,190 @@ public class BmpImageParser extends ImageParser {
         return byteArrayOutputStream.toByteArray();
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:33:0x008f  */
-    /* JADX WARN: Removed duplicated region for block: B:35:0x0099  */
-    /* JADX WARN: Removed duplicated region for block: B:42:0x00cd  */
-    /* JADX WARN: Removed duplicated region for block: B:45:0x00e9 A[LOOP:0: B:43:0x00e5->B:45:0x00e9, LOOP_END] */
-    /* JADX WARN: Removed duplicated region for block: B:48:0x00f7  */
-    /* JADX WARN: Removed duplicated region for block: B:53:0x0103  */
-    /* JADX WARN: Removed duplicated region for block: B:56:0x0114  */
-    /* JADX WARN: Removed duplicated region for block: B:58:0x014a  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private org.apache.commons.imaging.formats.bmp.ImageContents readImageContents(java.io.InputStream r11, org.apache.commons.imaging.FormatCompliance r12, boolean r13) throws java.io.IOException, org.apache.commons.imaging.ImageReadException {
-        /*
-            Method dump skipped, instructions count: 450
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.formats.bmp.BmpImageParser.readImageContents(java.io.InputStream, org.apache.commons.imaging.FormatCompliance, boolean):org.apache.commons.imaging.formats.bmp.ImageContents");
+    private ImageContents readImageContents(final InputStream inputStream, final FormatCompliance formatCompliance, final boolean b) throws ImageReadException, IOException {
+        final BmpHeaderInfo bmpHeaderInfo = this.readBmpHeaderInfo(inputStream, formatCompliance, b);
+        final int colorsUsed = bmpHeaderInfo.colorsUsed;
+        final int n = 1;
+        final int n2 = 1;
+        int n3 = colorsUsed;
+        if (colorsUsed == 0) {
+            n3 = 1 << bmpHeaderInfo.bitsPerPixel;
+        }
+        if (b) {
+            this.debugNumber("ColorsUsed", bmpHeaderInfo.colorsUsed, 4);
+            this.debugNumber("BitsPerPixel", bmpHeaderInfo.bitsPerPixel, 4);
+            this.debugNumber("ColorTableSize", n3, 4);
+            this.debugNumber("bhi.colorsUsed", bmpHeaderInfo.colorsUsed, 4);
+            this.debugNumber("Compression", bmpHeaderInfo.compression, 4);
+        }
+        final int compression = bmpHeaderInfo.compression;
+        final int n4 = 0;
+        int i = 0;
+        int n6 = 0;
+        int n7 = 0;
+        Label_0329: {
+            while (true) {
+                Label_0320: {
+                    Label_0314: {
+                        switch (compression) {
+                            default: {
+                                final StringBuilder sb = new StringBuilder();
+                                sb.append("BMP: Unknown Compression: ");
+                                sb.append(bmpHeaderInfo.compression);
+                                throw new ImageReadException(sb.toString());
+                            }
+                            case 3: {
+                                if (b) {
+                                    System.out.println("Compression: BI_BITFIELDS");
+                                }
+                                if (bmpHeaderInfo.bitsPerPixel <= 8) {
+                                    i = n3 * 4;
+                                    break Label_0314;
+                                }
+                                break Label_0320;
+                            }
+                            case 2: {
+                                if (b) {
+                                    System.out.println("Compression: BI_RLE4");
+                                }
+                                i = n3 * 4;
+                                final int n5 = 2;
+                                n6 = n;
+                                n7 = n5;
+                                break Label_0329;
+                            }
+                            case 1: {
+                                if (b) {
+                                    System.out.println("Compression: BI_RLE8");
+                                }
+                                final int n8 = n3 * 4;
+                                n6 = n2;
+                                i = n8;
+                                break;
+                            }
+                            case 0: {
+                                if (b) {
+                                    System.out.println("Compression: BI_RGB");
+                                }
+                                if (bmpHeaderInfo.bitsPerPixel <= 8) {
+                                    i = n3 * 4;
+                                    break Label_0314;
+                                }
+                                break Label_0320;
+                            }
+                        }
+                        n7 = n6;
+                        break Label_0329;
+                    }
+                    n6 = 0;
+                    continue;
+                }
+                i = 0;
+                n6 = 0;
+                continue;
+            }
+        }
+        byte[] bytes = null;
+        if (i > 0) {
+            bytes = BinaryFunctions.readBytes("ColorTable", inputStream, i, "Not a Valid BMP File");
+        }
+        if (b) {
+            this.debugNumber("paletteLength", i, 4);
+            final PrintStream out = System.out;
+            final StringBuilder sb2 = new StringBuilder();
+            sb2.append("ColorTable: ");
+            String string;
+            if (bytes == null) {
+                string = "null";
+            }
+            else {
+                string = Integer.toString(bytes.length);
+            }
+            sb2.append(string);
+            out.println(sb2.toString());
+        }
+        final int width = bmpHeaderInfo.width;
+        final int height = bmpHeaderInfo.height;
+        int n10;
+        final int n9 = n10 = (bmpHeaderInfo.bitsPerPixel * bmpHeaderInfo.width + 7) / 8;
+        if (b) {
+            this.debugNumber("bhi.Width", bmpHeaderInfo.width, 4);
+            this.debugNumber("bhi.Height", bmpHeaderInfo.height, 4);
+            this.debugNumber("ImageLineLength", n9, 4);
+            this.debugNumber("PixelCount", width * height, 4);
+            n10 = n9;
+        }
+        while (n10 % 4 != 0) {
+            ++n10;
+        }
+        final int bitmapHeaderSize = bmpHeaderInfo.bitmapHeaderSize;
+        int n11 = n4;
+        if (bmpHeaderInfo.bitmapHeaderSize == 40) {
+            n11 = n4;
+            if (bmpHeaderInfo.compression == 3) {
+                n11 = 12;
+            }
+        }
+        final int j = 14 + bitmapHeaderSize + n11;
+        final int k = j + i;
+        if (b) {
+            this.debugNumber("bhi.BitmapDataOffset", bmpHeaderInfo.bitmapDataOffset, 4);
+            this.debugNumber("expectedDataOffset", k, 4);
+        }
+        final int n12 = bmpHeaderInfo.bitmapDataOffset - k;
+        if (n12 < 0) {
+            final StringBuilder sb3 = new StringBuilder();
+            sb3.append("BMP has invalid image data offset: ");
+            sb3.append(bmpHeaderInfo.bitmapDataOffset);
+            sb3.append(" (expected: ");
+            sb3.append(k);
+            sb3.append(", paletteLength: ");
+            sb3.append(i);
+            sb3.append(", headerSize: ");
+            sb3.append(j);
+            sb3.append(")");
+            throw new ImageReadException(sb3.toString());
+        }
+        if (n12 > 0) {
+            BinaryFunctions.readBytes("BitmapDataOffset", inputStream, n12, "Not a Valid BMP File");
+        }
+        final int n13 = bmpHeaderInfo.height * n10;
+        if (b) {
+            this.debugNumber("imageDataSize", n13, 4);
+        }
+        byte[] array;
+        if (n6 != 0) {
+            array = this.getRLEBytes(inputStream, n7);
+        }
+        else {
+            array = BinaryFunctions.readBytes("ImageData", inputStream, n13, "Not a Valid BMP File");
+        }
+        if (b) {
+            this.debugNumber("ImageData.length", array.length, 4);
+        }
+        PixelParser pixelParser = null;
+        switch (bmpHeaderInfo.compression) {
+            default: {
+                final StringBuilder sb4 = new StringBuilder();
+                sb4.append("BMP: Unknown Compression: ");
+                sb4.append(bmpHeaderInfo.compression);
+                throw new ImageReadException(sb4.toString());
+            }
+            case 3: {
+                pixelParser = new PixelParserBitFields(bmpHeaderInfo, bytes, array);
+                break;
+            }
+            case 1:
+            case 2: {
+                pixelParser = new PixelParserRle(bmpHeaderInfo, bytes, array);
+                break;
+            }
+            case 0: {
+                pixelParser = new PixelParserRgb(bmpHeaderInfo, bytes, array);
+                break;
+            }
+        }
+        return new ImageContents(bmpHeaderInfo, bytes, array, pixelParser);
     }
 
     private BmpHeaderInfo readBmpHeaderInfo(ByteSource byteSource, boolean z) throws Throwable {

@@ -40,81 +40,69 @@ public class IccProfileParser extends BinaryFileParser {
         return getICCProfileInfo(new ByteSourceFile(file));
     }
 
-    /* JADX WARN: Not initialized variable reg: 1, insn: 0x0033: MOVE (r0 I:??[OBJECT, ARRAY]) = (r1 I:??[OBJECT, ARRAY]), block:B:19:0x0033 */
-    /* JADX WARN: Removed duplicated region for block: B:43:0x0054 A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public org.apache.commons.imaging.icc.IccProfileInfo getICCProfileInfo(org.apache.commons.imaging.common.bytesource.ByteSource r9) throws java.lang.Throwable {
-        /*
-            r8 = this;
-            r0 = 0
-            java.io.InputStream r1 = r9.getInputStream()     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            org.apache.commons.imaging.icc.IccProfileInfo r2 = r8.readICCProfileInfo(r1)     // Catch: java.lang.Throwable -> L32 java.lang.Exception -> L35
-            if (r2 != 0) goto L16
-            if (r1 == 0) goto L15
-            r1.close()     // Catch: java.lang.Exception -> L11
-            goto L15
-        L11:
-            r8 = move-exception
-            org.apache.commons.imaging.util.Debug.debug(r8)
-        L15:
-            return r0
-        L16:
-            r1.close()     // Catch: java.lang.Throwable -> L32 java.lang.Exception -> L35
-            org.apache.commons.imaging.icc.IccTag[] r1 = r2.getTags()     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            int r3 = r1.length     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            r4 = 0
-        L1f:
-            if (r4 >= r3) goto L31
-            r5 = r1[r4]     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            int r6 = r5.offset     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            int r7 = r5.length     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            byte[] r6 = r9.getBlock(r6, r7)     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            r5.setData(r6)     // Catch: java.lang.Throwable -> L37 java.lang.Exception -> L39
-            int r4 = r4 + 1
-            goto L1f
-        L31:
-            return r2
-        L32:
-            r8 = move-exception
-            r0 = r1
-            goto L52
-        L35:
-            r9 = move-exception
-            goto L3b
-        L37:
-            r8 = move-exception
-            goto L52
-        L39:
-            r9 = move-exception
-            r1 = r0
-        L3b:
-            org.apache.commons.imaging.util.Debug.debug(r9)     // Catch: java.lang.Throwable -> L32
-            if (r1 == 0) goto L48
-            r1.close()     // Catch: java.lang.Exception -> L44
-            goto L48
-        L44:
-            r9 = move-exception
-            org.apache.commons.imaging.util.Debug.debug(r9)
-        L48:
-            boolean r8 = r8.getDebug()
-            if (r8 == 0) goto L51
-            org.apache.commons.imaging.util.Debug.debug()
-        L51:
-            return r0
-        L52:
-            if (r0 == 0) goto L5c
-            r0.close()     // Catch: java.lang.Exception -> L58
-            goto L5c
-        L58:
-            r9 = move-exception
-            org.apache.commons.imaging.util.Debug.debug(r9)
-        L5c:
-            throw r8
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.icc.IccProfileParser.getICCProfileInfo(org.apache.commons.imaging.common.bytesource.ByteSource):org.apache.commons.imaging.icc.IccProfileInfo");
+    public IccProfileInfo getICCProfileInfo(final ByteSource byteSource) {
+        final InputStream inputStream = null;
+        InputStream inputStream4 = null;
+        Label_0171: {
+            Object inputStream2 = null;
+            InputStream inputStream3;
+            try {
+                inputStream2 = byteSource.getInputStream();
+                try {
+                    try {
+                        final IccProfileInfo iccProfileInfo = this.readICCProfileInfo((InputStream)inputStream2);
+                        if (iccProfileInfo == null) {
+                            if (inputStream2 != null) {
+                                try {
+                                    ((InputStream)inputStream2).close();
+                                }
+                                catch (final Exception ex) {
+                                    Debug.debug(ex);
+                                }
+                            }
+                            return null;
+                        }
+                        ((InputStream)inputStream2).close();
+                        final IccTag[] tags = iccProfileInfo.getTags();
+                        for (int length = tags.length, i = 0; i < length; ++i) {
+                            inputStream2 = tags[i];
+                            ((IccTag)inputStream2).setData(byteSource.getBlock(((IccTag)inputStream2).offset, ((IccTag)inputStream2).length));
+                        }
+                        return iccProfileInfo;
+                    }
+                    finally {}
+                }
+                catch (final Exception ex2) {}
+            }
+            catch (final Exception inputStream2) {
+                inputStream3 = null;
+            }
+            finally {
+                inputStream4 = inputStream;
+                break Label_0171;
+            }
+            Debug.debug((Throwable)inputStream2);
+            if (inputStream3 != null) {
+                try {
+                    inputStream3.close();
+                }
+                catch (final Exception ex3) {
+                    Debug.debug(ex3);
+                }
+            }
+            if (this.getDebug()) {
+                Debug.debug();
+            }
+            return null;
+        }
+        if (inputStream4 != null) {
+            try {
+                inputStream4.close();
+            }
+            catch (final Exception ex4) {
+                Debug.debug(ex4);
+            }
+        }
     }
 
     private IccProfileInfo readICCProfileInfo(InputStream inputStream) throws IOException {

@@ -162,119 +162,59 @@ public class StorageUtil {
         return pathFromType;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:43:0x00c9 A[PHI: r8
-  0x00c9: PHI (r8v5 android.database.Cursor) = (r8v4 android.database.Cursor), (r8v6 android.database.Cursor) binds: [B:42:0x00c7, B:34:0x00b9] A[DONT_GENERATE, DONT_INLINE]] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static java.lang.String getPathFromUriByMediaDb(android.content.Context r7, android.net.Uri r8) throws java.lang.Throwable {
-        /*
-            android.content.ContentResolver r0 = r7.getContentResolver()
-            r6 = 0
-            java.lang.String r1 = "_data"
-            java.lang.String[] r2 = new java.lang.String[]{r1}     // Catch: java.lang.Throwable -> Lbc java.lang.Exception -> Lbf
-            r3 = 0
-            r4 = 0
-            r5 = 0
-            r1 = r8
-            android.database.Cursor r8 = r0.query(r1, r2, r3, r4, r5)     // Catch: java.lang.Throwable -> Lbc java.lang.Exception -> Lbf
-            if (r8 == 0) goto Lb9
-            boolean r0 = r8.moveToFirst()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            if (r0 == 0) goto Lb9
-            java.lang.String r0 = "_data"
-            int r0 = r8.getColumnIndexOrThrow(r0)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            int r1 = r8.getType(r0)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r2 = 3
-            r3 = 1
-            r4 = 0
-            if (r1 == r2) goto L50
-            boolean r7 = com.sonyericsson.android.camera.util.CamLog.VERBOSE     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            if (r7 == 0) goto L4a
-            java.lang.String[] r7 = new java.lang.String[r3]     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.StringBuilder r0 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r0.<init>()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.String r1 = "no path in content: "
-            r0.append(r1)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            int r1 = r8.getType(r4)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r0.append(r1)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.String r0 = r0.toString()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r7[r4] = r0     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            com.sonyericsson.android.camera.util.CamLog.d(r7)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-        L4a:
-            if (r8 == 0) goto L4f
-            r8.close()
-        L4f:
-            return r6
-        L50:
-            java.lang.String r0 = r8.getString(r0)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            com.sonyericsson.cameracommon.mediasaving.StorageManagerProxy r7 = getStorageManager(r7)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.util.List r7 = r7.getVolumes()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.util.Iterator r7 = r7.iterator()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-        L60:
-            boolean r1 = r7.hasNext()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            if (r1 == 0) goto L9a
-            java.lang.Object r1 = r7.next()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            android.os.storage.VolumeInfo r1 = (android.os.storage.VolumeInfo) r1     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.String r1 = getVolumePath(r1)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            if (r1 == 0) goto L60
-            boolean r2 = r0.contains(r1)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            if (r2 == 0) goto L60
-            boolean r7 = com.sonyericsson.android.camera.util.CamLog.VERBOSE     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            if (r7 == 0) goto L94
-            java.lang.String[] r7 = new java.lang.String[r3]     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.StringBuilder r0 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r0.<init>()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.String r2 = "valid content: "
-            r0.append(r2)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r0.append(r1)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.String r0 = r0.toString()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r7[r4] = r0     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            com.sonyericsson.android.camera.util.CamLog.d(r7)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-        L94:
-            if (r8 == 0) goto L99
-            r8.close()
-        L99:
-            return r1
-        L9a:
-            boolean r7 = com.sonyericsson.android.camera.util.CamLog.VERBOSE     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            if (r7 == 0) goto Lb9
-            java.lang.String[] r7 = new java.lang.String[r3]     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.StringBuilder r1 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r1.<init>()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.String r2 = "invalid content path: "
-            r1.append(r2)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r1.append(r0)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            java.lang.String r0 = r1.toString()     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            r7[r4] = r0     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            com.sonyericsson.android.camera.util.CamLog.d(r7)     // Catch: java.lang.Throwable -> Lb7 java.lang.Exception -> Lc7
-            goto Lb9
-        Lb7:
-            r7 = move-exception
-            goto Lc1
-        Lb9:
-            if (r8 == 0) goto Lcc
-            goto Lc9
-        Lbc:
-            r7 = move-exception
-            r8 = r6
-            goto Lc1
-        Lbf:
-            r8 = r6
-            goto Lc7
-        Lc1:
-            if (r8 == 0) goto Lc6
-            r8.close()
-        Lc6:
-            throw r7
-        Lc7:
-            if (r8 == 0) goto Lcc
-        Lc9:
-            r8.close()
-        Lcc:
-            return r6
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.storage.StorageUtil.getPathFromUriByMediaDb(android.content.Context, android.net.Uri):java.lang.String");
+    private static String getPathFromUriByMediaDb(final Context context, Uri query) {
+        final ContentResolver contentResolver = context.getContentResolver();
+        try {
+            query = (Uri)contentResolver.query(query, new String[] { "_data" }, (String)null, (String[])null, (String)null);
+            if (query == null) {
+                goto Label_0279;
+            }
+            try {
+                if (!((Cursor)query).moveToFirst()) {
+                    goto Label_0279;
+                }
+                final int columnIndexOrThrow = ((Cursor)query).getColumnIndexOrThrow("_data");
+                if (((Cursor)query).getType(columnIndexOrThrow) != 3) {
+                    if (CamLog.VERBOSE) {
+                        final StringBuilder sb = new StringBuilder();
+                        sb.append("no path in content: ");
+                        sb.append(((Cursor)query).getType(0));
+                        CamLog.d(sb.toString());
+                    }
+                    if (query != null) {
+                        ((Cursor)query).close();
+                    }
+                    return null;
+                }
+                final String string = ((Cursor)query).getString(columnIndexOrThrow);
+                final Iterator<VolumeInfo> iterator = getStorageManager(context).getVolumes().iterator();
+                while (iterator.hasNext()) {
+                    final String volumePath = getVolumePath(iterator.next());
+                    if (volumePath != null && string.contains(volumePath)) {
+                        if (CamLog.VERBOSE) {
+                            final StringBuilder sb2 = new StringBuilder();
+                            sb2.append("valid content: ");
+                            sb2.append(volumePath);
+                            CamLog.d(sb2.toString());
+                        }
+                        if (query != null) {
+                            ((Cursor)query).close();
+                        }
+                        return volumePath;
+                    }
+                }
+                if (CamLog.VERBOSE) {
+                    final StringBuilder sb3 = new StringBuilder();
+                    sb3.append("invalid content path: ");
+                    sb3.append(string);
+                    CamLog.d(sb3.toString());
+                    goto Label_0279;
+                }
+                goto Label_0279;
+            }
+            catch (final Exception ex) {}
+        }
+        catch (final Exception ex2) {}
     }
 
     private static StorageManagerProxy getStorageManager(Context context) {

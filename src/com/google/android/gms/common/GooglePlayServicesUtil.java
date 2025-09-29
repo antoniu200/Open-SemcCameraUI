@@ -142,128 +142,109 @@ public final class GooglePlayServicesUtil {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:35:0x0095  */
-    /* JADX WARN: Removed duplicated region for block: B:37:0x00b9  */
     @java.lang.Deprecated
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static int isGooglePlayServicesAvailable(android.content.Context r7) throws android.content.pm.PackageManager.NameNotFoundException {
-        /*
-            boolean r0 = com.google.android.gms.common.internal.zzd.zzaeK
-            r1 = 0
-            if (r0 == 0) goto L6
-            return r1
-        L6:
-            android.content.pm.PackageManager r0 = r7.getPackageManager()
-            android.content.res.Resources r2 = r7.getResources()     // Catch: java.lang.Throwable -> L14
-            int r3 = com.google.android.gms.R.string.common_google_play_services_unknown_issue     // Catch: java.lang.Throwable -> L14
-            r2.getString(r3)     // Catch: java.lang.Throwable -> L14
-            goto L1b
-        L14:
-            java.lang.String r2 = "GooglePlayServicesUtil"
-            java.lang.String r3 = "The Google Play services resources were not found. Check your project configuration to ensure that the resources are included."
-            android.util.Log.e(r2, r3)
-        L1b:
-            java.lang.String r2 = "com.google.android.gms"
-            java.lang.String r3 = r7.getPackageName()
-            boolean r2 = r2.equals(r3)
-            if (r2 != 0) goto L2a
-            zzad(r7)
-        L2a:
-            r2 = 1
-            java.lang.String r3 = "com.google.android.gms"
-            r4 = 64
-            android.content.pm.PackageInfo r3 = r0.getPackageInfo(r3, r4)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> Ld4
-            com.google.android.gms.common.zzd r4 = com.google.android.gms.common.zzd.zznu()
-            int r5 = r3.versionCode
-            boolean r5 = com.google.android.gms.internal.zzml.zzcb(r5)
-            r6 = 9
-            if (r5 != 0) goto L7a
-            boolean r7 = com.google.android.gms.internal.zzml.zzan(r7)
-            if (r7 == 0) goto L48
-            goto L7a
-        L48:
-            java.lang.String r7 = "com.android.vending"
-            r5 = 8256(0x2040, float:1.1569E-41)
-            android.content.pm.PackageInfo r7 = r0.getPackageInfo(r7, r5)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            com.google.android.gms.common.zzc$zza[] r5 = com.google.android.gms.common.zzc.zzbz.zzaak     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            com.google.android.gms.common.zzc$zza r7 = r4.zza(r7, r5)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            if (r7 != 0) goto L60
-            java.lang.String r7 = "GooglePlayServicesUtil"
-            java.lang.String r0 = "Google Play Store signature invalid."
-            android.util.Log.w(r7, r0)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            return r6
-        L60:
-            com.google.android.gms.common.zzc$zza[] r5 = new com.google.android.gms.common.zzc.zza[r2]     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            r5[r1] = r7     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            com.google.android.gms.common.zzc$zza r7 = r4.zza(r3, r5)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            if (r7 != 0) goto L87
-            java.lang.String r7 = "GooglePlayServicesUtil"
-            java.lang.String r0 = "Google Play services signature invalid."
-            android.util.Log.w(r7, r0)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L72
-            return r6
-        L72:
-            java.lang.String r7 = "GooglePlayServicesUtil"
-            java.lang.String r0 = "Google Play Store is neither installed nor updating."
-        L76:
-            android.util.Log.w(r7, r0)
-            return r6
-        L7a:
-            com.google.android.gms.common.zzc$zza[] r7 = com.google.android.gms.common.zzc.zzbz.zzaak
-            com.google.android.gms.common.zzc$zza r7 = r4.zza(r3, r7)
-            if (r7 != 0) goto L87
-            java.lang.String r7 = "GooglePlayServicesUtil"
-            java.lang.String r0 = "Google Play services signature invalid."
-            goto L76
-        L87:
-            int r7 = com.google.android.gms.common.GooglePlayServicesUtil.GOOGLE_PLAY_SERVICES_VERSION_CODE
-            int r7 = com.google.android.gms.internal.zzml.zzca(r7)
-            int r4 = r3.versionCode
-            int r4 = com.google.android.gms.internal.zzml.zzca(r4)
-            if (r4 >= r7) goto Lb9
-            java.lang.String r7 = "GooglePlayServicesUtil"
-            java.lang.StringBuilder r0 = new java.lang.StringBuilder
-            r0.<init>()
-            java.lang.String r1 = "Google Play services out of date.  Requires "
-            r0.append(r1)
-            int r1 = com.google.android.gms.common.GooglePlayServicesUtil.GOOGLE_PLAY_SERVICES_VERSION_CODE
-            r0.append(r1)
-            java.lang.String r1 = " but found "
-            r0.append(r1)
-            int r1 = r3.versionCode
-            r0.append(r1)
-            java.lang.String r0 = r0.toString()
-            android.util.Log.w(r7, r0)
-            r7 = 2
-            return r7
-        Lb9:
-            android.content.pm.ApplicationInfo r7 = r3.applicationInfo
-            if (r7 != 0) goto Lcd
-            java.lang.String r7 = "com.google.android.gms"
-            android.content.pm.ApplicationInfo r7 = r0.getApplicationInfo(r7, r1)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> Lc4
-            goto Lcd
-        Lc4:
-            r7 = move-exception
-            java.lang.String r0 = "GooglePlayServicesUtil"
-            java.lang.String r1 = "Google Play services missing when getting application info."
-            android.util.Log.wtf(r0, r1, r7)
-            return r2
-        Lcd:
-            boolean r7 = r7.enabled
-            if (r7 != 0) goto Ld3
-            r7 = 3
-            return r7
-        Ld3:
-            return r1
-        Ld4:
-            java.lang.String r7 = "GooglePlayServicesUtil"
-            java.lang.String r0 = "Google Play services is missing."
-            android.util.Log.w(r7, r0)
-            return r2
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.android.gms.common.GooglePlayServicesUtil.isGooglePlayServicesAvailable(android.content.Context):int");
+    public static int isGooglePlayServicesAvailable(android.content.Context ctx) {
+        // If test flag says we're good, return SUCCESS (0)
+        if (com.google.android.gms.common.internal.zzd.zzaeK) {
+            return 0;
+        }
+
+        final android.content.pm.PackageManager pm = ctx.getPackageManager();
+
+        // Try touching resources; log if missing (doesn't change result here)
+        try {
+            android.content.res.Resources res = ctx.getResources();
+            res.getString(com.google.android.gms.R.string.common_google_play_services_unknown_issue);
+        } catch (Throwable t) {
+            android.util.Log.e("GooglePlayServicesUtil",
+                "The Google Play services resources were not found. " +
+                "Check your project configuration to ensure that the resources are included.");
+        }
+
+        // Validate manifest setup if not running inside GMS core
+        if (!"com.google.android.gms".equals(ctx.getPackageName())) {
+            zzad(ctx);
+        }
+
+        final int SUCCESS = 0;
+        final int SERVICE_MISSING = 1;
+        final int SERVICE_VERSION_UPDATE_REQUIRED = 2;
+        final int SERVICE_DISABLED = 3;
+        final int SERVICE_INVALID = 9;
+
+        final int SIGS = 64;      // PackageManager.GET_SIGNATURES (legacy)
+        final int PLAY_STORE_FLAGS = 0x2040; // 8256
+
+        final android.content.pm.PackageInfo gmsPkg;
+        try {
+            gmsPkg = pm.getPackageInfo("com.google.android.gms", SIGS);
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            android.util.Log.w("GooglePlayServicesUtil", "Google Play services is missing.");
+            return SERVICE_MISSING;
+        }
+
+        final com.google.android.gms.common.zzd verifier = com.google.android.gms.common.zzd.zznu();
+        final boolean isTvBuildOrUpdating = com.google.android.gms.internal.zzml.zzcb(gmsPkg.versionCode)
+                || com.google.android.gms.internal.zzml.zzan(ctx);
+
+        if (!isTvBuildOrUpdating) {
+            // Validate Play Store and then validate GMS with Play Store's signature
+            try {
+                android.content.pm.PackageInfo vending = pm.getPackageInfo("com.android.vending", PLAY_STORE_FLAGS);
+                com.google.android.gms.common.zzc.zza vendingSig =
+                        verifier.zza(vending, com.google.android.gms.common.zzc.zzbz.zzaak);
+                if (vendingSig == null) {
+                    android.util.Log.w("GooglePlayServicesUtil", "Google Play Store signature invalid.");
+                    return SERVICE_INVALID;
+                }
+                com.google.android.gms.common.zzc.zza[] allow = new com.google.android.gms.common.zzc.zza[1];
+                allow[0] = vendingSig;
+                com.google.android.gms.common.zzc.zza gmsSig = verifier.zza(gmsPkg, allow);
+                if (gmsSig == null) {
+                    android.util.Log.w("GooglePlayServicesUtil", "Google Play services signature invalid.");
+                    return SERVICE_INVALID;
+                }
+            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                android.util.Log.w("GooglePlayServicesUtil", "Google Play Store is neither installed nor updating.");
+                return SERVICE_INVALID;
+            }
+        } else {
+            // Directly validate GMS against known good signatures
+            com.google.android.gms.common.zzc.zza gmsSig =
+                    verifier.zza(gmsPkg, com.google.android.gms.common.zzc.zzbz.zzaak);
+            if (gmsSig == null) {
+                android.util.Log.w("GooglePlayServicesUtil", "Google Play services signature invalid.");
+                return SERVICE_INVALID;
+            }
+        }
+
+        // Version check (normalize with zzml.zzca)
+        final int required = com.google.android.gms.internal.zzml
+                .zzca(com.google.android.gms.common.GooglePlayServicesUtil.GOOGLE_PLAY_SERVICES_VERSION_CODE);
+        final int found = com.google.android.gms.internal.zzml.zzca(gmsPkg.versionCode);
+        if (found < required) {
+            android.util.Log.w("GooglePlayServicesUtil",
+                    "Google Play services out of date.  Requires "
+                    + com.google.android.gms.common.GooglePlayServicesUtil.GOOGLE_PLAY_SERVICES_VERSION_CODE
+                    + " but found " + gmsPkg.versionCode);
+            return SERVICE_VERSION_UPDATE_REQUIRED;
+        }
+
+        // Enabled check
+        android.content.pm.ApplicationInfo ai = gmsPkg.applicationInfo;
+        if (ai == null) {
+            try {
+                ai = pm.getApplicationInfo("com.google.android.gms", 0);
+            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                android.util.Log.wtf("GooglePlayServicesUtil",
+                        "Google Play services missing when getting application info.", e);
+                return SERVICE_MISSING;
+            }
+        }
+        if (!ai.enabled) {
+            return SERVICE_DISABLED;
+        }
+        return SUCCESS;
     }
 
     @Deprecated
@@ -522,50 +503,28 @@ public final class GooglePlayServicesUtil {
         return false;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:15:0x0030  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static boolean zzb(android.content.pm.PackageManager r6) {
-        /*
-            java.lang.Object r0 = com.google.android.gms.common.GooglePlayServicesUtil.zzpy
-            monitor-enter(r0)
-            int r1 = com.google.android.gms.common.GooglePlayServicesUtil.zzaan     // Catch: java.lang.Throwable -> L33
-            r2 = -1
-            r3 = 0
-            r4 = 1
-            if (r1 != r2) goto L2c
-            java.lang.String r1 = "com.google.android.gms"
-            r2 = 64
-            android.content.pm.PackageInfo r6 = r6.getPackageInfo(r1, r2)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            com.google.android.gms.common.zzd r1 = com.google.android.gms.common.zzd.zznu()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            com.google.android.gms.common.zzc$zza[] r2 = new com.google.android.gms.common.zzc.zza[r4]     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            com.google.android.gms.common.zzc$zza[] r5 = com.google.android.gms.common.zzc.zzaad     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            r5 = r5[r4]     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            r2[r3] = r5     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            com.google.android.gms.common.zzc$zza r6 = r1.zza(r6, r2)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            if (r6 == 0) goto L27
-            com.google.android.gms.common.GooglePlayServicesUtil.zzaan = r4     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            goto L2c
-        L27:
-            com.google.android.gms.common.GooglePlayServicesUtil.zzaan = r3     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L2a java.lang.Throwable -> L33
-            goto L2c
-        L2a:
-            com.google.android.gms.common.GooglePlayServicesUtil.zzaan = r3     // Catch: java.lang.Throwable -> L33
-        L2c:
-            int r6 = com.google.android.gms.common.GooglePlayServicesUtil.zzaan     // Catch: java.lang.Throwable -> L33
-            if (r6 == 0) goto L31
-            r3 = r4
-        L31:
-            monitor-exit(r0)     // Catch: java.lang.Throwable -> L33
-            return r3
-        L33:
-            r6 = move-exception
-            monitor-exit(r0)     // Catch: java.lang.Throwable -> L33
-            throw r6
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.android.gms.common.GooglePlayServicesUtil.zzb(android.content.pm.PackageManager):boolean");
+    public static boolean zzb(android.content.Context ctx, int uid, String packageName) {
+        if (com.google.android.gms.internal.zzmx.zzqB()) {
+            Object svc = ctx.getSystemService("appops");
+            android.app.AppOpsManager appOps = (android.app.AppOpsManager) svc;
+            try {
+                appOps.checkPackage(uid, packageName);
+                return true;
+            } catch (java.lang.SecurityException se) {
+                return false;
+            }
+        } else {
+            android.content.pm.PackageManager pm = ctx.getPackageManager();
+            String[] pkgs = pm.getPackagesForUid(uid);
+            if (packageName != null && pkgs != null) {
+                for (int i = 0; i < pkgs.length; i++) {
+                    if (packageName.equals(pkgs[i])) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 
     @Deprecated

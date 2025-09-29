@@ -47,60 +47,40 @@ public abstract class StorageUpdateTask implements Callable {
         return this.mRequestReason;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:16:0x0045  */
-    /* JADX WARN: Removed duplicated region for block: B:18:0x0050 A[RETURN] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected boolean acquire() throws java.lang.InterruptedException {
-        /*
-            r5 = this;
-            boolean r0 = com.sonyericsson.android.camera.util.CamLog.DEBUG
-            r1 = 1
-            r2 = 0
-            if (r0 == 0) goto L22
-            java.lang.String[] r0 = new java.lang.String[r1]
-            java.lang.StringBuilder r3 = new java.lang.StringBuilder
-            r3.<init>()
-            java.lang.String r4 = "invoke: id: "
-            r3.append(r4)
-            int r4 = r5.hashCode()
-            r3.append(r4)
-            java.lang.String r3 = r3.toString()
-            r0[r2] = r3
-            com.sonyericsson.android.camera.util.CamLog.d(r0)
-        L22:
-            java.util.concurrent.Semaphore r5 = r5.mStorageAccessSemaphore     // Catch: java.lang.InterruptedException -> L3c
-            r3 = 4000(0xfa0, double:1.9763E-320)
-            java.util.concurrent.TimeUnit r0 = java.util.concurrent.TimeUnit.MILLISECONDS     // Catch: java.lang.InterruptedException -> L3c
-            boolean r5 = r5.tryAcquire(r3, r0)     // Catch: java.lang.InterruptedException -> L3c
-            boolean r0 = com.sonyericsson.android.camera.util.CamLog.DEBUG     // Catch: java.lang.InterruptedException -> L3a
-            if (r0 == 0) goto L43
-            java.lang.String r0 = "Semaphore acquired."
-            java.lang.String[] r0 = new java.lang.String[]{r0}     // Catch: java.lang.InterruptedException -> L3a
-            com.sonyericsson.android.camera.util.CamLog.d(r0)     // Catch: java.lang.InterruptedException -> L3a
-            goto L43
-        L3a:
-            r0 = move-exception
-            goto L3e
-        L3c:
-            r0 = move-exception
-            r5 = r2
-        L3e:
-            java.lang.String r2 = "Unintended interrupt occurred."
-            com.sonyericsson.android.camera.util.CamLog.e(r2, r0)
-        L43:
-            if (r5 != 0) goto L50
-            java.lang.RuntimeException r5 = new java.lang.RuntimeException
-            java.lang.String r0 = "Semaphore could not be acquired due to timeout"
-            r5.<init>(r0)
-            r5.fillInStackTrace()
-            throw r5
-        L50:
-            return r1
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.storage.updater.StorageUpdateTask.acquire():boolean");
+    protected boolean acquire() {
+        if (CamLog.DEBUG) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("invoke: id: ");
+            sb.append(this.hashCode());
+            CamLog.d(sb.toString());
+        }
+        boolean tryAcquire = false;
+        Label_0098: {
+            try {
+                final boolean b = tryAcquire = this.mStorageAccessSemaphore.tryAcquire(4000L, TimeUnit.MILLISECONDS);
+                try {
+                    if (CamLog.DEBUG) {
+                        CamLog.d("Semaphore acquired.");
+                        tryAcquire = b;
+                    }
+                    break Label_0098;
+                }
+                catch (final InterruptedException ex) {
+                    tryAcquire = b;
+                }
+            }
+            catch (final InterruptedException ex) {
+                tryAcquire = false;
+            }
+            final InterruptedException ex;
+            CamLog.e("Unintended interrupt occurred.", ex);
+        }
+        if (!tryAcquire) {
+            final RuntimeException ex2 = new RuntimeException("Semaphore could not be acquired due to timeout");
+            ex2.fillInStackTrace();
+            throw ex2;
+        }
+        return true;
     }
 
     protected boolean tryAcquire() {

@@ -332,18 +332,217 @@ public class LinearLayoutCompat extends ViewGroup {
         return false;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:152:0x0334  */
-    /* JADX WARN: Removed duplicated region for block: B:158:0x0342  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    void measureVertical(int r41, int r42) {
-        /*
-            Method dump skipped, instructions count: 929
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.LinearLayoutCompat.measureVertical(int, int):void");
+    void measureVertical(int widthMeasureSpec, int heightMeasureSpec) {
+        mTotalLength = 0;
+
+        final int count = getVirtualChildCount();
+        final int widthMode = View.MeasureSpec.getMode(widthMeasureSpec);
+        final int heightMode = View.MeasureSpec.getMode(heightMeasureSpec);
+
+        final int baselineChildIndex = mBaselineAlignedChildIndex;
+        final boolean useLargestChild = mUseLargestChild;
+
+        int largestChildHeight = 0;
+        int childState = 0;
+        int maxWidth = 0;
+        int alternativeMaxWidth = 0;
+        int weightedMaxWidth = 0;
+        boolean allFillParent = true;
+        boolean skippedMeasure = false;
+        float totalWeight = 0f;
+
+        for (int i = 0; i < count; i++) {
+            final View child = getVirtualChildAt(i);
+            if (child == null) {
+                mTotalLength += measureNullChild(i);
+                continue;
+            }
+            if (child.getVisibility() == View.GONE) {
+                i += getChildrenSkipCount(child, i);
+                continue;
+            }
+
+            if (hasDividerBeforeChildAt(i)) {
+                mTotalLength += mDividerHeight;
+            }
+
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            totalWeight += lp.weight;
+
+            if (heightMode == View.MeasureSpec.EXACTLY && lp.height == 0 && lp.weight > 0f) {
+                // Defer measuring this child until we distribute remaining space
+                final int totalLength = mTotalLength;
+                mTotalLength = Math.max(totalLength, totalLength + lp.topMargin + lp.bottomMargin);
+                skippedMeasure = true;
+            } else {
+                int oldHeight = Integer.MIN_VALUE;
+                if (lp.height == 0 && lp.weight > 0f) {
+                    // Measure with WRAP_CONTENT first so we can get a height for useLargestChild
+                    oldHeight = lp.height;
+                    lp.height = LayoutParams.WRAP_CONTENT;
+                }
+
+                final int usedTotal = (totalWeight == 0f) ? mTotalLength : 0;
+                measureChildBeforeLayout(child, i, widthMeasureSpec, 0, heightMeasureSpec, usedTotal);
+
+                if (oldHeight != Integer.MIN_VALUE) {
+                    lp.height = oldHeight;
+                }
+
+                final int childHeight = child.getMeasuredHeight();
+                final int total = mTotalLength + childHeight + lp.topMargin + lp.bottomMargin + getNextLocationOffset(child);
+                mTotalLength = Math.max(mTotalLength, total);
+
+                if (useLargestChild) {
+                    largestChildHeight = Math.max(largestChildHeight, childHeight);
+                }
+            }
+
+            if (baselineChildIndex >= 0 && baselineChildIndex == i + 1) {
+                mBaselineChildTop = mTotalLength;
+            }
+
+            if (i < baselineChildIndex && lp.weight > 0f) {
+                throw new RuntimeException(
+                    "A child of LinearLayout with index less than mBaselineAlignedChildIndex has weight > 0, " +
+                    "which won't work.  Either remove the weight, or don't set mBaselineAlignedChildIndex.");
+            }
+
+            final boolean matchWidthLocally = (widthMode != View.MeasureSpec.EXACTLY && lp.width == LayoutParams.MATCH_PARENT);
+            if (matchWidthLocally) {
+                allFillParent = true;
+            } else {
+                allFillParent = false;
+            }
+
+            final int margin = lp.leftMargin + lp.rightMargin;
+            final int measuredWidth = child.getMeasuredWidth() + margin;
+            maxWidth = Math.max(maxWidth, measuredWidth);
+            childState = View.combineMeasuredStates(childState, child.getMeasuredState());
+
+            final boolean matchWidth = (lp.width == LayoutParams.MATCH_PARENT);
+            if (matchWidth) {
+                alternativeMaxWidth = Math.max(alternativeMaxWidth, margin);
+            } else {
+                alternativeMaxWidth = Math.max(alternativeMaxWidth, measuredWidth);
+            }
+
+            if (lp.weight > 0f) {
+                // Width for weighted child: use margins only if we will remeasure later
+                weightedMaxWidth = Math.max(weightedMaxWidth, matchWidth ? margin : measuredWidth);
+            }
+
+            i += getChildrenSkipCount(child, i);
+        }
+
+        if (mTotalLength > 0 && hasDividerBeforeChildAt(count)) {
+            mTotalLength += mDividerHeight;
+        }
+
+        // If using largest child, ensure total length at least accounts for it
+        if (useLargestChild && (heightMode == View.MeasureSpec.AT_MOST || heightMode == View.MeasureSpec.UNSPECIFIED)) {
+            mTotalLength = 0;
+            for (int i = 0; i < count; i++) {
+                final View child = getVirtualChildAt(i);
+                if (child == null) {
+                    mTotalLength += measureNullChild(i);
+                    continue;
+                }
+                if (child.getVisibility() == View.GONE) {
+                    i += getChildrenSkipCount(child, i);
+                    continue;
+                }
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                final int total = mTotalLength + largestChildHeight + lp.topMargin + lp.bottomMargin + getNextLocationOffset(child);
+                mTotalLength = Math.max(mTotalLength, total);
+            }
+        }
+
+        mTotalLength += getPaddingTop() + getPaddingBottom();
+        int heightSize = Math.max(mTotalLength, getSuggestedMinimumHeight());
+        int heightSizeAndState = View.resolveSizeAndState(heightSize, heightMeasureSpec, 0);
+        int heightAvailable = heightSizeAndState & 0x00FFFFFF;
+        int remaining = heightAvailable - mTotalLength;
+
+        if (!skippedMeasure && remaining != 0 && totalWeight > 0f) {
+            float weightSum = mWeightSum > 0f ? mWeightSum : totalWeight;
+            mTotalLength = 0;
+
+            for (int i = 0; i < count; i++) {
+                final View child = getVirtualChildAt(i);
+                if (child.getVisibility() == View.GONE) {
+                    continue;
+                }
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (lp.weight > 0f) {
+                    int share = (int) (remaining * lp.weight / weightSum);
+                    int childWidthSpec = getChildMeasureSpec(widthMeasureSpec,
+                            getPaddingLeft() + getPaddingRight() + lp.leftMargin + lp.rightMargin,
+                            lp.width);
+                    int childHeight;
+                    if (lp.height == 0 && heightMode == View.MeasureSpec.EXACTLY) {
+                        childHeight = Math.max(0, child.getMeasuredHeight() + share);
+                    } else {
+                        childHeight = child.getMeasuredHeight() + share;
+                        if (childHeight < 0) childHeight = 0;
+                    }
+                    final int childHeightSpec = View.MeasureSpec.makeMeasureSpec(childHeight, View.MeasureSpec.EXACTLY);
+                    child.measure(childWidthSpec, childHeightSpec);
+
+                    childState = View.combineMeasuredStates(childState, child.getMeasuredState() & 0xFF00);
+                }
+
+                final int margin = lp.leftMargin + lp.rightMargin;
+                final int measuredWidth = child.getMeasuredWidth() + margin;
+                maxWidth = Math.max(maxWidth, measuredWidth);
+
+                final int total = mTotalLength + child.getMeasuredHeight() + lp.topMargin + lp.bottomMargin + getNextLocationOffset(child);
+                mTotalLength = Math.max(mTotalLength, total);
+
+                final boolean matchWidth = (lp.width == LayoutParams.MATCH_PARENT);
+                if (matchWidth) {
+                    alternativeMaxWidth = Math.max(alternativeMaxWidth, margin);
+                } else {
+                    alternativeMaxWidth = Math.max(alternativeMaxWidth, measuredWidth);
+                }
+            }
+
+            mTotalLength += getPaddingTop() + getPaddingBottom();
+            heightSizeAndState = View.resolveSizeAndState(Math.max(mTotalLength, getSuggestedMinimumHeight()),
+                    heightMeasureSpec, childState & 0xFF000000);
+        } else {
+            // take max of widths
+            maxWidth = Math.max(maxWidth, alternativeMaxWidth);
+            if (useLargestChild && heightMode != View.MeasureSpec.EXACTLY) {
+                // Remeasure children with largest height
+                for (int i = 0; i < count; i++) {
+                    final View child = getVirtualChildAt(i);
+                    if (child == null || child.getVisibility() == View.GONE) continue;
+                    final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                    if (lp.weight > 0f) {
+                        int childWidthSpec = View.MeasureSpec.makeMeasureSpec(child.getMeasuredWidth(), View.MeasureSpec.EXACTLY);
+                        final int childHeightSpec = View.MeasureSpec.makeMeasureSpec(largestChildHeight, View.MeasureSpec.EXACTLY);
+                        child.measure(childWidthSpec, childHeightSpec);
+                    }
+                }
+            }
+        }
+
+        int widthSize;
+        if (!allFillParent && widthMode != View.MeasureSpec.EXACTLY) {
+            widthSize = Math.max(maxWidth, weightedMaxWidth);
+        } else {
+            widthSize = maxWidth;
+        }
+
+        widthSize += getPaddingLeft() + getPaddingRight();
+        widthSize = Math.max(widthSize, getSuggestedMinimumWidth());
+
+        setMeasuredDimension(View.resolveSizeAndState(widthSize, widthMeasureSpec, childState), heightSizeAndState);
+
+        if (allFillParent) {
+            forceUniformWidth(count, heightMeasureSpec);
+        }
     }
 
     private void forceUniformWidth(int i, int i2) {
@@ -362,23 +561,209 @@ public class LinearLayoutCompat extends ViewGroup {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:199:0x0469  */
-    /* JADX WARN: Removed duplicated region for block: B:60:0x0170  */
-    /* JADX WARN: Removed duplicated region for block: B:67:0x0192  */
-    /* JADX WARN: Removed duplicated region for block: B:68:0x0195  */
-    /* JADX WARN: Removed duplicated region for block: B:75:0x01c1  */
-    /* JADX WARN: Removed duplicated region for block: B:78:0x01c8  */
-    /* JADX WARN: Removed duplicated region for block: B:83:0x01d6  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    void measureHorizontal(int r42, int r43) {
-        /*
-            Method dump skipped, instructions count: 1281
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.LinearLayoutCompat.measureHorizontal(int, int):void");
+    void measureHorizontal(int widthMeasureSpec, int heightMeasureSpec) {
+        mTotalLength = 0;
+
+        final int count = getVirtualChildCount();
+        final int widthMode = View.MeasureSpec.getMode(widthMeasureSpec);
+        final int heightMode = View.MeasureSpec.getMode(heightMeasureSpec);
+
+        if (mMaxAscent == null || mMaxDescent == null) {
+            mMaxAscent = new int[4];
+            mMaxDescent = new int[4];
+        }
+        final int[] maxAscent = mMaxAscent;
+        final int[] maxDescent = mMaxDescent;
+        for (int i = 0; i < 4; i++) {
+            maxAscent[i] = -1;
+            maxDescent[i] = -1;
+        }
+
+        final boolean baselineAligned = mBaselineAligned;
+        final boolean useLargestChild = mUseLargestChild;
+        final boolean isExactly = widthMode == View.MeasureSpec.EXACTLY;
+
+        int largestChildWidth = 0;
+        boolean fromLargest = false;
+
+        int childState = 0;
+        int totalHeight = 0;
+        int alternativeMaxHeight = 0;
+        int weightedMaxHeight = 0;
+        boolean allFillParent = true;
+        boolean skippedMeasure = false;
+        float totalWeight = 0f;
+
+        for (int i = 0; i < count; i++) {
+            final View child = getVirtualChildAt(i);
+            if (child == null) {
+                mTotalLength += measureNullChild(i);
+                continue;
+            }
+            if (child.getVisibility() == View.GONE) {
+                i += getChildrenSkipCount(child, i);
+                continue;
+            }
+
+            if (hasDividerBeforeChildAt(i)) {
+                mTotalLength += mDividerWidth;
+            }
+
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            totalWeight += lp.weight;
+
+            if (widthMode == View.MeasureSpec.EXACTLY && lp.width == 0 && lp.weight > 0f) {
+                // We defer measuring this child until second pass.
+                if (isExactly) {
+                    mTotalLength += lp.leftMargin + lp.rightMargin;
+                } else {
+                    mTotalLength = Math.max(mTotalLength,
+                            mTotalLength + lp.leftMargin + lp.rightMargin + getNextLocationOffset(child));
+                }
+                skippedMeasure = true;
+
+                if (baselineAligned) {
+                    // still need to set a 0x0 measure to keep baseline arrays in sync
+                    final int spec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+                    child.measure(spec, spec);
+                }
+            } else {
+                int oldWidth = Integer.MIN_VALUE;
+                if (lp.width == 0 && lp.weight > 0f) {
+                    oldWidth = lp.width;
+                    lp.width = LayoutParams.WRAP_CONTENT;
+                }
+
+                final int usedTotal = (totalWeight == 0f) ? mTotalLength : 0;
+                measureChildBeforeLayout(child, i, widthMeasureSpec, usedTotal, heightMeasureSpec, 0);
+
+                if (oldWidth != Integer.MIN_VALUE) {
+                    lp.width = oldWidth;
+                }
+
+                final int childWidth = child.getMeasuredWidth();
+                if (isExactly) {
+                    mTotalLength += childWidth + lp.leftMargin + lp.rightMargin + getNextLocationOffset(child);
+                } else {
+                    mTotalLength = Math.max(mTotalLength,
+                            mTotalLength + childWidth + lp.leftMargin + lp.rightMargin + getNextLocationOffset(child));
+                }
+
+                if (useLargestChild) {
+                    largestChildWidth = Math.max(largestChildWidth, childWidth);
+                }
+            }
+
+            final boolean matchHeightLocally = (heightMode != View.MeasureSpec.EXACTLY && lp.height == LayoutParams.MATCH_PARENT);
+            if (matchHeightLocally) {
+                allFillParent = true;
+            } else {
+                allFillParent = false;
+            }
+
+            int childHeight = child.getMeasuredHeight();
+            final int childStateLocal = child.getMeasuredState();
+            childState = View.combineMeasuredStates(childState, childStateLocal);
+
+            if (baselineAligned) {
+                final int childBaseline = child.getBaseline();
+                if (childBaseline != -1) {
+                    final int gravity = (lp.gravity >= 0 ? lp.gravity : mGravity) & 0x70;
+                    final int index = ((gravity >> 4) & ~0x1) >> 1;
+                    maxAscent[index] = Math.max(maxAscent[index], childBaseline);
+                    maxDescent[index] = Math.max(maxDescent[index], childHeight - childBaseline);
+                }
+            }
+
+            totalHeight = Math.max(totalHeight, childHeight + lp.topMargin + lp.bottomMargin);
+            if (heightMode != View.MeasureSpec.EXACTLY && lp.height == LayoutParams.MATCH_PARENT) {
+                alternativeMaxHeight = Math.max(alternativeMaxHeight, lp.topMargin + lp.bottomMargin);
+            } else {
+                alternativeMaxHeight = Math.max(alternativeMaxHeight, childHeight + lp.topMargin + lp.bottomMargin);
+            }
+
+            if (lp.weight > 0f) {
+                weightedMaxHeight = Math.max(weightedMaxHeight,
+                        matchHeightLocally ? (lp.topMargin + lp.bottomMargin)
+                                           : (childHeight + lp.topMargin + lp.bottomMargin));
+            }
+
+            i += getChildrenSkipCount(child, i);
+        }
+
+        if (mTotalLength > 0 && hasDividerBeforeChildAt(count)) {
+            mTotalLength += mDividerWidth;
+        }
+
+        // Account for baseline alignment
+        int ascent = Math.max(maxAscent[0], Math.max(maxAscent[1], Math.max(maxAscent[2], maxAscent[3])));
+        int descent = Math.max(maxDescent[0], Math.max(maxDescent[1], Math.max(maxDescent[2], maxDescent[3])));
+        totalHeight = Math.max(totalHeight, ascent + descent);
+
+        if (useLargestChild && (widthMode == View.MeasureSpec.AT_MOST || widthMode == View.MeasureSpec.UNSPECIFIED)) {
+            mTotalLength = 0;
+            for (int i = 0; i < count; i++) {
+                final View child = getVirtualChildAt(i);
+                if (child == null) {
+                    mTotalLength += measureNullChild(i);
+                    continue;
+                }
+                if (child.getVisibility() == View.GONE) {
+                    i += getChildrenSkipCount(child, i);
+                    continue;
+                }
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (isExactly) {
+                    mTotalLength += largestChildWidth + lp.leftMargin + lp.rightMargin + getNextLocationOffset(child);
+                } else {
+                    mTotalLength = Math.max(mTotalLength,
+                            mTotalLength + largestChildWidth + lp.leftMargin + lp.rightMargin + getNextLocationOffset(child));
+                }
+            }
+        }
+
+        mTotalLength += getPaddingLeft() + getPaddingRight();
+        int widthSize = Math.max(mTotalLength, getSuggestedMinimumWidth());
+        int widthSizeAndState = View.resolveSizeAndState(widthSize, widthMeasureSpec, 0);
+        int widthAvailable = widthSizeAndState & 0x00FFFFFF;
+        int remaining = widthAvailable - mTotalLength;
+
+        if (!skippedMeasure && remaining != 0 && totalWeight > 0f) {
+            float weightSum = mWeightSum > 0f ? mWeightSum : totalWeight;
+            for (int i = 0; i < count; i++) {
+                final View child = getVirtualChildAt(i);
+                if (child.getVisibility() == View.GONE) continue;
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (lp.weight > 0f) {
+                    int share = (int) (remaining * lp.weight / weightSum);
+                    int childWidth = child.getMeasuredWidth() + share;
+                    if (childWidth < 0) childWidth = 0;
+
+                    final int childWidthSpec = View.MeasureSpec.makeMeasureSpec(childWidth, View.MeasureSpec.EXACTLY);
+                    final int childHeightSpec = getChildMeasureSpec(heightMeasureSpec,
+                            getPaddingTop() + getPaddingBottom() + lp.topMargin + lp.bottomMargin, lp.height);
+                    child.measure(childWidthSpec, childHeightSpec);
+
+                    childState = View.combineMeasuredStates(childState, child.getMeasuredState() & 0xFF000000);
+                }
+            }
+        }
+
+        int heightSize;
+        if (!allFillParent && heightMode != View.MeasureSpec.EXACTLY) {
+            heightSize = Math.max(totalHeight, Math.max(alternativeMaxHeight, weightedMaxHeight));
+        } else {
+            heightSize = Math.max(totalHeight, alternativeMaxHeight);
+        }
+
+        heightSize += getPaddingTop() + getPaddingBottom();
+        heightSize = Math.max(heightSize, getSuggestedMinimumHeight());
+
+        setMeasuredDimension(widthSizeAndState, View.resolveSizeAndState(heightSize, heightMeasureSpec, childState << 16));
+
+        if (allFillParent) {
+            forceUniformHeight(count, widthMeasureSpec);
+        }
     }
 
     private void forceUniformHeight(int i, int i2) {
@@ -468,20 +853,106 @@ public class LinearLayoutCompat extends ViewGroup {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:30:0x00b6  */
-    /* JADX WARN: Removed duplicated region for block: B:33:0x00bf  */
-    /* JADX WARN: Removed duplicated region for block: B:48:0x00f6  */
-    /* JADX WARN: Removed duplicated region for block: B:51:0x010a  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    void layoutHorizontal(int r28, int r29, int r30, int r31) {
-        /*
-            Method dump skipped, instructions count: 340
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.LinearLayoutCompat.layoutHorizontal(int, int, int, int):void");
+    void layoutHorizontal(int left, int top, int right, int bottom) {
+        final boolean isRtl = android.support.v7.widget.ViewUtils.isLayoutRtl(this);
+
+        final int paddingTop = getPaddingTop();
+        final int height = bottom - top;
+        final int paddingBottom = getPaddingBottom();
+        final int bottomEdge = height - paddingBottom;
+        final int innerHeight = height - paddingTop - paddingBottom;
+
+        final int count = getVirtualChildCount();
+
+        int majorGravity = mGravity & 0x800007;
+        final int minorGravity = mGravity & 0x70;
+
+        final int layoutDir = android.support.v4.view.ViewCompat.getLayoutDirection(this);
+        majorGravity = android.support.v4.view.GravityCompat.getAbsoluteGravity(majorGravity, layoutDir);
+
+        int childLeft;
+        switch (majorGravity) {
+            case android.view.Gravity.CENTER_HORIZONTAL:
+                childLeft = getPaddingLeft() + (right - left - mTotalLength) / 2;
+                break;
+            case android.view.Gravity.RIGHT:
+                childLeft = getPaddingLeft() + (right - left) - mTotalLength;
+                break;
+            case android.view.Gravity.LEFT:
+            default:
+                childLeft = getPaddingLeft();
+                break;
+        }
+
+        int start, dir;
+        if (isRtl) {
+            start = count - 1;
+            dir = -1;
+        } else {
+            start = 0;
+            dir = 1;
+        }
+
+        for (int i = 0, index = start; i < count; i++, index += dir) {
+            final View child = getVirtualChildAt(index);
+            if (child == null) {
+                childLeft += measureNullChild(index);
+                continue;
+            }
+            if (child.getVisibility() == View.GONE) {
+                i += getChildrenSkipCount(child, index);
+                continue;
+            }
+
+            final int childWidth = child.getMeasuredWidth();
+            final int childHeight = child.getMeasuredHeight();
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+
+            int childTop;
+            int layoutGravity = lp.gravity;
+            if (layoutGravity < 0) {
+                layoutGravity = minorGravity;
+            }
+            switch (layoutGravity & 0x70) {
+                case android.view.Gravity.TOP: {
+                    childTop = paddingTop + lp.topMargin;
+                    final int baseline = (mBaselineAligned && lp.height != LayoutParams.MATCH_PARENT) ? child.getBaseline() : -1;
+                    if (baseline != -1) {
+                        final int indexA = (((layoutGravity & 0x70) >> 4) & ~0x1) >> 1;
+                        childTop += (mMaxAscent[1] - baseline); // aligns to ascent bucket per fallback
+                    }
+                    break;
+                }
+                case android.view.Gravity.BOTTOM: {
+                    childTop = bottomEdge - childHeight - lp.bottomMargin;
+                    final int baseline = (mBaselineAligned && lp.height != LayoutParams.MATCH_PARENT) ? child.getBaseline() : -1;
+                    if (baseline != -1) {
+                        final int delta = childHeight - baseline;
+                        childTop -= (mMaxDescent[2] - delta);
+                    }
+                    break;
+                }
+                case android.view.Gravity.CENTER_VERTICAL:
+                default: {
+                    childTop = paddingTop + (innerHeight - childHeight) / 2
+                            + lp.topMargin - lp.bottomMargin;
+                    break;
+                }
+            }
+
+            if (hasDividerBeforeChildAt(index)) {
+                childLeft += mDividerWidth;
+            }
+
+            final int leftMargin = lp.leftMargin;
+            final int locationOffset = getLocationOffset(child);
+            final int cl = childLeft + leftMargin + locationOffset;
+
+            setChildFrame(child, cl, childTop, childWidth, childHeight);
+
+            childLeft = cl + childWidth + lp.rightMargin + getNextLocationOffset(child);
+            i += getChildrenSkipCount(child, index);
+        }
     }
 
     private void setChildFrame(View view, int i, int i2, int i3, int i4) {

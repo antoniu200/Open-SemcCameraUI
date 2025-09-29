@@ -151,38 +151,26 @@ public final class zzg {
         return resources.getString(i2);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:10:0x0019  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static java.lang.String zzh(android.content.Context r1, int r2) {
-        /*
-            android.content.res.Resources r1 = r1.getResources()
-            r0 = 42
-            if (r2 == r0) goto L19
-            switch(r2) {
-                case 1: goto L16;
-                case 2: goto L19;
-                case 3: goto L13;
-                default: goto Lb;
+    public static String zzh(android.content.Context ctx, int code) {
+        android.content.res.Resources res = ctx.getResources();
+        int id;
+        if (code == 42) {
+            id = com.google.android.gms.R.string.common_google_play_services_update_button;
+        } else {
+            switch (code) {
+                case 1:
+                    id = com.google.android.gms.R.string.common_google_play_services_install_button;
+                    break;
+                case 3:
+                    id = com.google.android.gms.R.string.common_google_play_services_enable_button;
+                    break;
+                case 2:
+                default:
+                    id = 17039370; // android.R.string.ok
+                    break;
             }
-        Lb:
-            r2 = 17039370(0x104000a, float:2.42446E-38)
-        Le:
-            java.lang.String r1 = r1.getString(r2)
-            return r1
-        L13:
-            int r2 = com.google.android.gms.R.string.common_google_play_services_enable_button
-            goto Le
-        L16:
-            int r2 = com.google.android.gms.R.string.common_google_play_services_install_button
-            goto Le
-        L19:
-            int r2 = com.google.android.gms.R.string.common_google_play_services_update_button
-            goto Le
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.android.gms.common.internal.zzg.zzh(android.content.Context, int):java.lang.String");
+        }
+        return res.getString(id);
     }
 
     public static final String zzi(Context context, int i) {

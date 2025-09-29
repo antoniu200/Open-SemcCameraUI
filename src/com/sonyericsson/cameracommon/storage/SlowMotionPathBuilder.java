@@ -26,17 +26,100 @@ public class SlowMotionPathBuilder {
         this.mSuffix = str;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:18:0x0034  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public java.lang.String get(java.lang.String r9, java.lang.String r10, long r11, com.sonyericsson.cameracommon.storage.Storage.StorageType r13) {
-        /*
-            Method dump skipped, instructions count: 336
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.storage.SlowMotionPathBuilder.get(java.lang.String, java.lang.String, long, com.sonyericsson.cameracommon.storage.Storage$StorageType):java.lang.String");
+    public String get(final String s, String s2, final long n, final Storage.StorageType storageType) {
+        final int hashCode = s2.hashCode();
+        int n2 = 0;
+        Label_0078: {
+            if (hashCode != -351666540) {
+                if (hashCode != 1185702096) {
+                    if (hashCode == 1616114994) {
+                        if (s2.equals("STANDARD_SLOW_MOTION")) {
+                            n2 = 1;
+                            break Label_0078;
+                        }
+                    }
+                }
+                else if (s2.equals("SUPER_SLOW_MOTION")) {
+                    n2 = 0;
+                    break Label_0078;
+                }
+            }
+            else if (s2.equals("SUPER_SLOW_SHOT")) {
+                n2 = 2;
+                break Label_0078;
+            }
+            n2 = -1;
+        }
+        switch (n2) {
+            case 2: {
+                this.mPrefix = "MOV_SM_960F_";
+                break;
+            }
+            case 1: {
+                this.mPrefix = "MOV_HFR_120F_";
+                break;
+            }
+            case 0: {
+                this.mPrefix = "MOV_SM_P960F_";
+                break;
+            }
+        }
+        if (storageType != Storage.StorageType.EXTERNAL_CARD) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append(s);
+            sb.append(File.separator);
+            sb.append(SlowMotionPathBuilder.DCF_DIR_NAME_FREE_WORD_XPERIA_SLOW_MOTION);
+            if (!makeDirectories(sb.toString())) {
+                CamLog.e("Failed to make directory for slow motion video content.");
+                return null;
+            }
+        }
+        else {
+            final Uri sdCardGrantedUri = StorageUtil.getSdCardGrantedUri(CameraApplication.getContext());
+            if (StorageUtil.isExistDcimDirectory(sdCardGrantedUri)) {
+                s2 = SlowMotionPathBuilder.DCF_DIR_NAME_FREE_WORD_XPERIA_SLOW_MOTION;
+            }
+            else {
+                final StringBuilder sb2 = new StringBuilder();
+                sb2.append(Environment.DIRECTORY_DCIM);
+                sb2.append("/");
+                sb2.append(SlowMotionPathBuilder.DCF_DIR_NAME_FREE_WORD_XPERIA_SLOW_MOTION);
+                s2 = sb2.toString();
+            }
+            if (StorageUtil.createDirectory(CameraApplication.getContext(), sdCardGrantedUri, s2) == null) {
+                CamLog.e("Failed to make directory on SD card for slow motion video content.");
+                return null;
+            }
+        }
+        final Calendar instance = Calendar.getInstance();
+        for (int i = 0; i < 10; ++i) {
+            instance.setTimeInMillis(i * 1000L + n);
+            final String format = new SimpleDateFormat("yyyyMMddHHmmss", Locale.US).format(instance.getTime());
+            final StringBuilder sb3 = new StringBuilder();
+            sb3.append(s);
+            sb3.append(File.separator);
+            sb3.append(SlowMotionPathBuilder.DCF_DIR_NAME_FREE_WORD_XPERIA_SLOW_MOTION);
+            sb3.append(File.separator);
+            sb3.append(this.mPrefix);
+            sb3.append(format);
+            sb3.append(this.mSuffix);
+            final String string = sb3.toString();
+            if (!new File(string).exists()) {
+                if (CamLog.VERBOSE) {
+                    final StringBuilder sb4 = new StringBuilder();
+                    sb4.append("Generate path:");
+                    sb4.append(string);
+                    CamLog.d(sb4.toString());
+                }
+                return string;
+            }
+            final StringBuilder sb5 = new StringBuilder();
+            sb5.append("Generated path already exists. Try to generate next path. tryCount:");
+            sb5.append(i);
+            CamLog.w(sb5.toString());
+        }
+        CamLog.e("Failed to generate path. retry:10");
+        return null;
     }
 
     private static boolean makeDirectories(String str) {

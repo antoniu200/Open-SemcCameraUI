@@ -85,17 +85,181 @@ public final class Imaging {
         throw new RuntimeException("Invalid Byte Pair.");
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:95:0x016c A[Catch: all -> 0x0037, TRY_ENTER, TRY_LEAVE, TryCatch #0 {all -> 0x0037, blocks: (B:13:0x002d, B:21:0x0044, B:25:0x0053, B:29:0x0062, B:33:0x0071, B:37:0x0080, B:41:0x008f, B:45:0x009e, B:49:0x00ad, B:53:0x00bd, B:57:0x00cd, B:61:0x00dd, B:65:0x00ed, B:69:0x00fd, B:79:0x012c, B:95:0x016c, B:85:0x0144, B:89:0x0154, B:93:0x0164), top: B:106:0x002b }] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static org.apache.commons.imaging.ImageFormat guessFormat(org.apache.commons.imaging.common.bytesource.ByteSource r6) throws java.lang.Throwable {
-        /*
-            Method dump skipped, instructions count: 395
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.Imaging.guessFormat(org.apache.commons.imaging.common.bytesource.ByteSource):org.apache.commons.imaging.ImageFormat");
+    public static ImageFormat guessFormat(ByteSource inputStream) throws ImageReadException, IOException {
+        if (inputStream == null) {
+            return ImageFormats.UNKNOWN;
+        }
+        Closeable closeable;
+        try {
+            inputStream = (ByteSource)inputStream.getInputStream();
+            try {
+                final int read = ((InputStream)inputStream).read();
+                final int read2 = ((InputStream)inputStream).read();
+                if (read < 0 || read2 < 0) {
+                    throw new ImageReadException("Couldn't read magic numbers to guess format.");
+                }
+                final int[] array = { read & 0xFF, read2 & 0xFF };
+                boolean b = compareBytePair(Imaging.MAGIC_NUMBERS_GIF, array);
+                while (true) {
+                    Label_0111: {
+                        if (!b) {
+                            break Label_0111;
+                        }
+                        try {
+                            final Object gif = ImageFormats.GIF;
+                            final Closeable[] array2 = { (Closeable)inputStream };
+                            inputStream = (ByteSource)gif;
+                            IoUtils.closeQuietly(true, array2);
+                            return (ImageFormat)inputStream;
+                        }
+                        finally {
+                            b = true;
+                        }
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PNG, array);
+                    if (b) {
+                        final Object png = ImageFormats.PNG;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)png;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_JPEG, array);
+                    if (b) {
+                        final Object jpeg = ImageFormats.JPEG;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)jpeg;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_BMP, array);
+                    if (b) {
+                        final Object bmp = ImageFormats.BMP;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)bmp;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_TIFF_MOTOROLA, array);
+                    if (b) {
+                        final Object tiff = ImageFormats.TIFF;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)tiff;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_TIFF_INTEL, array);
+                    if (b) {
+                        final Object tiff2 = ImageFormats.TIFF;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)tiff2;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PSD, array);
+                    if (b) {
+                        final Object psd = ImageFormats.PSD;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)psd;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PAM, array);
+                    if (b) {
+                        final Object pam = ImageFormats.PAM;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)pam;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PBM_A, array);
+                    if (b) {
+                        final Object pbm = ImageFormats.PBM;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)pbm;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PBM_B, array);
+                    if (b) {
+                        final Object pbm2 = ImageFormats.PBM;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)pbm2;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PGM_A, array);
+                    if (b) {
+                        final Object pgm = ImageFormats.PGM;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)pgm;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PGM_B, array);
+                    if (b) {
+                        final Object pgm2 = ImageFormats.PGM;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)pgm2;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PPM_A, array);
+                    if (b) {
+                        final Object ppm = ImageFormats.PPM;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)ppm;
+                        continue;
+                    }
+                    b = compareBytePair(Imaging.MAGIC_NUMBERS_PPM_B, array);
+                    if (b) {
+                        final Object ppm2 = ImageFormats.PPM;
+                        final Closeable[] array2 = { (Closeable)inputStream };
+                        inputStream = (ByteSource)ppm2;
+                        continue;
+                    }
+                    if (compareBytePair(Imaging.MAGIC_NUMBERS_JBIG2_1, array)) {
+                        final int read3 = ((InputStream)inputStream).read();
+                        final int read4 = ((InputStream)inputStream).read();
+                        if (read3 < 0 || read4 < 0) {
+                            throw new ImageReadException("Couldn't read magic numbers to guess format.");
+                        }
+                        b = compareBytePair(Imaging.MAGIC_NUMBERS_JBIG2_2, new int[] { read3 & 0xFF, read4 & 0xFF });
+                        if (b) {
+                            final Object jbig2 = ImageFormats.JBIG2;
+                            final Closeable[] array2 = { (Closeable)inputStream };
+                            inputStream = (ByteSource)jbig2;
+                            continue;
+                        }
+                    }
+                    else {
+                        b = compareBytePair(Imaging.MAGIC_NUMBERS_ICNS, array);
+                        if (b) {
+                            final Object icns = ImageFormats.ICNS;
+                            final Closeable[] array2 = { (Closeable)inputStream };
+                            inputStream = (ByteSource)icns;
+                            continue;
+                        }
+                        b = compareBytePair(Imaging.MAGIC_NUMBERS_DCX, array);
+                        if (b) {
+                            final Object dcx = ImageFormats.DCX;
+                            final Closeable[] array2 = { (Closeable)inputStream };
+                            inputStream = (ByteSource)dcx;
+                            continue;
+                        }
+                        b = compareBytePair(Imaging.MAGIC_NUMBERS_RGBE, array);
+                        if (b) {
+                            final Object rgbe = ImageFormats.RGBE;
+                            final Closeable[] array2 = { (Closeable)inputStream };
+                            inputStream = (ByteSource)rgbe;
+                            continue;
+                        }
+                    }
+                    final Object unknown = ImageFormats.UNKNOWN;
+                    final Closeable[] array2 = { (Closeable)inputStream };
+                    inputStream = (ByteSource)unknown;
+                    continue;
+                }
+            }
+            finally {}
+        }
+        finally {
+            closeable = null;
+        }
+        boolean b = false;
+        final Throwable t2;
+        final Throwable t = t2;
+        IoUtils.closeQuietly(b, closeable);
+        throw t;
     }
 
     public static ICC_Profile getICCProfile(byte[] bArr) throws IOException, ImageReadException {

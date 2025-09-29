@@ -5,6 +5,7 @@ import android.graphics.Rect;
 import android.os.Build;
 import android.support.v4.util.ArrayMap;
 import android.support.v4.view.ViewCompat;
+import android.transition.Transition;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -646,21 +647,110 @@ class FragmentTransition {
         return (PLATFORM_IMPL == null && SUPPORT_IMPL == null) ? false : true;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:46:0x006d  */
-    /* JADX WARN: Removed duplicated region for block: B:47:0x006f  */
-    /* JADX WARN: Removed duplicated region for block: B:54:0x007e  */
-    /* JADX WARN: Removed duplicated region for block: B:60:0x008b  */
-    /* JADX WARN: Removed duplicated region for block: B:61:0x008d  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static void addToFirstInLastOut(android.support.v4.app.BackStackRecord r16, android.support.v4.app.BackStackRecord.Op r17, android.util.SparseArray<android.support.v4.app.FragmentTransition.FragmentContainerTransition> r18, boolean r19, boolean r20) throws android.content.res.Resources.NotFoundException {
-        /*
-            Method dump skipped, instructions count: 250
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.app.FragmentTransition.addToFirstInLastOut(android.support.v4.app.BackStackRecord, android.support.v4.app.BackStackRecord$Op, android.util.SparseArray, boolean, boolean):void");
+    /**
+     * Examines the {@code command} and may set the first out or last in fragment for the fragment's
+     * container.
+     *
+     * @param transaction The executing transaction
+     * @param op The operation being run.
+     * @param transitioningFragments A structure holding the first in and last out fragments
+     *                               for each fragment container.
+     * @param isPop Is the operation a pop?
+     * @param isOptimizedTransaction True if the operations have been partially executed and the
+     *                               added fragments have Views in the hierarchy or false if the
+     *                               operations haven't been executed yet.
+     */
+    private static void addToFirstInLastOut(BackStackRecord transaction, BackStackRecord.Op op,
+            SparseArray<FragmentContainerTransition> transitioningFragments, boolean isPop,
+            boolean isOptimizedTransaction) {
+        final Fragment fragment = op.fragment;
+        if (fragment == null) {
+            return; // no fragment, no transition
+        }
+        final int containerId = fragment.mContainerId;
+        if (containerId == 0) {
+            return; // no container, no transition
+        }
+        final int command = isPop ? INVERSE_OPS[op.cmd] : op.cmd;
+        boolean setLastIn = false;
+        boolean wasRemoved = false;
+        boolean setFirstOut = false;
+        boolean wasAdded = false;
+        switch (command) {
+            case BackStackRecord.OP_SHOW:
+                if (isOptimizedTransaction) {
+                    setLastIn = fragment.mHiddenChanged && !fragment.mHidden &&
+                            fragment.mAdded;
+                } else {
+                    setLastIn = fragment.mHidden;
+                }
+                wasAdded = true;
+                break;
+            case BackStackRecord.OP_ADD:
+            case BackStackRecord.OP_ATTACH:
+                if (isOptimizedTransaction) {
+                    setLastIn = fragment.mIsNewlyAdded;
+                } else {
+                    setLastIn = !fragment.mAdded && !fragment.mHidden;
+                }
+                wasAdded = true;
+                break;
+            case BackStackRecord.OP_HIDE:
+                if (isOptimizedTransaction) {
+                    setFirstOut = fragment.mHiddenChanged && fragment.mAdded &&
+                            fragment.mHidden;
+                } else {
+                    setFirstOut = fragment.mAdded && !fragment.mHidden;
+                }
+                wasRemoved = true;
+                break;
+            case BackStackRecord.OP_REMOVE:
+            case BackStackRecord.OP_DETACH:
+                if (isOptimizedTransaction) {
+                    setFirstOut = !fragment.mAdded && fragment.mView != null
+                            && fragment.mView.getVisibility() == View.VISIBLE
+                            && fragment.mView.getTransitionAlpha() > 0;
+                } else {
+                    setFirstOut = fragment.mAdded && !fragment.mHidden;
+                }
+                wasRemoved = true;
+                break;
+        }
+        FragmentContainerTransition containerTransition = transitioningFragments.get(containerId);
+        if (setLastIn) {
+            containerTransition =
+                    ensureContainer(containerTransition, transitioningFragments, containerId);
+            containerTransition.lastIn = fragment;
+            containerTransition.lastInIsPop = isPop;
+            containerTransition.lastInTransaction = transaction;
+        }
+        if (!isOptimizedTransaction && wasAdded) {
+            if (containerTransition != null && containerTransition.firstOut == fragment) {
+                containerTransition.firstOut = null;
+            }
+            /**
+             * Ensure that fragments that are entering are at least at the CREATED state
+             * so that they may load Transitions using TransitionInflater.
+             */
+            FragmentManagerImpl manager = transaction.mManager;
+            if (fragment.mState < Fragment.CREATED && manager.mCurState >= Fragment.CREATED &&
+                    manager.mHost.getContext().getApplicationInfo().targetSdkVersion >=
+                            Build.VERSION_CODES.N && !transaction.mAllowOptimization) {
+                manager.makeActive(fragment);
+                manager.moveToState(fragment, Fragment.CREATED, 0, 0, false);
+            }
+        }
+        if (setFirstOut && (containerTransition == null || containerTransition.firstOut == null)) {
+            containerTransition =
+                    ensureContainer(containerTransition, transitioningFragments, containerId);
+            containerTransition.firstOut = fragment;
+            containerTransition.firstOutIsPop = isPop;
+            containerTransition.firstOutTransaction = transaction;
+        }
+        if (!isOptimizedTransaction && wasRemoved &&
+                (containerTransition != null && containerTransition.lastIn == fragment)) {
+            containerTransition.lastIn = null;
+        }
     }
 
     private static FragmentContainerTransition ensureContainer(FragmentContainerTransition fragmentContainerTransition, SparseArray<FragmentContainerTransition> sparseArray, int i) {

@@ -87,20 +87,55 @@ class AudioTrack extends Track implements ClockInterface {
         this.mIsPauseLatchDown = true;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:24:0x007f  */
-    /* JADX WARN: Removed duplicated region for block: B:25:0x008c  */
-    /* JADX WARN: Removed duplicated region for block: B:41:0x0061 A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    @Override // com.sonymobile.android.media.internal.Track
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
+    @Override
     protected void doPrepare() {
-        /*
-            Method dump skipped, instructions count: 246
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonymobile.android.media.internal.AudioTrack.doPrepare():void");
+        final MediaCodecList list = new MediaCodecList(0);
+        final MediaFormat audioFormat = MediaFormat.createAudioFormat(this.mAudioMime, this.mAudioSamplingRate, this.mNumAudioChannels);
+        audioFormat.setInteger("bitrate", this.mAudioBitRate);
+        if (this.mOperatingRate > 0) {
+            audioFormat.setInteger("operating-rate", this.mOperatingRate);
+        }
+        if (!this.checkFormat(list, audioFormat, this.mAudioMime)) {
+            goto Label_0334;
+        }
+        int n;
+        if (this.mNumAudioChannels == 1) {
+            n = 16;
+        }
+        else if (this.mNumAudioChannels == 2) {
+            n = 12;
+        }
+        else {
+            n = 1;
+        }
+        try {
+            this.mInputBufferSize = AudioRecord.getMinBufferSize(this.mAudioSamplingRate, this.mNumAudioChannels, 2) * 2;
+            this.mAudioRecorder = new AudioRecord(this.mAudioSource, this.mAudioSamplingRate, n, 2, this.mInputBufferSize);
+            if (!this.mAudioMime.equals("audio/mp4a-latm")) {
+                goto Label_0202;
+            }
+            try {
+                this.mEncoder = MediaCodec.createByCodecName("OMX.qcom.audio.encoder.aac");
+                goto Label_0202;
+            }
+            catch (final IOException | NullPointerException ex) {
+                Log.e("AudioTrack", "Unable to create encoder", (Throwable)ex);
+                this.mCallback.obtainMessage(1, 4, 2).sendToTarget();
+                return;
+            }
+            catch (final IllegalArgumentException ex2) {
+                goto Label_0202;
+            }
+            try {
+                final String s;
+                this.mEncoder = MediaCodec.createByCodecName(s);
+                this.mBufferList = new LinkedBlockingDeque<EncodedBuffer>();
+                this.mEncoder.setCallback((MediaCodec.Callback)new AudioEncoderCallback());
+                this.mEncoder.configure(audioFormat, (Surface)null, (MediaCrypto)null, 1);
+            }
+            catch (final IOException | NullPointerException | IllegalArgumentException ex3) {}
+        }
+        catch (final IllegalArgumentException ex4) {}
     }
 
     @Override // com.sonymobile.android.media.internal.Track

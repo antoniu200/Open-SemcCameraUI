@@ -2,13 +2,16 @@ package android.support.v7.graphics.drawable;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.FloatRange;
 import android.support.annotation.RestrictTo;
+import android.support.v4.graphics.drawable.DrawableCompat
 import android.support.v7.appcompat.R;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -161,18 +164,80 @@ public class DrawerArrowDrawable extends Drawable {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:7:0x0018 A[FALL_THROUGH] */
     @Override // android.graphics.drawable.Drawable
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public void draw(android.graphics.Canvas r21) {
-        /*
-            Method dump skipped, instructions count: 288
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.graphics.drawable.DrawerArrowDrawable.draw(android.graphics.Canvas):void");
+    public void draw(Canvas canvas) {
+        final Rect bounds = getBounds();
+
+        // Resolve "pointing-right" depending on explicit direction & layout dir
+        boolean pointRight = false;
+        switch (mDirection) {
+            case 0: // left
+                pointRight = false;
+                break;
+            case 1: // right
+                pointRight = true;
+                break;
+            case 3: // end
+                pointRight = (DrawableCompat.getLayoutDirection(this) == 0); // LTR -> right
+                break;
+            default: // start
+                pointRight = (DrawableCompat.getLayoutDirection(this) == 1); // RTL -> right
+                break;
+        }
+
+        // Interpolated dimensions
+        final float arrowHeadHypot = (float) Math.sqrt(2f * mArrowHeadLength * mArrowHeadLength);
+        final float barLen = lerp(mBarLength, arrowHeadHypot, mProgress);
+        final float shaftLen = lerp(mBarLength, mArrowShaftLength, mProgress);
+        final float cut = Math.round(lerp(0f, mMaxCutForBarSize, mProgress));
+        final float angle = lerp(0f, ARROW_HEAD_ANGLE, mProgress); // radians
+
+        // Rotation interpolation (degrees)
+        final float startDeg = pointRight ? 0f : -180f;
+        final float endDeg   = pointRight ? 180f : 0f;
+        final float rotation = lerp(startDeg, endDeg, mProgress);
+
+        // Compute head vectors
+        final float x = Math.round(barLen * (float) Math.cos(angle));
+        final float y = Math.round(barLen * (float) Math.sin(angle));
+
+        // Build path for shaft + two head segments
+        mPath.rewind();
+        final float gapPlusStroke = mBarGap + mPaint.getStrokeWidth();
+        final float shaftY = lerp(gapPlusStroke, -mMaxCutForBarSize, mProgress);
+
+        final float halfShaft = -shaftLen / 2f;
+        mPath.moveTo(halfShaft + cut, 0f);
+        mPath.rLineTo(shaftLen - 2f * cut, 0f);
+
+        mPath.moveTo(halfShaft,  shaftY);
+        mPath.rLineTo(x, y);
+
+        mPath.moveTo(halfShaft, -shaftY);
+        mPath.rLineTo(x, -y);
+        mPath.close();
+
+        // Translate to center X and computed Y offset
+        canvas.save();
+        final float stroke = mPaint.getStrokeWidth();
+        float yOffset = (bounds.height() - 3f * stroke - 2f * mBarGap);
+        yOffset = (float) ((int) yOffset); // match fallback's integer truncation
+        yOffset = (float) (((int) yOffset / 4) * 2);
+        yOffset += 1.5f * stroke + mBarGap;
+
+        canvas.translate(bounds.centerX(), yOffset);
+
+        // Apply rotation
+        if (mSpin) {
+            final boolean flip = mVerticalMirror ^ pointRight;
+            canvas.rotate(flip ? -rotation : rotation);
+        } else if (pointRight) {
+            canvas.rotate(180f);
+        }
+
+        // Draw
+        canvas.drawPath(mPath, mPaint);
+        canvas.restore();
     }
 
     @Override // android.graphics.drawable.Drawable

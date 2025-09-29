@@ -208,26 +208,63 @@ public class CameraParameterConverter {
         }
     }
 
-    static class AeMode {
-        AeMode() {
-        }
+    static int getApi2Value(String aeMode, String flashMode) {
+        if (flashMode == null || aeMode == null) return 0;
 
-        /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-        /* JADX WARN: Removed duplicated region for block: B:26:0x0056  */
-        /* JADX WARN: Removed duplicated region for block: B:52:0x00ad  */
-        /* JADX WARN: Removed duplicated region for block: B:76:0x00f1  */
-        /* JADX WARN: Removed duplicated region for block: B:77:0x00f4  */
-        /* JADX WARN: Removed duplicated region for block: B:78:0x00f7  */
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        static int getApi2Value(java.lang.String r14, java.lang.String r15) {
-            /*
-                Method dump skipped, instructions count: 544
-                To view this dump change 'Code comments level' option to 'DEBUG'
-            */
-            throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.device.CameraParameterConverter.AeMode.getApi2Value(java.lang.String, java.lang.String):int");
+        switch (flashMode) {
+            case "display-on":
+                return 16;
+
+            case "display-auto":
+                return 15;
+
+            case "red-eye":
+                switch (aeMode) {
+                    case "auto":         return 4;
+                    case "iso-prio":     return 8;
+                    case "shutter-prio": return 12;
+                    case "semi-auto":    return 13;
+                    default:             return 0;
+                }
+
+            case "torch":
+                switch (aeMode) {
+                    case "auto":         return 1;
+                    case "iso-prio":     return 5;
+                    case "shutter-prio": return 9;
+                    case "semi-auto":    return 13;
+                    default:             return 0;
+                }
+
+            case "on":
+                switch (aeMode) {
+                    case "auto":         return 3;
+                    case "iso-prio":     return 7;
+                    case "shutter-prio": return 11;
+                    case "semi-auto":    return 14;
+                    default:             return 0;
+                }
+
+            case "off":
+                switch (aeMode) {
+                    case "auto":         return 1;
+                    case "iso-prio":     return 5;
+                    case "shutter-prio": return 9;
+                    case "semi-auto":    return 13;
+                    default:             return 0;
+                }
+
+            case "auto":
+                switch (aeMode) {
+                    case "auto":         return 2;
+                    case "iso-prio":     return 6;
+                    case "shutter-prio": return 10;
+                    case "semi-auto":    return 13;
+                    default:             return 0;
+                }
+
+            default:
+                return 0;
         }
     }
 
@@ -244,64 +281,14 @@ public class CameraParameterConverter {
         StillHdr() {
         }
 
-        /* JADX WARN: Removed duplicated region for block: B:18:0x0034  */
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        static java.lang.Integer getApi2Value(java.lang.String r4) {
-            /*
-                int r0 = r4.hashCode()
-                r1 = 109935(0x1ad6f, float:1.54052E-40)
-                r2 = 0
-                r3 = 1
-                if (r0 == r1) goto L2a
-                r1 = 3005871(0x2dddaf, float:4.212122E-39)
-                if (r0 == r1) goto L20
-                r1 = 1589394147(0x5ebc3ae3, float:6.7817014E18)
-                if (r0 == r1) goto L16
-                goto L34
-            L16:
-                java.lang.String r0 = "on-still-hdr"
-                boolean r4 = r4.equals(r0)
-                if (r4 == 0) goto L34
-                r4 = r3
-                goto L35
-            L20:
-                java.lang.String r0 = "auto"
-                boolean r4 = r4.equals(r0)
-                if (r4 == 0) goto L34
-                r4 = 2
-                goto L35
-            L2a:
-                java.lang.String r0 = "off"
-                boolean r4 = r4.equals(r0)
-                if (r4 == 0) goto L34
-                r4 = r2
-                goto L35
-            L34:
-                r4 = -1
-            L35:
-                switch(r4) {
-                    case 0: goto L3e;
-                    case 1: goto L39;
-                    case 2: goto L43;
-                    default: goto L38;
-                }
-            L38:
-                goto L43
-            L39:
-                java.lang.Integer r4 = java.lang.Integer.valueOf(r3)
-                goto L44
-            L3e:
-                java.lang.Integer r4 = java.lang.Integer.valueOf(r2)
-                goto L44
-            L43:
-                r4 = 0
-            L44:
-                return r4
-            */
-            throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.device.CameraParameterConverter.StillHdr.getApi2Value(java.lang.String):java.lang.Integer");
+        static Integer getApi2Value(String mode) {
+            if (mode == null) return null;
+            switch (mode) {
+                case "off":          return Integer.valueOf(0);
+                case "on-still-hdr": return Integer.valueOf(1);
+                case "auto":         return null;
+                default:             return null;
+            }
         }
     }
 
@@ -309,66 +296,14 @@ public class CameraParameterConverter {
         FusionMode() {
         }
 
-        /* JADX WARN: Removed duplicated region for block: B:18:0x0034  */
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        static java.lang.Integer getApi2Value(java.lang.String r5) {
-            /*
-                int r0 = r5.hashCode()
-                r1 = 3551(0xddf, float:4.976E-42)
-                r2 = 1
-                r3 = 0
-                r4 = 2
-                if (r0 == r1) goto L2a
-                r1 = 109935(0x1ad6f, float:1.54052E-40)
-                if (r0 == r1) goto L20
-                r1 = 3005871(0x2dddaf, float:4.212122E-39)
-                if (r0 == r1) goto L16
-                goto L34
-            L16:
-                java.lang.String r0 = "auto"
-                boolean r5 = r5.equals(r0)
-                if (r5 == 0) goto L34
-                r5 = r4
-                goto L35
-            L20:
-                java.lang.String r0 = "off"
-                boolean r5 = r5.equals(r0)
-                if (r5 == 0) goto L34
-                r5 = r3
-                goto L35
-            L2a:
-                java.lang.String r0 = "on"
-                boolean r5 = r5.equals(r0)
-                if (r5 == 0) goto L34
-                r5 = r2
-                goto L35
-            L34:
-                r5 = -1
-            L35:
-                switch(r5) {
-                    case 0: goto L44;
-                    case 1: goto L3f;
-                    case 2: goto L3a;
-                    default: goto L38;
-                }
-            L38:
-                r5 = 0
-                goto L48
-            L3a:
-                java.lang.Integer r5 = java.lang.Integer.valueOf(r4)
-                goto L48
-            L3f:
-                java.lang.Integer r5 = java.lang.Integer.valueOf(r2)
-                goto L48
-            L44:
-                java.lang.Integer r5 = java.lang.Integer.valueOf(r3)
-            L48:
-                return r5
-            */
-            throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.device.CameraParameterConverter.FusionMode.getApi2Value(java.lang.String):java.lang.Integer");
+        static Integer getApi2Value(String mode) {
+            if (mode == null) return null;
+            switch (mode) {
+                case "off":  return Integer.valueOf(0);
+                case "on":   return Integer.valueOf(1);
+                case "auto": return Integer.valueOf(2);
+                default:     return null;
+            }
         }
     }
 
@@ -376,53 +311,13 @@ public class CameraParameterConverter {
         DistortionCorrection() {
         }
 
-        /* JADX WARN: Removed duplicated region for block: B:13:0x0024  */
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        static java.lang.Integer getApi2Value(java.lang.String r4) {
-            /*
-                int r0 = r4.hashCode()
-                r1 = 3551(0xddf, float:4.976E-42)
-                r2 = 1
-                r3 = 0
-                if (r0 == r1) goto L1a
-                r1 = 109935(0x1ad6f, float:1.54052E-40)
-                if (r0 == r1) goto L10
-                goto L24
-            L10:
-                java.lang.String r0 = "off"
-                boolean r4 = r4.equals(r0)
-                if (r4 == 0) goto L24
-                r4 = r3
-                goto L25
-            L1a:
-                java.lang.String r0 = "on"
-                boolean r4 = r4.equals(r0)
-                if (r4 == 0) goto L24
-                r4 = r2
-                goto L25
-            L24:
-                r4 = -1
-            L25:
-                switch(r4) {
-                    case 0: goto L2f;
-                    case 1: goto L2a;
-                    default: goto L28;
-                }
-            L28:
-                r4 = 0
-                goto L33
-            L2a:
-                java.lang.Integer r4 = java.lang.Integer.valueOf(r2)
-                goto L33
-            L2f:
-                java.lang.Integer r4 = java.lang.Integer.valueOf(r3)
-            L33:
-                return r4
-            */
-            throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.device.CameraParameterConverter.DistortionCorrection.getApi2Value(java.lang.String):java.lang.Integer");
+        static Integer getApi2Value(String mode) {
+            if (mode == null) return null;
+            switch (mode) {
+                case "off": return Integer.valueOf(0);
+                case "on":  return Integer.valueOf(1);
+                default:    return null;
+            }
         }
     }
 }

@@ -142,36 +142,93 @@ class FindAddress {
         return sLocationNameRe.matcher(str).matches();
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:58:0x00d8, code lost:
-    
-        if (r10 <= 0) goto L60;
+    /**
+     * Attempt to match a complete address in content, starting with
+     * houseNumberMatch.
+     *
+     * @param content The string to search.
+     * @param houseNumberMatch A matching house number to start extending.
+     * @return +ve: the end of the match
+     *         +ve: the position to restart searching for house numbers, negated.
      */
-    /* JADX WARN: Code restructure failed: missing block: B:59:0x00da, code lost:
-    
-        return r10;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:60:0x00db, code lost:
-    
-        if (r7 <= 0) goto L62;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:61:0x00dd, code lost:
-    
-        r14 = r7;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:63:0x00df, code lost:
-    
-        return -r14;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static int attemptMatch(java.lang.String r13, java.util.regex.MatchResult r14) {
-        /*
-            Method dump skipped, instructions count: 224
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.text.util.FindAddress.attemptMatch(java.lang.String, java.util.regex.MatchResult):int");
+    private static int attemptMatch(String content, MatchResult houseNumberMatch) {
+        int restartPos = -1;
+        int nonZipMatch = -1;
+        int it = houseNumberMatch.end();
+        int numLines = 1;
+        boolean consecutiveHouseNumbers = true;
+        boolean foundLocationName = false;
+        int wordCount = 1;
+        String lastWord = "";
+        Matcher matcher = sWordRe.matcher(content);
+        for (; it < content.length(); lastWord = matcher.group(0), it = matcher.end()) {
+            if (!matcher.find(it)) {
+                // No more words in the input sequence.
+                return -content.length();
+            }
+            if (matcher.end() - matcher.start() > kMaxAddressNameWordLength) {
+                // Word is too long to be part of an address. Fail.
+                return -matcher.end();
+            }
+            // Count the number of newlines we just consumed.
+            while (it < matcher.start()) {
+                if (NL.indexOf(content.charAt(it++)) != -1) ++numLines;
+            }
+            // Consumed too many lines. Fail.
+            if (numLines > MAX_ADDRESS_LINES) break;
+            // Consumed too many words. Fail.
+            if (++wordCount > MAX_ADDRESS_WORDS) break;
+            if (matchHouseNumber(content, it) != null) {
+                if (consecutiveHouseNumbers && numLines > 1) {
+                    // Last line ended with a number, and this this line starts with one.
+                    // Restart at this number.
+                    return -it;
+                }
+                // Remember the position of this match as the restart position.
+                if (restartPos == -1) restartPos = it;
+                continue;
+            }
+            consecutiveHouseNumbers = false;
+            if (isValidLocationName(matcher.group(0))) {
+                foundLocationName = true;
+                continue;
+            }
+            if (wordCount == MAX_LOCATION_NAME_DISTANCE && !foundLocationName) {
+                // Didn't find a location name in time. Fail.
+                it = matcher.end();
+                break;
+            }
+            if (foundLocationName && wordCount > MIN_ADDRESS_WORDS) {
+                // We can now attempt to match a state.
+                MatchResult stateMatch = matchState(content, it);
+                if (stateMatch != null) {
+                    if (lastWord.equals("et") && stateMatch.group(0).equals("al")) {
+                        // Reject "et al" as a false postitive.
+                        it = stateMatch.end();
+                        break;
+                    }
+                    // At this point we've matched a state; try to match a zip code after it.
+                    Matcher zipMatcher = sWordRe.matcher(content);
+                    if (zipMatcher.find(stateMatch.end())) {
+                        if (isValidZipCode(zipMatcher.group(0), stateMatch)) {
+                            return zipMatcher.end();
+                        }
+                    } else {
+                        // The content ends with a state but no zip
+                        // code. This is a legal match according to the
+                        // documentation. N.B. This is equivalent to the
+                        // original c++ implementation, which only allowed
+                        // the zip code to be optional at the end of the
+                        // string, which presumably is a bug.  We tried
+                        // relaxing this to work in other places but it
+                        // caused too many false positives.
+                        nonZipMatch = stateMatch.end();
+                    }
+                }
+            }
+        }
+        if (nonZipMatch > 0) return nonZipMatch;
+        return -(restartPos > 0 ? restartPos : it);
     }
 
     static String findAddress(String str) {

@@ -10,6 +10,7 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
 import android.util.SparseArray;
@@ -202,72 +203,42 @@ public class CameraUISettingsProvider extends ContentProvider {
         return iDelete;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:27:0x0065  */
-    @Override // android.content.ContentProvider
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public int update(android.net.Uri r5, android.content.ContentValues r6, java.lang.String r7, java.lang.String[] r8) {
-        /*
-            r4 = this;
-            boolean r0 = com.sonyericsson.android.camera.util.CamLog.VERBOSE
-            if (r0 == 0) goto L7
-            r4.in(r5)
-        L7:
-            android.database.sqlite.SQLiteOpenHelper r0 = r4.mOpenHelper
-            android.database.sqlite.SQLiteDatabase r0 = r0.getWritableDatabase()
-            java.lang.String r1 = r4.getTableName(r5)
-            r2 = 1
-            r3 = 0
-            if (r7 == 0) goto L46
-            int r6 = r0.update(r1, r6, r7, r8)     // Catch: android.database.sqlite.SQLiteConstraintException -> L27
-            if (r6 <= 0) goto L61
-            boolean r7 = r4.isProcessingBatch()     // Catch: android.database.sqlite.SQLiteConstraintException -> L25
-            if (r7 != 0) goto L61
-            r4.onCompleteOperation(r5)     // Catch: android.database.sqlite.SQLiteConstraintException -> L25
-            goto L61
-        L25:
-            r5 = move-exception
-            goto L29
-        L27:
-            r5 = move-exception
-            r6 = r3
-        L29:
-            java.lang.String[] r7 = new java.lang.String[r2]
-            java.lang.StringBuilder r8 = new java.lang.StringBuilder
-            r8.<init>()
-            java.lang.String r0 = "Failed to update the record. Message : "
-            r8.append(r0)
-            java.lang.String r5 = r5.getMessage()
-            r8.append(r5)
-            java.lang.String r5 = r8.toString()
-            r7[r3] = r5
-            com.sonyericsson.android.camera.util.CamLog.e(r7)
-            goto L61
-        L46:
-            java.lang.String r7 = r4.getTableName(r5)
-            r8 = 0
-            long r6 = r0.replace(r7, r8, r6)
-            r0 = -1
-            int r6 = (r6 > r0 ? 1 : (r6 == r0 ? 0 : -1))
-            if (r6 == 0) goto L60
-            boolean r6 = r4.isProcessingBatch()
-            if (r6 != 0) goto L5e
-            r4.onCompleteOperation(r5)
-        L5e:
-            r6 = r2
-            goto L61
-        L60:
-            r6 = r3
-        L61:
-            boolean r5 = com.sonyericsson.android.camera.util.CamLog.VERBOSE
-            if (r5 == 0) goto L68
-            r4.out()
-        L68:
-            return r6
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.provider.CameraUISettingsProvider.update(android.net.Uri, android.content.ContentValues, java.lang.String, java.lang.String[]):int");
+    @Override
+    public int update(Uri uri, ContentValues values, String where, String[] args) {
+        if (CamLog.VERBOSE) {
+            in(uri);
+        }
+
+        final SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        final String table = getTableName(uri);
+        int rows = 0;
+
+        if (where != null) {
+            try {
+                rows = db.update(table, values, where, args);
+                if (rows > 0 && !isProcessingBatch()) {
+                    onCompleteOperation(uri);
+                }
+            } catch (android.database.sqlite.SQLiteConstraintException e) {
+                CamLog.e(new String[] { "Failed to update the record. Message : " + e.getMessage() });
+            }
+        } else {
+            // Upsert behavior when no where-clause is provided
+            long id = db.replace(table, null, values);
+            if (id != -1) {
+                if (!isProcessingBatch()) {
+                    onCompleteOperation(uri);
+                }
+                rows = 1;
+            } else {
+                rows = 0;
+            }
+        }
+
+        if (CamLog.VERBOSE) {
+            out();
+        }
+        return rows;
     }
 
     @Override // android.content.ContentProvider

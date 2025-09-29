@@ -694,17 +694,89 @@ public class CameraStorageManager {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:36:0x00e4  */
-    /* JADX WARN: Removed duplicated region for block: B:38:0x00e7  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private boolean changeReadyStateTo(com.sonyericsson.cameracommon.storage.Storage.StorageType r7, com.sonyericsson.cameracommon.storage.Storage.StorageReadyState r8, com.sonyericsson.cameracommon.storage.CameraStorageManager.UpdateRequestReason r9) {
-        /*
-            Method dump skipped, instructions count: 256
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.storage.CameraStorageManager.changeReadyStateTo(com.sonyericsson.cameracommon.storage.Storage$StorageType, com.sonyericsson.cameracommon.storage.Storage$StorageReadyState, com.sonyericsson.cameracommon.storage.CameraStorageManager$UpdateRequestReason):boolean");
-    }
+	// inside CameraStorageManager
+	private boolean changeReadyStateTo(Storage.StorageType storageType,
+									   Storage.StorageReadyState to,
+									   CameraStorageManager.UpdateRequestReason reason) {
+		final Storage.StorageReadyState from = mStorageController.getStorageReadyState(storageType);
+
+		if (CamLog.DEBUG) {
+			CamLog.d(new String[] {
+					new StringBuilder()
+							.append("changeReadyStateTo: type = ").append(storageType)
+							.append(", from = ").append(from)
+							.append(", to = ").append(to)
+							.append(", Reason = ").append(reason)
+							.toString()
+			});
+		}
+
+		boolean changed = true;
+
+		switch (from) {
+			case PREPARING:
+				// from PREPARING → SUSPENDED : stop auto updates
+				if (to == Storage.StorageReadyState.SUSPENDED) {
+					mStorageUpdaterMap.get(storageType).setAutoUpdateEnabled(false);
+				}
+				// from PREPARING → ACCESSIBLE : perform write check
+				else if (to == Storage.StorageReadyState.ACCESSIBLE) {
+					requestWriteCheck(storageType, reason);
+				} else {
+					changed = false;
+				}
+				break;
+
+			case ACCESSIBLE:
+				// from ACCESSIBLE → SUSPENDED : stop auto updates
+				if (to == Storage.StorageReadyState.SUSPENDED) {
+					mStorageUpdaterMap.get(storageType).setAutoUpdateEnabled(false);
+				}
+				// from ACCESSIBLE → COMPLETED : accept
+				else if (to == Storage.StorageReadyState.COMPLETED) {
+					// nothing extra to do
+				} else {
+					changed = false;
+				}
+				break;
+
+			case SUSPENDED:
+				// from SUSPENDED → SUSPENDED : idempotent; ensure disabled
+				if (to == Storage.StorageReadyState.SUSPENDED) {
+					mStorageUpdaterMap.get(storageType).setAutoUpdateEnabled(false);
+				}
+				// from SUSPENDED → PREPARING : accept (kick volume check if needed by callers)
+				else if (to == Storage.StorageReadyState.PREPARING) {
+					// nothing extra to do here
+				} else {
+					changed = false;
+				}
+				break;
+
+			case COMPLETED:
+				// from COMPLETED → PREPARING : immediate volume check
+				if (to == Storage.StorageReadyState.PREPARING) {
+					mStorageUpdaterMap.get(storageType)
+							.requestVolumeCheck(CameraStorageManager.UpdateInterval.IMMEDIATE, reason);
+				} else {
+					if (CamLog.DEBUG) {
+						throw new IllegalStateException("Incorrect state : " + to);
+					}
+					changed = false;
+				}
+				break;
+
+			default:
+				CamLog.e(new String[] { from + " is not supported." });
+				changed = false;
+				break;
+		}
+
+		if (changed) {
+			mStorageController.setStorageReadyState(storageType, to);
+			mStorageController.checkAndNotifyReadyStateChanged(storageType);
+		}
+
+		return changed;
+	}
 }

@@ -290,88 +290,60 @@ class DropDownListView extends ListView {
         super.onDetachedFromWindow();
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:11:0x0019  */
-    /* JADX WARN: Removed duplicated region for block: B:5:0x000c  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public boolean onForwardedEvent(android.view.MotionEvent r8, int r9) throws java.lang.IllegalAccessException, java.lang.IllegalArgumentException {
-        /*
-            r7 = this;
-            int r0 = r8.getActionMasked()
-            r1 = 0
-            r2 = 1
-            switch(r0) {
-                case 1: goto L11;
-                case 2: goto Lf;
-                case 3: goto Lc;
-                default: goto L9;
+    /**
+     * Handles forwarded events.
+     *
+     * @param activePointerId id of the pointer that activated forwarding
+     * @return whether the event was handled
+     */
+    public boolean onForwardedEvent(@NonNull MotionEvent event, int activePointerId) {
+        boolean handledEvent = true;
+        boolean clearPressedItem = false;
+        final int actionMasked = event.getActionMasked();
+        switch (actionMasked) {
+            case MotionEvent.ACTION_CANCEL:
+                handledEvent = false;
+                break;
+            case MotionEvent.ACTION_UP:
+                handledEvent = false;
+                // $FALL-THROUGH$
+            case MotionEvent.ACTION_MOVE:
+                final int activeIndex = event.findPointerIndex(activePointerId);
+                if (activeIndex < 0) {
+                    handledEvent = false;
+                    break;
+                }
+                final int x = (int) event.getX(activeIndex);
+                final int y = (int) event.getY(activeIndex);
+                final int position = pointToPosition(x, y);
+                if (position == INVALID_POSITION) {
+                    clearPressedItem = true;
+                    break;
+                }
+                final View child = getChildAt(position - getFirstVisiblePosition());
+                setPressedItem(child, position, x, y);
+                handledEvent = true;
+                if (actionMasked == MotionEvent.ACTION_UP) {
+                    final long id = getItemIdAtPosition(position);
+                    performItemClick(child, position, id);
+                }
+                break;
+        }
+        // Failure to handle the event cancels forwarding.
+        if (!handledEvent || clearPressedItem) {
+            clearPressedItem();
+        }
+        // Manage automatic scrolling.
+        if (handledEvent) {
+            if (mScrollHelper == null) {
+                mScrollHelper = new AbsListViewAutoScroller(this);
             }
-        L9:
-            r9 = r1
-            r3 = r2
-            goto L41
-        Lc:
-            r9 = r1
-            r3 = r9
-            goto L41
-        Lf:
-            r3 = r2
-            goto L12
-        L11:
-            r3 = r1
-        L12:
-            int r9 = r8.findPointerIndex(r9)
-            if (r9 >= 0) goto L19
-            goto Lc
-        L19:
-            float r4 = r8.getX(r9)
-            int r4 = (int) r4
-            float r9 = r8.getY(r9)
-            int r9 = (int) r9
-            int r5 = r7.pointToPosition(r4, r9)
-            r6 = -1
-            if (r5 != r6) goto L2c
-            r9 = r2
-            goto L41
-        L2c:
-            int r3 = r7.getFirstVisiblePosition()
-            int r3 = r5 - r3
-            android.view.View r3 = r7.getChildAt(r3)
-            float r4 = (float) r4
-            float r9 = (float) r9
-            r7.setPressedItem(r3, r5, r4, r9)
-            if (r0 != r2) goto L9
-            r7.clickPressedItem(r3, r5)
-            goto L9
-        L41:
-            if (r3 == 0) goto L45
-            if (r9 == 0) goto L48
-        L45:
-            r7.clearPressedItem()
-        L48:
-            if (r3 == 0) goto L60
-            android.support.v4.widget.ListViewAutoScrollHelper r9 = r7.mScrollHelper
-            if (r9 != 0) goto L55
-            android.support.v4.widget.ListViewAutoScrollHelper r9 = new android.support.v4.widget.ListViewAutoScrollHelper
-            r9.<init>(r7)
-            r7.mScrollHelper = r9
-        L55:
-            android.support.v4.widget.ListViewAutoScrollHelper r9 = r7.mScrollHelper
-            r9.setEnabled(r2)
-            android.support.v4.widget.ListViewAutoScrollHelper r9 = r7.mScrollHelper
-            r9.onTouch(r7, r8)
-            goto L69
-        L60:
-            android.support.v4.widget.ListViewAutoScrollHelper r8 = r7.mScrollHelper
-            if (r8 == 0) goto L69
-            android.support.v4.widget.ListViewAutoScrollHelper r7 = r7.mScrollHelper
-            r7.setEnabled(r1)
-        L69:
-            return r3
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.DropDownListView.onForwardedEvent(android.view.MotionEvent, int):boolean");
+            mScrollHelper.setEnabled(true);
+            mScrollHelper.onTouch(this, event);
+        } else if (mScrollHelper != null) {
+            mScrollHelper.setEnabled(false);
+        }
+        return handledEvent;
     }
 
     private void clickPressedItem(View view, int i) {

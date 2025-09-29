@@ -1262,89 +1262,54 @@ class AppCompatDelegateImpl extends AppCompatDelegate implements MenuBuilder.Cal
         return preparePanel(panelState, keyEvent);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:34:0x0065  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private boolean onKeyUpPanel(int r4, android.view.KeyEvent r5) {
-        /*
-            r3 = this;
-            android.support.v7.view.ActionMode r0 = r3.mActionMode
-            r1 = 0
-            if (r0 == 0) goto L6
-            return r1
-        L6:
-            r0 = 1
-            android.support.v7.app.AppCompatDelegateImpl$PanelFeatureState r2 = r3.getPanelState(r4, r0)
-            if (r4 != 0) goto L45
-            android.support.v7.widget.DecorContentParent r4 = r3.mDecorContentParent
-            if (r4 == 0) goto L45
-            android.support.v7.widget.DecorContentParent r4 = r3.mDecorContentParent
-            boolean r4 = r4.canShowOverflowMenu()
-            if (r4 == 0) goto L45
-            android.content.Context r4 = r3.mContext
-            android.view.ViewConfiguration r4 = android.view.ViewConfiguration.get(r4)
-            boolean r4 = r4.hasPermanentMenuKey()
-            if (r4 != 0) goto L45
-            android.support.v7.widget.DecorContentParent r4 = r3.mDecorContentParent
-            boolean r4 = r4.isOverflowMenuShowing()
-            if (r4 != 0) goto L3e
-            boolean r4 = r3.mIsDestroyed
-            if (r4 != 0) goto L65
-            boolean r4 = r3.preparePanel(r2, r5)
-            if (r4 == 0) goto L65
-            android.support.v7.widget.DecorContentParent r4 = r3.mDecorContentParent
-            boolean r4 = r4.showOverflowMenu()
-            goto L6c
-        L3e:
-            android.support.v7.widget.DecorContentParent r4 = r3.mDecorContentParent
-            boolean r4 = r4.hideOverflowMenu()
-            goto L6c
-        L45:
-            boolean r4 = r2.isOpen
-            if (r4 != 0) goto L67
-            boolean r4 = r2.isHandled
-            if (r4 == 0) goto L4e
-            goto L67
-        L4e:
-            boolean r4 = r2.isPrepared
-            if (r4 == 0) goto L65
-            boolean r4 = r2.refreshMenuContent
-            if (r4 == 0) goto L5d
-            r2.isPrepared = r1
-            boolean r4 = r3.preparePanel(r2, r5)
-            goto L5e
-        L5d:
-            r4 = r0
-        L5e:
-            if (r4 == 0) goto L65
-            r3.openPanel(r2, r5)
-            r4 = r0
-            goto L6c
-        L65:
-            r4 = r1
-            goto L6c
-        L67:
-            boolean r4 = r2.isOpen
-            r3.closePanel(r2, r0)
-        L6c:
-            if (r4 == 0) goto L85
-            android.content.Context r3 = r3.mContext
-            java.lang.String r5 = "audio"
-            java.lang.Object r3 = r3.getSystemService(r5)
-            android.media.AudioManager r3 = (android.media.AudioManager) r3
-            if (r3 == 0) goto L7e
-            r3.playSoundEffect(r1)
-            goto L85
-        L7e:
-            java.lang.String r3 = "AppCompatDelegate"
-            java.lang.String r5 = "Couldn't get audio manager"
-            android.util.Log.w(r3, r5)
-        L85:
-            return r4
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.app.AppCompatDelegateImpl.onKeyUpPanel(int, android.view.KeyEvent):boolean");
+    private boolean onKeyUpPanel(int featureId, KeyEvent event) {
+        if (mActionMode != null) {
+            return false;
+        }
+        boolean handled = false;
+        final PanelFeatureState st = getPanelState(featureId, true);
+        if (featureId == FEATURE_OPTIONS_PANEL && mDecorContentParent != null &&
+                mDecorContentParent.canShowOverflowMenu() &&
+                !ViewConfiguration.get(mContext).hasPermanentMenuKey()) {
+            if (!mDecorContentParent.isOverflowMenuShowing()) {
+                if (!mDestroyed && preparePanel(st, event)) {
+                    handled = mDecorContentParent.showOverflowMenu();
+                }
+            } else {
+                handled = mDecorContentParent.hideOverflowMenu();
+            }
+        } else {
+            if (st.isOpen || st.isHandled) {
+                // Play the sound effect if the user closed an open menu (and not if
+                // they just released a menu shortcut)
+                handled = st.isOpen;
+                // Close menu
+                closePanel(st, true);
+            } else if (st.isPrepared) {
+                boolean show = true;
+                if (st.refreshMenuContent) {
+                    // Something may have invalidated the menu since we prepared it.
+                    // Re-prepare it to refresh.
+                    st.isPrepared = false;
+                    show = preparePanel(st, event);
+                }
+                if (show) {
+                    // Show menu
+                    openPanel(st, event);
+                    handled = true;
+                }
+            }
+        }
+        if (handled) {
+            AudioManager audioManager = (AudioManager) mContext.getApplicationContext()
+                    .getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager != null) {
+                audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
+            } else {
+                Log.w(TAG, "Couldn't get audio manager");
+            }
+        }
+        return handled;
     }
 
     void callOnPanelClosed(int i, PanelFeatureState panelFeatureState, Menu menu) {

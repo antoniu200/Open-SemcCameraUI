@@ -1,10 +1,16 @@
 package android.support.v4.graphics;
 
+import android.os.CancellationSignal;
+import android.os.ParcelFileDescriptor;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Typeface;
+import android.graphics.Typeface.Builder;
 import android.graphics.fonts.FontVariationAxis;
+import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.RestrictTo;
@@ -15,6 +21,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 @RequiresApi(26)
 @RestrictTo({RestrictTo.Scope.LIBRARY_GROUP})
@@ -147,117 +154,57 @@ public class TypefaceCompatApi26Impl extends TypefaceCompatApi21Impl {
         return null;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:24:0x0054  */
-    /* JADX WARN: Removed duplicated region for block: B:62:? A[Catch: IOException -> 0x0063, SYNTHETIC, TRY_LEAVE, TryCatch #2 {IOException -> 0x0063, blocks: (B:8:0x0014, B:11:0x0022, B:15:0x0045, B:25:0x0056, B:29:0x005f, B:28:0x005b, B:30:0x0062), top: B:53:0x0014, inners: #0 }] */
     @Override // android.support.v4.graphics.TypefaceCompatApi21Impl, android.support.v4.graphics.TypefaceCompatBaseImpl
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public android.graphics.Typeface createFromFontInfo(android.content.Context r12, @android.support.annotation.Nullable android.os.CancellationSignal r13, @android.support.annotation.NonNull android.support.v4.provider.FontsContractCompat.FontInfo[] r14, int r15) throws java.lang.Throwable {
-        /*
-            r11 = this;
-            int r0 = r14.length
-            r1 = 1
-            r2 = 0
-            if (r0 >= r1) goto L6
-            return r2
-        L6:
-            boolean r0 = r11.isFontFamilyPrivateAPIAvailable()
-            if (r0 != 0) goto L64
-            android.support.v4.provider.FontsContractCompat$FontInfo r11 = r11.findBestInfo(r14, r15)
-            android.content.ContentResolver r12 = r12.getContentResolver()
-            android.net.Uri r14 = r11.getUri()     // Catch: java.io.IOException -> L63
-            java.lang.String r15 = "r"
-            android.os.ParcelFileDescriptor r12 = r12.openFileDescriptor(r14, r15, r13)     // Catch: java.io.IOException -> L63
-            if (r12 != 0) goto L26
-            if (r12 == 0) goto L25
-            r12.close()     // Catch: java.io.IOException -> L63
-        L25:
-            return r2
-        L26:
-            android.graphics.Typeface$Builder r13 = new android.graphics.Typeface$Builder     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            java.io.FileDescriptor r14 = r12.getFileDescriptor()     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            r13.<init>(r14)     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            int r14 = r11.getWeight()     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            android.graphics.Typeface$Builder r13 = r13.setWeight(r14)     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            boolean r11 = r11.isItalic()     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            android.graphics.Typeface$Builder r11 = r13.setItalic(r11)     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            android.graphics.Typeface r11 = r11.build()     // Catch: java.lang.Throwable -> L49 java.lang.Throwable -> L4c
-            if (r12 == 0) goto L48
-            r12.close()     // Catch: java.io.IOException -> L63
-        L48:
-            return r11
-        L49:
-            r11 = move-exception
-            r13 = r2
-            goto L52
-        L4c:
-            r11 = move-exception
-            throw r11     // Catch: java.lang.Throwable -> L4e
-        L4e:
-            r13 = move-exception
-            r10 = r13
-            r13 = r11
-            r11 = r10
-        L52:
-            if (r12 == 0) goto L62
-            if (r13 == 0) goto L5f
-            r12.close()     // Catch: java.lang.Throwable -> L5a java.io.IOException -> L63
-            goto L62
-        L5a:
-            r12 = move-exception
-            r13.addSuppressed(r12)     // Catch: java.io.IOException -> L63
-            goto L62
-        L5f:
-            r12.close()     // Catch: java.io.IOException -> L63
-        L62:
-            throw r11     // Catch: java.io.IOException -> L63
-        L63:
-            return r2
-        L64:
-            java.util.Map r12 = android.support.v4.provider.FontsContractCompat.prepareFontData(r12, r14, r13)
-            java.lang.Object r13 = r11.newFamily()
-            int r0 = r14.length
-            r3 = 0
-            r9 = r3
-        L6f:
-            if (r9 >= r0) goto L9c
-            r4 = r14[r9]
-            android.net.Uri r5 = r4.getUri()
-            java.lang.Object r5 = r12.get(r5)
-            java.nio.ByteBuffer r5 = (java.nio.ByteBuffer) r5
-            if (r5 != 0) goto L80
-            goto L99
-        L80:
-            int r6 = r4.getTtcIndex()
-            int r7 = r4.getWeight()
-            boolean r8 = r4.isItalic()
-            r3 = r11
-            r4 = r13
-            boolean r3 = r3.addFontFromBuffer(r4, r5, r6, r7, r8)
-            if (r3 != 0) goto L98
-            r11.abortCreation(r13)
-            return r2
-        L98:
-            r3 = r1
-        L99:
-            int r9 = r9 + 1
-            goto L6f
-        L9c:
-            if (r3 != 0) goto La2
-            r11.abortCreation(r13)
-            return r2
-        La2:
-            boolean r12 = r11.freeze(r13)
-            if (r12 != 0) goto La9
-            return r2
-        La9:
-            android.graphics.Typeface r11 = r11.createFromFamiliesWithDefault(r13)
-            android.graphics.Typeface r11 = android.graphics.Typeface.create(r11, r15)
-            return r11
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.graphics.TypefaceCompatApi26Impl.createFromFontInfo(android.content.Context, android.os.CancellationSignal, android.support.v4.provider.FontsContractCompat$FontInfo[], int):android.graphics.Typeface");
+    public Typeface createFromFontInfo(Context context,
+            @Nullable CancellationSignal cancellationSignal,
+            @NonNull FontsContractCompat.FontInfo[] fonts, int style) {
+        if (fonts.length < 1) {
+            return null;
+        }
+        if (!isFontFamilyPrivateAPIAvailable()) {
+            // Even if the private API is not avaiable, don't use API 21 implemenation and use
+            // public API to create Typeface from file descriptor.
+            final FontsContractCompat.FontInfo bestFont = findBestInfo(fonts, style);
+            final ContentResolver resolver = context.getContentResolver();
+            try (ParcelFileDescriptor pfd =
+                    resolver.openFileDescriptor(bestFont.getUri(), "r", cancellationSignal)) {
+                if (pfd == null) {
+                    return null;
+                }
+                return new Typeface.Builder(pfd.getFileDescriptor())
+                        .setWeight(bestFont.getWeight())
+                        .setItalic(bestFont.isItalic())
+                        .build();
+            } catch (IOException e) {
+                return null;
+            }
+        }
+        Map<Uri, ByteBuffer> uriBuffer = FontsContractCompat.prepareFontData(
+                context, fonts, cancellationSignal);
+        final Object fontFamily = newFamily();
+        boolean atLeastOneFont = false;
+        for (FontsContractCompat.FontInfo font : fonts) {
+            final ByteBuffer fontBuffer = uriBuffer.get(font.getUri());
+            if (fontBuffer == null) {
+                continue;  // skip
+            }
+            final boolean success = addFontFromBuffer(fontFamily, fontBuffer,
+                    font.getTtcIndex(), font.getWeight(), font.isItalic() ? 1 : 0);
+            if (!success) {
+                abortCreation(fontFamily);
+                return null;
+            }
+            atLeastOneFont = true;
+        }
+        if (!atLeastOneFont) {
+            abortCreation(fontFamily);
+            return null;
+        }
+        if (!freeze(fontFamily)) {
+            return null;
+        }
+        final Typeface typeface = createFromFamiliesWithDefault(fontFamily);
+        return Typeface.create(typeface, style);
     }
 
     @Override // android.support.v4.graphics.TypefaceCompatBaseImpl

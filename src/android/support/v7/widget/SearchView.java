@@ -32,6 +32,7 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -1070,86 +1071,64 @@ public class SearchView extends LinearLayoutCompat implements CollapsibleActionV
             this.mActualBounds.set(rect2);
         }
 
-        /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-        /* JADX WARN: Removed duplicated region for block: B:14:0x0033  */
         @Override // android.view.TouchDelegate
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        public boolean onTouchEvent(android.view.MotionEvent r7) {
-            /*
-                r6 = this;
-                float r0 = r7.getX()
-                int r0 = (int) r0
-                float r1 = r7.getY()
-                int r1 = (int) r1
-                int r2 = r7.getAction()
-                r3 = 1
-                r4 = 0
-                switch(r2) {
-                    case 0: goto L27;
-                    case 1: goto L19;
-                    case 2: goto L19;
-                    case 3: goto L14;
-                    default: goto L13;
+        public boolean onTouchEvent(MotionEvent event) {
+            final int x = (int) event.getX();
+            final int y = (int) event.getY();
+            final int action = event.getAction();
+
+            boolean sendToDelegate;
+            boolean hit = true; // follows fallback: defaults to true
+
+            switch (action) {
+                case MotionEvent.ACTION_DOWN: {
+                    if (mTargetBounds.contains(x, y)) {
+                        mDelegateTargeted = true;
+                        sendToDelegate = true;
+                    } else {
+                        sendToDelegate = false;
+                    }
+                    break;
                 }
-            L13:
-                goto L33
-            L14:
-                boolean r2 = r6.mDelegateTargeted
-                r6.mDelegateTargeted = r4
-                goto L34
-            L19:
-                boolean r2 = r6.mDelegateTargeted
-                if (r2 == 0) goto L34
-                android.graphics.Rect r5 = r6.mSlopBounds
-                boolean r5 = r5.contains(r0, r1)
-                if (r5 != 0) goto L34
-                r3 = r4
-                goto L34
-            L27:
-                android.graphics.Rect r2 = r6.mTargetBounds
-                boolean r2 = r2.contains(r0, r1)
-                if (r2 == 0) goto L33
-                r6.mDelegateTargeted = r3
-                r2 = r3
-                goto L34
-            L33:
-                r2 = r4
-            L34:
-                if (r2 == 0) goto L6b
-                if (r3 == 0) goto L56
-                android.graphics.Rect r2 = r6.mActualBounds
-                boolean r2 = r2.contains(r0, r1)
-                if (r2 != 0) goto L56
-                android.view.View r0 = r6.mDelegateView
-                int r0 = r0.getWidth()
-                int r0 = r0 / 2
-                float r0 = (float) r0
-                android.view.View r1 = r6.mDelegateView
-                int r1 = r1.getHeight()
-                int r1 = r1 / 2
-                float r1 = (float) r1
-                r7.setLocation(r0, r1)
-                goto L65
-            L56:
-                android.graphics.Rect r2 = r6.mActualBounds
-                int r2 = r2.left
-                int r0 = r0 - r2
-                float r0 = (float) r0
-                android.graphics.Rect r2 = r6.mActualBounds
-                int r2 = r2.top
-                int r1 = r1 - r2
-                float r1 = (float) r1
-                r7.setLocation(r0, r1)
-            L65:
-                android.view.View r6 = r6.mDelegateView
-                boolean r4 = r6.dispatchTouchEvent(r7)
-            L6b:
-                return r4
-            */
-            throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.SearchView.UpdatableTouchDelegate.onTouchEvent(android.view.MotionEvent):boolean");
+                case MotionEvent.ACTION_MOVE:
+                case MotionEvent.ACTION_UP: {
+                    sendToDelegate = mDelegateTargeted;
+                    if (sendToDelegate) {
+                        if (!mSlopBounds.contains(x, y)) {
+                            hit = false;
+                        }
+                    }
+                    break;
+                }
+                case MotionEvent.ACTION_CANCEL: {
+                    sendToDelegate = mDelegateTargeted;
+                    mDelegateTargeted = false;
+                    break;
+                }
+                default:
+                    sendToDelegate = false;
+            }
+
+            boolean handled = false;
+            if (sendToDelegate) {
+                if (hit) {
+                    if (!mActualBounds.contains(x, y)) {
+                        final float centerX = mDelegateView.getWidth() / 2f;
+                        final float centerY = mDelegateView.getHeight() / 2f;
+                        event.setLocation(centerX, centerY);
+                    } else {
+                        final float localX = x - mActualBounds.left;
+                        final float localY = y - mActualBounds.top;
+                        event.setLocation(localX, localY);
+                    }
+                } else {
+                    final float localX = x - mActualBounds.left;
+                    final float localY = y - mActualBounds.top;
+                    event.setLocation(localX, localY);
+                }
+                handled = mDelegateView.dispatchTouchEvent(event);
+            }
+            return handled;
         }
     }
 

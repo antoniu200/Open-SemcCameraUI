@@ -472,78 +472,43 @@ class AdapterHelper implements OpReorderer.Callback {
         this.mExistingUpdateTypes = 0;
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:38:0x0047, code lost:
-    
-        continue;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public int applyPendingUpdatesToPosition(int r6) {
-        /*
-            r5 = this;
-            java.util.ArrayList<android.support.v7.widget.AdapterHelper$UpdateOp> r0 = r5.mPendingUpdates
-            int r0 = r0.size()
-            r1 = 0
-        L7:
-            if (r1 >= r0) goto L4a
-            java.util.ArrayList<android.support.v7.widget.AdapterHelper$UpdateOp> r2 = r5.mPendingUpdates
-            java.lang.Object r2 = r2.get(r1)
-            android.support.v7.widget.AdapterHelper$UpdateOp r2 = (android.support.v7.widget.AdapterHelper.UpdateOp) r2
-            int r3 = r2.cmd
-            r4 = 8
-            if (r3 == r4) goto L34
-            switch(r3) {
-                case 1: goto L2c;
-                case 2: goto L1b;
-                default: goto L1a;
+    public int applyPendingUpdatesToPosition(int position) {
+        final int size = mPendingUpdates.size();
+        for (int i = 0; i < size; i++) {
+            UpdateOp op = mPendingUpdates.get(i);
+            switch (op.cmd) {
+                case UpdateOp.ADD:
+                    if (op.positionStart <= position) {
+                        position += op.itemCount;
+                    }
+                    break;
+                case UpdateOp.REMOVE:
+                    if (op.positionStart <= position) {
+                        final int end = op.positionStart + op.itemCount;
+                        if (end > position) {
+                            return RecyclerView.NO_POSITION;
+                        }
+                        position -= op.itemCount;
+                    }
+                    break;
+                case UpdateOp.MOVE:
+                    if (op.positionStart == position) {
+                        position = op.itemCount; //position end
+                    } else {
+                        if (op.positionStart < position) {
+                            position -= 1;
+                        }
+                        if (op.itemCount <= position) {
+                            position += 1;
+                        }
+                    }
+                    break;
             }
-        L1a:
-            goto L47
-        L1b:
-            int r3 = r2.positionStart
-            if (r3 > r6) goto L47
-            int r3 = r2.positionStart
-            int r4 = r2.itemCount
-            int r3 = r3 + r4
-            if (r3 <= r6) goto L28
-            r5 = -1
-            return r5
-        L28:
-            int r2 = r2.itemCount
-            int r6 = r6 - r2
-            goto L47
-        L2c:
-            int r3 = r2.positionStart
-            if (r3 > r6) goto L47
-            int r2 = r2.itemCount
-            int r6 = r6 + r2
-            goto L47
-        L34:
-            int r3 = r2.positionStart
-            if (r3 != r6) goto L3b
-            int r6 = r2.itemCount
-            goto L47
-        L3b:
-            int r3 = r2.positionStart
-            if (r3 >= r6) goto L41
-            int r6 = r6 + (-1)
-        L41:
-            int r2 = r2.itemCount
-            if (r2 > r6) goto L47
-            int r6 = r6 + 1
-        L47:
-            int r1 = r1 + 1
-            goto L7
-        L4a:
-            return r6
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.AdapterHelper.applyPendingUpdatesToPosition(int):int");
+        }
+        return position;
     }
-
     boolean hasUpdates() {
-        return (this.mPostponedList.isEmpty() || this.mPendingUpdates.isEmpty()) ? false : true;
+        return !mPostponedList.isEmpty() && !mPendingUpdates.isEmpty();
     }
 
     static class UpdateOp {

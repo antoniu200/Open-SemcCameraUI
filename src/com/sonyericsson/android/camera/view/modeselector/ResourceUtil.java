@@ -8,9 +8,15 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import com.sonyericsson.android.camera.util.CamLog;
 import com.sonyericsson.android.camera.util.capability.SharedPrefsTranslator;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
 public class ResourceUtil {
@@ -155,134 +161,83 @@ public class ResourceUtil {
         return null;
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
-    /* JADX WARN: Removed duplicated region for block: B:52:0x00c5  */
-    /* JADX WARN: Type inference failed for: r7v0, types: [java.lang.String] */
-    /* JADX WARN: Type inference failed for: r7v1 */
-    /* JADX WARN: Type inference failed for: r7v4, types: [java.net.HttpURLConnection] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static android.graphics.Bitmap getRemoteBitmap(java.lang.String r7, int r8, int r9) throws java.lang.Throwable {
-        /*
-            r0 = 1
-            r1 = 0
-            r2 = 0
-            java.net.URL r3 = new java.net.URL     // Catch: java.lang.Throwable -> L77 java.io.IOException -> L7a java.net.MalformedURLException -> L9e
-            r3.<init>(r7)     // Catch: java.lang.Throwable -> L77 java.io.IOException -> L7a java.net.MalformedURLException -> L9e
-            java.net.URLConnection r7 = r3.openConnection()     // Catch: java.lang.Throwable -> L77 java.io.IOException -> L7a java.net.MalformedURLException -> L9e
-            java.net.HttpURLConnection r7 = (java.net.HttpURLConnection) r7     // Catch: java.lang.Throwable -> L77 java.io.IOException -> L7a java.net.MalformedURLException -> L9e
-            r3 = 60000(0xea60, float:8.4078E-41)
-            r7.setConnectTimeout(r3)     // Catch: java.io.IOException -> L73 java.net.MalformedURLException -> L75 java.lang.Throwable -> Lc2
-            r7.setReadTimeout(r3)     // Catch: java.io.IOException -> L73 java.net.MalformedURLException -> L75 java.lang.Throwable -> Lc2
-            java.io.BufferedInputStream r3 = new java.io.BufferedInputStream     // Catch: java.lang.Throwable -> L65
-            java.io.InputStream r4 = r7.getInputStream()     // Catch: java.lang.Throwable -> L65
-            r3.<init>(r4)     // Catch: java.lang.Throwable -> L65
-            java.io.ByteArrayOutputStream r4 = new java.io.ByteArrayOutputStream     // Catch: java.lang.Throwable -> L62
-            r4.<init>()     // Catch: java.lang.Throwable -> L62
-            java.io.BufferedOutputStream r5 = new java.io.BufferedOutputStream     // Catch: java.lang.Throwable -> L62
-            r6 = 4096(0x1000, float:5.74E-42)
-            r5.<init>(r4, r6)     // Catch: java.lang.Throwable -> L62
-            copy(r3, r5)     // Catch: java.lang.Throwable -> L60
-            r5.flush()     // Catch: java.lang.Throwable -> L60
-            byte[] r4 = r4.toByteArray()     // Catch: java.lang.Throwable -> L60
-            int r6 = r4.length     // Catch: java.lang.Throwable -> L60
-            android.graphics.Bitmap r4 = android.graphics.BitmapFactory.decodeByteArray(r4, r1, r6)     // Catch: java.lang.Throwable -> L60
-            if (r3 == 0) goto L40
-            r3.close()     // Catch: java.io.IOException -> L73 java.net.MalformedURLException -> L75 java.lang.Throwable -> Lc2
-        L40:
-            if (r5 == 0) goto L45
-            r5.close()     // Catch: java.io.IOException -> L73 java.net.MalformedURLException -> L75 java.lang.Throwable -> Lc2
-        L45:
-            if (r7 == 0) goto L4a
-            r7.disconnect()
-        L4a:
-            if (r4 == 0) goto L56
-            android.graphics.Bitmap r2 = android.graphics.Bitmap.createScaledBitmap(r4, r8, r9, r0)
-            if (r4 == r2) goto L5f
-            r4.recycle()
-            goto L5f
-        L56:
-            java.lang.String r7 = "Bitmap is null."
-            java.lang.String[] r7 = new java.lang.String[]{r7}
-            com.sonyericsson.android.camera.util.CamLog.e(r7)
-        L5f:
-            return r2
-        L60:
-            r8 = move-exception
-            goto L68
-        L62:
-            r8 = move-exception
-            r5 = r2
-            goto L68
-        L65:
-            r8 = move-exception
-            r3 = r2
-            r5 = r3
-        L68:
-            if (r3 == 0) goto L6d
-            r3.close()     // Catch: java.io.IOException -> L73 java.net.MalformedURLException -> L75 java.lang.Throwable -> Lc2
-        L6d:
-            if (r5 == 0) goto L72
-            r5.close()     // Catch: java.io.IOException -> L73 java.net.MalformedURLException -> L75 java.lang.Throwable -> Lc2
-        L72:
-            throw r8     // Catch: java.io.IOException -> L73 java.net.MalformedURLException -> L75 java.lang.Throwable -> Lc2
-        L73:
-            r8 = move-exception
-            goto L7c
-        L75:
-            r8 = move-exception
-            goto La0
-        L77:
-            r8 = move-exception
-            r7 = r2
-            goto Lc3
-        L7a:
-            r8 = move-exception
-            r7 = r2
-        L7c:
-            java.lang.String[] r9 = new java.lang.String[r0]     // Catch: java.lang.Throwable -> Lc2
-            java.lang.StringBuilder r0 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> Lc2
-            r0.<init>()     // Catch: java.lang.Throwable -> Lc2
-            java.lang.String r3 = "Could not open connection. "
-            r0.append(r3)     // Catch: java.lang.Throwable -> Lc2
-            java.lang.String r8 = r8.getMessage()     // Catch: java.lang.Throwable -> Lc2
-            r0.append(r8)     // Catch: java.lang.Throwable -> Lc2
-            java.lang.String r8 = r0.toString()     // Catch: java.lang.Throwable -> Lc2
-            r9[r1] = r8     // Catch: java.lang.Throwable -> Lc2
-            com.sonyericsson.android.camera.util.CamLog.e(r9)     // Catch: java.lang.Throwable -> Lc2
-            if (r7 == 0) goto L9d
-            r7.disconnect()
-        L9d:
-            return r2
-        L9e:
-            r8 = move-exception
-            r7 = r2
-        La0:
-            java.lang.String[] r9 = new java.lang.String[r0]     // Catch: java.lang.Throwable -> Lc2
-            java.lang.StringBuilder r0 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> Lc2
-            r0.<init>()     // Catch: java.lang.Throwable -> Lc2
-            java.lang.String r3 = "Malformed URL. "
-            r0.append(r3)     // Catch: java.lang.Throwable -> Lc2
-            java.lang.String r8 = r8.getMessage()     // Catch: java.lang.Throwable -> Lc2
-            r0.append(r8)     // Catch: java.lang.Throwable -> Lc2
-            java.lang.String r8 = r0.toString()     // Catch: java.lang.Throwable -> Lc2
-            r9[r1] = r8     // Catch: java.lang.Throwable -> Lc2
-            com.sonyericsson.android.camera.util.CamLog.e(r9)     // Catch: java.lang.Throwable -> Lc2
-            if (r7 == 0) goto Lc1
-            r7.disconnect()
-        Lc1:
-            return r2
-        Lc2:
-            r8 = move-exception
-        Lc3:
-            if (r7 == 0) goto Lc8
-            r7.disconnect()
-        Lc8:
-            throw r8
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.view.modeselector.ResourceUtil.getRemoteBitmap(java.lang.String, int, int):android.graphics.Bitmap");
+    private static android.graphics.Bitmap getRemoteBitmap(String url, int reqW, int reqH) throws Throwable {
+        HttpURLConnection conn = null;
+        BufferedInputStream in = null;
+        BufferedOutputStream bout = null;
+        ByteArrayOutputStream baos = null;
+
+        try {
+            URL u = new URL(url);
+            conn = (HttpURLConnection) u.openConnection();
+            final int TIMEOUT = 60000;
+            conn.setConnectTimeout(TIMEOUT);
+            conn.setReadTimeout(TIMEOUT);
+
+            in = new BufferedInputStream(conn.getInputStream());
+            baos = new ByteArrayOutputStream();
+            bout = new BufferedOutputStream(baos, 4096);
+
+            // matches fallback: copy(in, out) then flush
+            copy(in, bout);
+            bout.flush();
+
+            // decode full image from memory, as in fallback
+            byte[] data = baos.toByteArray();
+            Bitmap decoded = BitmapFactory.decodeByteArray(data, 0, data.length);
+
+            // close streams (then disconnect), like the fallback does
+            try { in.close(); } catch (Exception ignore) {}
+            in = null;
+            try { bout.close(); } catch (Exception ignore) {}
+            bout = null;
+            try { conn.disconnect(); } catch (Exception ignore) {}
+            conn = null;
+
+            if (decoded != null) {
+                Bitmap scaled = Bitmap.createScaledBitmap(decoded, reqW, reqH, true);
+                if (decoded != scaled) {
+                    try { decoded.recycle(); } catch (Throwable ignore) {}
+                }
+                return scaled;
+            } else {
+                CamLog.e(new String[] { "Bitmap is null." });
+                return null;
+            }
+
+        } catch (IOException e) {
+            CamLog.e(new String[] { "Could not open connection. " + e.getMessage() });
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Exception ignore) {}
+            }
+            return null;
+
+        } catch (MalformedURLException e) {
+            CamLog.e(new String[] { "Malformed URL. " + e.getMessage() });
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Exception ignore) {}
+            }
+            return null;
+
+        } catch (Throwable t) {
+            // ensure disconnect on fatal path, as in fallback
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Exception ignore) {}
+            }
+            throw t;
+
+        } finally {
+            // mirror the fallback’s explicit closes for safety
+            if (in != null) {
+                try { in.close(); } catch (Exception ignore) {}
+            }
+            if (bout != null) {
+                try { bout.close(); } catch (Exception ignore) {}
+            }
+            if (baos != null) {
+                try { baos.close(); } catch (Exception ignore) {}
+            }
+        }
     }
 
     private static void copy(InputStream inputStream, OutputStream outputStream) throws IOException {

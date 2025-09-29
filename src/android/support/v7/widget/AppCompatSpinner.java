@@ -64,23 +64,113 @@ public class AppCompatSpinner extends Spinner implements TintableBackgroundView 
         this(context, attributeSet, i, i2, null);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:23:0x0059 A[PHI: r11 r12
-  0x0059: PHI (r11v3 int) = (r11v0 int), (r11v4 int) binds: [B:31:0x006b, B:22:0x0057] A[DONT_GENERATE, DONT_INLINE]
-  0x0059: PHI (r12v15 android.content.res.TypedArray) = (r12v14 android.content.res.TypedArray), (r12v17 android.content.res.TypedArray) binds: [B:31:0x006b, B:22:0x0057] A[DONT_GENERATE, DONT_INLINE]] */
-    /* JADX WARN: Removed duplicated region for block: B:35:0x0071  */
-    /* JADX WARN: Removed duplicated region for block: B:38:0x0077  */
-    /* JADX WARN: Removed duplicated region for block: B:41:0x00b5  */
-    /* JADX WARN: Removed duplicated region for block: B:44:0x00ce  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public AppCompatSpinner(android.content.Context r8, android.util.AttributeSet r9, int r10, int r11, android.content.res.Resources.Theme r12) throws java.lang.Throwable {
-        /*
-            Method dump skipped, instructions count: 219
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.AppCompatSpinner.<init>(android.content.Context, android.util.AttributeSet, int, int, android.content.res.Resources$Theme):void");
+    /**
+     * Constructs a new spinner with the given context's theme, the supplied
+     * attribute set, default styles, popup mode (one of {@link #MODE_DIALOG}
+     * or {@link #MODE_DROPDOWN}), and the context against which the popup
+     * should be inflated.
+     *
+     * @param context      The context against which the view is inflated, which
+     *                     provides access to the current theme, resources, etc.
+     * @param attrs        The attributes of the XML tag that is inflating the view.
+     * @param defStyleAttr An attribute in the current theme that contains a
+     *                     reference to a style resource that supplies default
+     *                     values for the view. Can be 0 to not look for
+     *                     defaults.
+     * @param mode         Constant describing how the user will select choices from
+     *                     the spinner.
+     * @param popupTheme   The theme against which the dialog or dropdown popup
+     *                     should be inflated. May be {@code null} to use the
+     *                     view theme. If set, this will override any value
+     *                     specified by
+     *                     {@link R.styleable#Spinner_popupTheme}.
+     * @see #MODE_DIALOG
+     * @see #MODE_DROPDOWN
+     */
+    public AppCompatSpinner(Context context, AttributeSet attrs, int defStyleAttr, int mode,
+            Resources.Theme popupTheme) {
+        super(context, attrs, defStyleAttr);
+        TintTypedArray a = TintTypedArray.obtainStyledAttributes(context, attrs,
+                R.styleable.Spinner, defStyleAttr, 0);
+        mDrawableManager = AppCompatDrawableManager.get();
+        mBackgroundTintHelper = new AppCompatBackgroundHelper(this, mDrawableManager);
+        if (popupTheme != null) {
+            mPopupContext = new ContextThemeWrapper(context, popupTheme);
+        } else {
+            final int popupThemeResId = a.getResourceId(R.styleable.Spinner_popupTheme, 0);
+            if (popupThemeResId != 0) {
+                mPopupContext = new ContextThemeWrapper(context, popupThemeResId);
+            } else {
+                // If we're running on a < M device, we'll use the current context and still handle
+                // any dropdown popup
+                mPopupContext = !IS_AT_LEAST_M ? context : null;
+            }
+        }
+        if (mPopupContext != null) {
+            if (mode == MODE_THEME) {
+                if (Build.VERSION.SDK_INT >= 11) {
+                    // If we're running on API v11+ we will try and read android:spinnerMode
+                    TypedArray aa = null;
+                    try {
+                        aa = context.obtainStyledAttributes(attrs, ATTRS_ANDROID_SPINNERMODE,
+                                defStyleAttr, 0);
+                        if (aa.hasValue(0)) {
+                            mode = aa.getInt(0, MODE_DIALOG);
+                        }
+                    } catch (Exception e) {
+                        Log.i(TAG, "Could not read android:spinnerMode", e);
+                    } finally {
+                        if (aa != null) {
+                            aa.recycle();
+                        }
+                    }
+                } else {
+                    // Else, we use a default mode of dropdown
+                    mode = MODE_DROPDOWN;
+                }
+            }
+            if (mode == MODE_DROPDOWN) {
+                final DropdownPopup popup = new DropdownPopup(mPopupContext, attrs, defStyleAttr);
+                final TintTypedArray pa = TintTypedArray.obtainStyledAttributes(
+                        mPopupContext, attrs, R.styleable.Spinner, defStyleAttr, 0);
+                mDropDownWidth = pa.getLayoutDimension(R.styleable.Spinner_android_dropDownWidth,
+                        LayoutParams.WRAP_CONTENT);
+                popup.setBackgroundDrawable(
+                        pa.getDrawable(R.styleable.Spinner_android_popupBackground));
+                popup.setPromptText(a.getString(R.styleable.Spinner_android_prompt));
+                pa.recycle();
+                mPopup = popup;
+                mForwardingListener = new ForwardingListener(this) {
+                    @Override
+                    public ShowableListMenu getPopup() {
+                        return popup;
+                    }
+                    @Override
+                    public boolean onForwardingStarted() {
+                        if (!mPopup.isShowing()) {
+                            mPopup.show();
+                        }
+                        return true;
+                    }
+                };
+            }
+        }
+        final CharSequence[] entries = a.getTextArray(R.styleable.Spinner_android_entries);
+        if (entries != null) {
+            final ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(context,
+                    R.layout.support_simple_spinner_dropdown_item, entries);
+            adapter.setDropDownViewResource(R.layout.support_simple_spinner_dropdown_item);
+            setAdapter(adapter);
+        }
+        a.recycle();
+        mPopupSet = true;
+        // Base constructors can call setAdapter before we initialize mPopup.
+        // Finish setting things up if this happened.
+        if (mTempAdapter != null) {
+            setAdapter(mTempAdapter);
+            mTempAdapter = null;
+        }
+        mBackgroundTintHelper.loadFromAttributes(attrs, defStyleAttr);
     }
 
     @Override // android.widget.Spinner

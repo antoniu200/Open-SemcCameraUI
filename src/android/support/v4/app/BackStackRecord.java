@@ -767,57 +767,30 @@ final class BackStackRecord extends FragmentTransaction implements FragmentManag
         return fragment2;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:13:0x0022  */
-    /* JADX WARN: Removed duplicated region for block: B:14:0x0028  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    android.support.v4.app.Fragment trackAddedFragmentsInPop(java.util.ArrayList<android.support.v4.app.Fragment> r5, android.support.v4.app.Fragment r6) {
-        /*
-            r4 = this;
-            r0 = 0
-        L1:
-            java.util.ArrayList<android.support.v4.app.BackStackRecord$Op> r1 = r4.mOps
-            int r1 = r1.size()
-            if (r0 >= r1) goto L30
-            java.util.ArrayList<android.support.v4.app.BackStackRecord$Op> r1 = r4.mOps
-            java.lang.Object r1 = r1.get(r0)
-            android.support.v4.app.BackStackRecord$Op r1 = (android.support.v4.app.BackStackRecord.Op) r1
-            int r2 = r1.cmd
-            r3 = 1
-            if (r2 == r3) goto L28
-            r3 = 3
-            if (r2 == r3) goto L22
-            switch(r2) {
-                case 6: goto L22;
-                case 7: goto L28;
-                case 8: goto L20;
-                case 9: goto L1d;
-                default: goto L1c;
+    Fragment trackAddedFragmentsInPop(ArrayList<Fragment> added, Fragment currentPrimaryNav) {
+        for (int i = 0, N = mOps.size(); i < N; i++) {
+            Op op = mOps.get(i);
+            switch (op.cmd) {
+                case 1: // ADD
+                case 7: // ATTACH
+                    added.remove(op.fragment);
+                    break;
+                case 3: // REMOVE
+                case 6: // DETACH
+                    added.add(op.fragment);
+                    break;
+                case 8: // UNSET_PRIMARY_NAV
+                    currentPrimaryNav = null;
+                    break;
+                case 9: // SET_PRIMARY_NAV
+                    currentPrimaryNav = op.fragment;
+                    break;
+                default:
+                    // no-op
+                    break;
             }
-        L1c:
-            goto L2d
-        L1d:
-            android.support.v4.app.Fragment r6 = r1.fragment
-            goto L2d
-        L20:
-            r6 = 0
-            goto L2d
-        L22:
-            android.support.v4.app.Fragment r1 = r1.fragment
-            r5.add(r1)
-            goto L2d
-        L28:
-            android.support.v4.app.Fragment r1 = r1.fragment
-            r5.remove(r1)
-        L2d:
-            int r0 = r0 + 1
-            goto L1
-        L30:
-            return r6
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.app.BackStackRecord.trackAddedFragmentsInPop(java.util.ArrayList, android.support.v4.app.Fragment):android.support.v4.app.Fragment");
+        }
+        return currentPrimaryNav;
     }
 
     boolean isPostponed() {

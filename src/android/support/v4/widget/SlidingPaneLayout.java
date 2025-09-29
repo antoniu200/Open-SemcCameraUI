@@ -247,37 +247,252 @@ public class SlidingPaneLayout extends ViewGroup {
         this.mPostedRunnables.clear();
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:120:0x01f5  */
-    /* JADX WARN: Removed duplicated region for block: B:123:0x020b  */
-    /* JADX WARN: Removed duplicated region for block: B:40:0x00b0 A[PHI: r12
-  0x00b0: PHI (r12v2 float) = (r12v1 float), (r12v3 float) binds: [B:36:0x00a5, B:38:0x00ac] A[DONT_GENERATE, DONT_INLINE]] */
-    /* JADX WARN: Removed duplicated region for block: B:74:0x0142  */
-    @Override // android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected void onMeasure(int r21, int r22) {
-        /*
-            Method dump skipped, instructions count: 585
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.widget.SlidingPaneLayout.onMeasure(int, int):void");
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        if (widthMode != MeasureSpec.EXACTLY) {
+            if (isInEditMode()) {
+                // Don't crash the layout editor. Consume all of the space if specified
+                // or pick a magic number from thin air otherwise.
+                // TODO Better communication with tools of this bogus state.
+                // It will crash on a real device.
+                if (widthMode == MeasureSpec.AT_MOST) {
+                    widthMode = MeasureSpec.EXACTLY;
+                } else if (widthMode == MeasureSpec.UNSPECIFIED) {
+                    widthMode = MeasureSpec.EXACTLY;
+                    widthSize = 300;
+                }
+            } else {
+                throw new IllegalStateException("Width must have an exact value or MATCH_PARENT");
+            }
+        } else if (heightMode == MeasureSpec.UNSPECIFIED) {
+            if (isInEditMode()) {
+                // Don't crash the layout editor. Pick a magic number from thin air instead.
+                // TODO Better communication with tools of this bogus state.
+                // It will crash on a real device.
+                if (heightMode == MeasureSpec.UNSPECIFIED) {
+                    heightMode = MeasureSpec.AT_MOST;
+                    heightSize = 300;
+                }
+            } else {
+                throw new IllegalStateException("Height must not be UNSPECIFIED");
+            }
+        }
+        int layoutHeight = 0;
+        int maxLayoutHeight = -1;
+        switch (heightMode) {
+            case MeasureSpec.EXACTLY:
+                layoutHeight = maxLayoutHeight = heightSize - getPaddingTop() - getPaddingBottom();
+                break;
+            case MeasureSpec.AT_MOST:
+                maxLayoutHeight = heightSize - getPaddingTop() - getPaddingBottom();
+                break;
+        }
+        float weightSum = 0;
+        boolean canSlide = false;
+        final int widthAvailable = widthSize - getPaddingLeft() - getPaddingRight();
+        int widthRemaining = widthAvailable;
+        final int childCount = getChildCount();
+        if (childCount > 2) {
+            Log.e(TAG, "onMeasure: More than two child views are not supported.");
+        }
+        // We'll find the current one below.
+        mSlideableView = null;
+        // First pass. Measure based on child LayoutParams width/height.
+        // Weight will incur a second pass.
+        for (int i = 0; i < childCount; i++) {
+            final View child = getChildAt(i);
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            if (child.getVisibility() == GONE) {
+                lp.dimWhenOffset = false;
+                continue;
+            }
+            if (lp.weight > 0) {
+                weightSum += lp.weight;
+                // If we have no width, weight is the only contributor to the final size.
+                // Measure this view on the weight pass only.
+                if (lp.width == 0) continue;
+            }
+            int childWidthSpec;
+            final int horizontalMargin = lp.leftMargin + lp.rightMargin;
+            if (lp.width == LayoutParams.WRAP_CONTENT) {
+                childWidthSpec = MeasureSpec.makeMeasureSpec(widthAvailable - horizontalMargin,
+                        MeasureSpec.AT_MOST);
+            } else if (lp.width == LayoutParams.FILL_PARENT) {
+                childWidthSpec = MeasureSpec.makeMeasureSpec(widthAvailable - horizontalMargin,
+                        MeasureSpec.EXACTLY);
+            } else {
+                childWidthSpec = MeasureSpec.makeMeasureSpec(lp.width, MeasureSpec.EXACTLY);
+            }
+            int childHeightSpec;
+            if (lp.height == LayoutParams.WRAP_CONTENT) {
+                childHeightSpec = MeasureSpec.makeMeasureSpec(maxLayoutHeight, MeasureSpec.AT_MOST);
+            } else if (lp.height == LayoutParams.FILL_PARENT) {
+                childHeightSpec = MeasureSpec.makeMeasureSpec(maxLayoutHeight, MeasureSpec.EXACTLY);
+            } else {
+                childHeightSpec = MeasureSpec.makeMeasureSpec(lp.height, MeasureSpec.EXACTLY);
+            }
+            child.measure(childWidthSpec, childHeightSpec);
+            final int childWidth = child.getMeasuredWidth();
+            final int childHeight = child.getMeasuredHeight();
+            if (heightMode == MeasureSpec.AT_MOST && childHeight > layoutHeight) {
+                layoutHeight = Math.min(childHeight, maxLayoutHeight);
+            }
+            widthRemaining -= childWidth;
+            canSlide |= lp.slideable = widthRemaining < 0;
+            if (lp.slideable) {
+                mSlideableView = child;
+            }
+        }
+        // Resolve weight and make sure non-sliding panels are smaller than the full screen.
+        if (canSlide || weightSum > 0) {
+            final int fixedPanelWidthLimit = widthAvailable - mOverhangSize;
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                if (child.getVisibility() == GONE) {
+                    continue;
+                }
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (child.getVisibility() == GONE) {
+                    continue;
+                }
+                final boolean skippedFirstPass = lp.width == 0 && lp.weight > 0;
+                final int measuredWidth = skippedFirstPass ? 0 : child.getMeasuredWidth();
+                if (canSlide && child != mSlideableView) {
+                    if (lp.width < 0 && (measuredWidth > fixedPanelWidthLimit || lp.weight > 0)) {
+                        // Fixed panels in a sliding configuration should
+                        // be clamped to the fixed panel limit.
+                        final int childHeightSpec;
+                        if (skippedFirstPass) {
+                            // Do initial height measurement if we skipped measuring this view
+                            // the first time around.
+                            if (lp.height == LayoutParams.WRAP_CONTENT) {
+                                childHeightSpec = MeasureSpec.makeMeasureSpec(maxLayoutHeight,
+                                        MeasureSpec.AT_MOST);
+                            } else if (lp.height == LayoutParams.FILL_PARENT) {
+                                childHeightSpec = MeasureSpec.makeMeasureSpec(maxLayoutHeight,
+                                        MeasureSpec.EXACTLY);
+                            } else {
+                                childHeightSpec = MeasureSpec.makeMeasureSpec(lp.height,
+                                        MeasureSpec.EXACTLY);
+                            }
+                        } else {
+                            childHeightSpec = MeasureSpec.makeMeasureSpec(
+                                    child.getMeasuredHeight(), MeasureSpec.EXACTLY);
+                        }
+                        final int childWidthSpec = MeasureSpec.makeMeasureSpec(
+                                fixedPanelWidthLimit, MeasureSpec.EXACTLY);
+                        child.measure(childWidthSpec, childHeightSpec);
+                    }
+                } else if (lp.weight > 0) {
+                    int childHeightSpec;
+                    if (lp.width == 0) {
+                        // This was skipped the first time; figure out a real height spec.
+                        if (lp.height == LayoutParams.WRAP_CONTENT) {
+                            childHeightSpec = MeasureSpec.makeMeasureSpec(maxLayoutHeight,
+                                    MeasureSpec.AT_MOST);
+                        } else if (lp.height == LayoutParams.FILL_PARENT) {
+                            childHeightSpec = MeasureSpec.makeMeasureSpec(maxLayoutHeight,
+                                    MeasureSpec.EXACTLY);
+                        } else {
+                            childHeightSpec = MeasureSpec.makeMeasureSpec(lp.height,
+                                    MeasureSpec.EXACTLY);
+                        }
+                    } else {
+                        childHeightSpec = MeasureSpec.makeMeasureSpec(
+                                child.getMeasuredHeight(), MeasureSpec.EXACTLY);
+                    }
+                    if (canSlide) {
+                        // Consume available space
+                        final int horizontalMargin = lp.leftMargin + lp.rightMargin;
+                        final int newWidth = widthAvailable - horizontalMargin;
+                        final int childWidthSpec = MeasureSpec.makeMeasureSpec(
+                                newWidth, MeasureSpec.EXACTLY);
+                        if (measuredWidth != newWidth) {
+                            child.measure(childWidthSpec, childHeightSpec);
+                        }
+                    } else {
+                        // Distribute the extra width proportionally similar to LinearLayout
+                        final int widthToDistribute = Math.max(0, widthRemaining);
+                        final int addedWidth = (int) (lp.weight * widthToDistribute / weightSum);
+                        final int childWidthSpec = MeasureSpec.makeMeasureSpec(
+                                measuredWidth + addedWidth, MeasureSpec.EXACTLY);
+                        child.measure(childWidthSpec, childHeightSpec);
+                    }
+                }
+            }
+        }
+        final int measuredWidth = widthSize;
+        final int measuredHeight = layoutHeight + getPaddingTop() + getPaddingBottom();
+        setMeasuredDimension(measuredWidth, measuredHeight);
+        mCanSlide = canSlide;
+        if (mDragHelper.getViewDragState() != ViewDragHelper.STATE_IDLE && !canSlide) {
+            // Cancel scrolling in progress, it's no longer relevant.
+            mDragHelper.abort();
+        }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:46:0x00c0  */
-    /* JADX WARN: Removed duplicated region for block: B:47:0x00c6  */
-    @Override // android.view.ViewGroup, android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected void onLayout(boolean r20, int r21, int r22, int r23, int r24) throws java.lang.IllegalAccessException, java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException {
-        /*
-            Method dump skipped, instructions count: 285
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.widget.SlidingPaneLayout.onLayout(boolean, int, int, int, int):void");
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        final int width = r - l;
+        final int paddingLeft = getPaddingLeft();
+        final int paddingRight = getPaddingRight();
+        final int paddingTop = getPaddingTop();
+        final int childCount = getChildCount();
+        int xStart = paddingLeft;
+        int nextXStart = xStart;
+        if (mFirstLayout) {
+            mSlideOffset = mCanSlide && mPreservedOpenState ? 1.f : 0.f;
+        }
+        for (int i = 0; i < childCount; i++) {
+            final View child = getChildAt(i);
+            if (child.getVisibility() == GONE) {
+                continue;
+            }
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            final int childWidth = child.getMeasuredWidth();
+            int offset = 0;
+            if (lp.slideable) {
+                final int margin = lp.leftMargin + lp.rightMargin;
+                final int range = Math.min(nextXStart,
+                        width - paddingRight - mOverhangSize) - xStart - margin;
+                mSlideRange = range;
+                lp.dimWhenOffset = xStart + lp.leftMargin + range + childWidth / 2 >
+                        width - paddingRight;
+                xStart += (int) (range * mSlideOffset) + lp.leftMargin;
+            } else if (mCanSlide && mParallaxBy != 0) {
+                offset = (int) ((1 - mSlideOffset) * mParallaxBy);
+                xStart = nextXStart;
+            } else {
+                xStart = nextXStart;
+            }
+            final int childLeft = xStart - offset;
+            final int childRight = childLeft + childWidth;
+            final int childTop = paddingTop;
+            final int childBottom = childTop + child.getMeasuredHeight();
+            child.layout(childLeft, paddingTop, childRight, childBottom);
+            nextXStart += child.getWidth();
+        }
+        if (mFirstLayout) {
+            if (mCanSlide) {
+                if (mParallaxBy != 0) {
+                    parallaxOtherViews(mSlideOffset);
+                }
+                if (((LayoutParams) mSlideableView.getLayoutParams()).dimWhenOffset) {
+                    dimChildView(mSlideableView, mSlideOffset, mSliderFadeColor);
+                }
+            } else {
+                // Reset the dim level of all children; it's irrelevant when nothing moves.
+                for (int i = 0; i < childCount; i++) {
+                    dimChildView(getChildAt(i), 0, mSliderFadeColor);
+                }
+            }
+            updateObscuredViewsVisibility(mSlideableView);
+        }
+        mFirstLayout = false;
     }
 
     @Override // android.view.View
@@ -604,77 +819,22 @@ public class SlidingPaneLayout extends ViewGroup {
         drawable.draw(canvas);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:9:0x001c  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private void parallaxOtherViews(float r10) throws java.lang.IllegalAccessException, java.lang.IllegalArgumentException, java.lang.reflect.InvocationTargetException {
-        /*
-            r9 = this;
-            boolean r0 = r9.isLayoutRtlSupport()
-            android.view.View r1 = r9.mSlideableView
-            android.view.ViewGroup$LayoutParams r1 = r1.getLayoutParams()
-            android.support.v4.widget.SlidingPaneLayout$LayoutParams r1 = (android.support.v4.widget.SlidingPaneLayout.LayoutParams) r1
-            boolean r2 = r1.dimWhenOffset
-            r3 = 0
-            if (r2 == 0) goto L1c
-            if (r0 == 0) goto L16
-            int r1 = r1.rightMargin
-            goto L18
-        L16:
-            int r1 = r1.leftMargin
-        L18:
-            if (r1 > 0) goto L1c
-            r1 = 1
-            goto L1d
-        L1c:
-            r1 = r3
-        L1d:
-            int r2 = r9.getChildCount()
-        L21:
-            if (r3 >= r2) goto L5b
-            android.view.View r4 = r9.getChildAt(r3)
-            android.view.View r5 = r9.mSlideableView
-            if (r4 != r5) goto L2c
-            goto L58
-        L2c:
-            float r5 = r9.mParallaxOffset
-            r6 = 1065353216(0x3f800000, float:1.0)
-            float r5 = r6 - r5
-            int r7 = r9.mParallaxBy
-            float r7 = (float) r7
-            float r5 = r5 * r7
-            int r5 = (int) r5
-            r9.mParallaxOffset = r10
-            float r7 = r6 - r10
-            int r8 = r9.mParallaxBy
-            float r8 = (float) r8
-            float r7 = r7 * r8
-            int r7 = (int) r7
-            int r5 = r5 - r7
-            if (r0 == 0) goto L44
-            int r5 = -r5
-        L44:
-            r4.offsetLeftAndRight(r5)
-            if (r1 == 0) goto L58
-            if (r0 == 0) goto L4f
-            float r5 = r9.mParallaxOffset
-            float r5 = r5 - r6
-            goto L53
-        L4f:
-            float r5 = r9.mParallaxOffset
-            float r5 = r6 - r5
-        L53:
-            int r6 = r9.mCoveredFadeColor
-            r9.dimChildView(r4, r5, r6)
-        L58:
-            int r3 = r3 + 1
-            goto L21
-        L5b:
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.widget.SlidingPaneLayout.parallaxOtherViews(float):void");
+    private void parallaxOtherViews(float slideOffset) {
+        final LayoutParams slideLp = (LayoutParams) mSlideableView.getLayoutParams();
+        final boolean dimViews = slideLp.dimWhenOffset && slideLp.leftMargin <= 0;
+        final int childCount = getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            final View v = getChildAt(i);
+            if (v == mSlideableView) continue;
+            final int oldOffset = (int) ((1 - mParallaxOffset) * mParallaxBy);
+            mParallaxOffset = slideOffset;
+            final int newOffset = (int) ((1 - slideOffset) * mParallaxBy);
+            final int dx = oldOffset - newOffset;
+            v.offsetLeftAndRight(dx);
+            if (dimViews) {
+                dimChildView(v, 1 - mParallaxOffset, mCoveredFadeColor);
+            }
+        }
     }
 
     protected boolean canScroll(View view, boolean z, int i, int i2, int i3) {

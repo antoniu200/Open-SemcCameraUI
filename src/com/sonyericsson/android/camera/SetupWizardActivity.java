@@ -6,11 +6,15 @@ import android.app.KeyguardManager;
 import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
+import android.content.pm.PermissionGroupInfo;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.OrientationEventListener;
@@ -492,78 +496,43 @@ public class SetupWizardActivity extends Activity {
         this.mOptionalRuntimePermissionDialog.show();
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:17:0x005c  */
-    /* JADX WARN: Removed duplicated region for block: B:23:0x007c  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private java.lang.String getPermissionGroupLabel(java.lang.String r6) throws android.content.pm.PackageManager.NameNotFoundException {
-        /*
-            r5 = this;
-            boolean r0 = com.sonyericsson.android.camera.util.CamLog.VERBOSE
-            if (r0 == 0) goto Ld
-            java.lang.String r0 = "getPermissionGroupLabel() start"
-            java.lang.String[] r0 = new java.lang.String[]{r0}
-            com.sonyericsson.android.camera.util.CamLog.d(r0)
-        Ld:
-            java.lang.String r0 = ""
-            r1 = 0
-            r2 = 1
-            android.content.pm.PackageManager r3 = r5.getPackageManager()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            r4 = 128(0x80, float:1.8E-43)
-            android.content.pm.PermissionInfo r6 = r3.getPermissionInfo(r6, r4)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            java.lang.String r6 = r6.group     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            java.lang.String r6 = r6.toString()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            android.content.pm.PackageManager r3 = r5.getPackageManager()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            android.content.pm.PermissionGroupInfo r3 = r3.getPermissionGroupInfo(r6, r4)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            if (r3 == 0) goto L5c
-            android.content.pm.PackageManager r5 = r5.getPackageManager()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            java.lang.CharSequence r5 = r3.loadLabel(r5)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            boolean r3 = android.text.TextUtils.isEmpty(r5)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            if (r3 != 0) goto L5c
-            java.lang.String r5 = r5.toString()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5e
-            boolean r0 = com.sonyericsson.android.camera.util.CamLog.VERBOSE     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            if (r0 == 0) goto L78
-            java.lang.String[] r0 = new java.lang.String[r2]     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            java.lang.StringBuilder r3 = new java.lang.StringBuilder     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            r3.<init>()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            java.lang.String r4 = "getPermissionGroupLabel label :"
-            r3.append(r4)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            r3.append(r6)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            java.lang.String r6 = r3.toString()     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            r0[r1] = r6     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            com.sonyericsson.android.camera.util.CamLog.d(r0)     // Catch: android.content.pm.PackageManager.NameNotFoundException -> L5a
-            goto L78
-        L5a:
-            r6 = move-exception
-            goto L60
-        L5c:
-            r5 = r0
-            goto L78
-        L5e:
-            r6 = move-exception
-            r5 = r0
-        L60:
-            java.lang.String[] r0 = new java.lang.String[r2]
-            java.lang.StringBuilder r2 = new java.lang.StringBuilder
-            r2.<init>()
-            java.lang.String r3 = "getPermissionGroupLabel(): "
-            r2.append(r3)
-            r2.append(r6)
-            java.lang.String r6 = r2.toString()
-            r0[r1] = r6
-            com.sonyericsson.android.camera.util.CamLog.e(r0)
-        L78:
-            boolean r6 = com.sonyericsson.android.camera.util.CamLog.VERBOSE
-            if (r6 == 0) goto L85
-            java.lang.String r6 = "getPermissionGroupLabel() end"
-            java.lang.String[] r6 = new java.lang.String[]{r6}
-            com.sonyericsson.android.camera.util.CamLog.d(r6)
-        L85:
-            return r5
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.SetupWizardActivity.getPermissionGroupLabel(java.lang.String):java.lang.String");
+    private String getPermissionGroupLabel(String permission)
+            throws PackageManager.NameNotFoundException {
+        if (CamLog.VERBOSE) {
+            CamLog.d(new String[] { "getPermissionGroupLabel() start" });
+        }
+
+        String label = "";
+
+        try {
+            final PackageManager pm = getPackageManager();
+            final int flags = 0x80; // PackageManager.GET_META_DATA
+
+            final PermissionInfo pi = pm.getPermissionInfo(permission, flags);
+            final String groupName = (pi.group != null) ? pi.group.toString() : null;
+
+            if (groupName != null) {
+                final PermissionGroupInfo pgi = pm.getPermissionGroupInfo(groupName, flags);
+                if (pgi != null) {
+                    final CharSequence cs = pgi.loadLabel(pm);
+                    if (!TextUtils.isEmpty(cs)) {
+                        label = cs.toString();
+                        if (CamLog.VERBOSE) {
+                            CamLog.d(new String[] { "getPermissionGroupLabel label :" + groupName });
+                        }
+                    }
+                }
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            CamLog.e(new String[] { "getPermissionGroupLabel(): " + e });
+            // rethrow to honor the method's throws clause
+            throw e;
+        }
+
+        if (CamLog.VERBOSE) {
+            CamLog.d(new String[] { "getPermissionGroupLabel() end" });
+        }
+        return label;
     }
 
     private static class KeyEventKiller implements DialogInterface.OnKeyListener {

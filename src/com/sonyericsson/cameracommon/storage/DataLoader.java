@@ -102,23 +102,104 @@ public class DataLoader implements Callable<Long> {
         this.mIsRegisterCache = z;
     }
 
-    /* JADX WARN: Can't rename method to resolve collision */
-    /* JADX WARN: Removed duplicated region for block: B:101:? A[Catch: all -> 0x00b0, Throwable -> 0x00b3, SYNTHETIC, TryCatch #2 {all -> 0x00b0, blocks: (B:14:0x0033, B:16:0x0037, B:17:0x0053, B:19:0x0057, B:21:0x005d, B:23:0x0063, B:24:0x0066, B:25:0x006a, B:27:0x0070, B:29:0x0078, B:48:0x00a7, B:41:0x0098, B:45:0x00a1, B:44:0x009d, B:46:0x00a4, B:50:0x00ac), top: B:89:0x0033 }] */
-    /* JADX WARN: Removed duplicated region for block: B:104:? A[Catch: all -> 0x00d0, SYNTHETIC, TryCatch #0 {all -> 0x00d0, blocks: (B:67:0x00cc, B:60:0x00bd, B:64:0x00c6, B:63:0x00c2, B:65:0x00c9), top: B:86:0x0031, inners: #6 }] */
-    /* JADX WARN: Removed duplicated region for block: B:40:0x0096  */
-    /* JADX WARN: Removed duplicated region for block: B:59:0x00bb  */
-    @Override // java.util.concurrent.Callable
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public java.lang.Long call() throws java.lang.Exception {
-        /*
-            Method dump skipped, instructions count: 288
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.storage.DataLoader.call():java.lang.Long");
-    }
+	@Override // java.util.concurrent.Callable
+	public java.lang.Long call() throws java.lang.Exception {
+		if (CamLog.VERBOSE) {
+			CamLog.d(new String[] { "call() has been called." });
+		}
+
+		long lastId = 0L;
+		LinkedList<Content.ContentInfo> list = new LinkedList<>();
+		Cursor c;
+
+		if (mParam != null) {
+			c = getLatestImageInfo();
+		} else if (mMediaUris != null) {
+			c = getImagesInfo(mMediaUris);
+		} else {
+			c = getCoverImageInfo(mMediaId);
+		}
+
+		Bitmap thumbnail = null;
+		boolean hasData = false;
+
+		try {
+			if (c != null) {
+				if (CamLog.VERBOSE) {
+					CamLog.d(new String[] { "cursor count = " + c.getCount() });
+				}
+
+				if (mMediaUris != null) {
+					// iterate all rows from provided URIs
+					while (!c.isAfterLast()) {
+						Content.ContentInfo info =
+								createContentInfoForMediaUris(c);
+						if (info != null) {
+							list.addLast(info);
+						}
+						c.moveToNext();
+					}
+				} else {
+					// single/latest item path (with predictive-capture follow-up)
+					Content.ContentInfo info =
+							createContentInfo(c);
+
+					if (info != null
+							&& PredictiveCapturePathBuilder.isPredictiveCaptureImage(info.mOriginalPath)) {
+
+						String ts = PredictiveCapturePathBuilder.getTimeStamp(info.mOriginalPath);
+						Cursor pc = getPredictiveCaptureImageInfo(ts, info.mBucketId);
+						if (pc != null) {
+							try {
+								info = createContentInfo(pc);
+							} finally {
+								pc.close();
+							}
+						}
+					}
+
+					if (info != null) {
+						list.addLast(info);
+					}
+				}
+			}
+		} finally {
+			try {
+				if (c != null) c.close();
+			} catch (Throwable t) {
+				// mirror fallback: clear params then rethrow
+				mParam = null;
+				mMediaUris = null;
+				throw t;
+			}
+		}
+
+		// clear query params as in fallback
+		mParam = null;
+		mMediaUris = null;
+
+		if (!list.isEmpty()) {
+			Content.ContentInfo last = list.getLast();
+			lastId = last.mId;
+
+			if (last.mIsContainDetails) {
+				Bitmap b = decodeThumbnail(last);
+				if (b != null) {
+					last.mIsMediaDataVerified = true;
+				}
+				thumbnail = b;
+			}
+			hasData = true;
+		}
+
+		if (hasData) {
+			mDataLoadCallback.onDataLoadCompleted(mRequestId, mIsRegisterCache, list, thumbnail);
+		} else {
+			mDataLoadCallback.onDataLoadFailed(mRequestId);
+		}
+
+		return java.lang.Long.valueOf(lastId);
+	}
 
     private CrQueryParameter setupQueryParam(List<String> list, int i) {
         if (CamLog.VERBOSE) {

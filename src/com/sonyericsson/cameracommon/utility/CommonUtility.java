@@ -171,46 +171,34 @@ public class CommonUtility {
         return str.substring(iLastIndexOf);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:17:0x0026 A[EXC_TOP_SPLITTER, SYNTHETIC] */
-    /* JADX WARN: Removed duplicated region for block: B:23:? A[RETURN, SYNTHETIC] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static void dumpFile(byte[] r4, java.lang.String r5) throws java.io.IOException {
-        /*
-            r0 = 0
-            java.io.FileOutputStream r1 = new java.io.FileOutputStream     // Catch: java.io.IOException -> L1d
-            java.lang.StringBuilder r2 = new java.lang.StringBuilder     // Catch: java.io.IOException -> L1d
-            r2.<init>()     // Catch: java.io.IOException -> L1d
-            java.lang.String r3 = "/sdcard/"
-            r2.append(r3)     // Catch: java.io.IOException -> L1d
-            r2.append(r5)     // Catch: java.io.IOException -> L1d
-            java.lang.String r5 = r2.toString()     // Catch: java.io.IOException -> L1d
-            r1.<init>(r5)     // Catch: java.io.IOException -> L1d
-            r1.write(r4)     // Catch: java.io.IOException -> L1b
-            goto L24
-        L1b:
-            r4 = move-exception
-            goto L1f
-        L1d:
-            r4 = move-exception
-            r1 = r0
-        L1f:
-            java.lang.String r5 = "dumpFile Open / Write Error"
-            com.sonyericsson.android.camera.util.CamLog.e(r5, r4)
-        L24:
-            if (r1 == 0) goto L30
-            r1.close()     // Catch: java.io.IOException -> L2a
-            goto L30
-        L2a:
-            r4 = move-exception
-            java.lang.String r5 = "dumpFile Close Error"
-            com.sonyericsson.android.camera.util.CamLog.e(r5, r4)
-        L30:
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.utility.CommonUtility.dumpFile(byte[], java.lang.String):void");
+    public static void dumpFile(final byte[] b, final String str) {
+        FileOutputStream fileOutputStream2;
+        try {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("/sdcard/");
+            sb.append(str);
+            final FileOutputStream fileOutputStream = new FileOutputStream(sb.toString());
+            try {
+                fileOutputStream.write(b);
+                fileOutputStream2 = fileOutputStream;
+            }
+            catch (final IOException ex) {
+                fileOutputStream2 = fileOutputStream;
+            }
+        }
+        catch (final IOException ex) {
+            fileOutputStream2 = null;
+        }
+        final IOException ex;
+        CamLog.e("dumpFile Open / Write Error", ex);
+        if (fileOutputStream2 != null) {
+            try {
+                fileOutputStream2.close();
+            }
+            catch (final IOException ex2) {
+                CamLog.e("dumpFile Close Error", ex2);
+            }
+        }
     }
 
     public static boolean sameStrings(String str, String str2) {

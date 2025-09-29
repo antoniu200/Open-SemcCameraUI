@@ -94,186 +94,179 @@ public class TiffReader extends BinaryFileParser {
         }
     }
 
-    private boolean readDirectory(ByteSource byteSource, long j, int i, FormatCompliance formatCompliance, Listener listener, List<Number> list) throws IOException, ImageReadException {
-        return readDirectory(byteSource, j, i, formatCompliance, listener, false, list);
+    private boolean readDirectory(final ByteSource byteSource, final long offset,
+            final int dirType, final FormatCompliance formatCompliance, final Listener listener,
+            final List<Number> visited) throws ImageReadException, IOException {
+        final boolean ignoreNextDirectory = false;
+        return readDirectory(byteSource, offset, dirType, formatCompliance,
+                listener, ignoreNextDirectory, visited);
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:47:0x0134, code lost:
+    private boolean readDirectory(final ByteSource byteSource, final long directoryOffset,
+            final int dirType, final FormatCompliance formatCompliance, final Listener listener,
+            final boolean ignoreNextDirectory, final List<Number> visited)
+            throws ImageReadException, IOException {
+
+        if (visited.contains(directoryOffset)) {
+            return false;
+        }
+        visited.add(directoryOffset);
+
+        InputStream is = null;
+        boolean canThrow = false;
+        try {
+            if (directoryOffset >= byteSource.getLength()) {
+                canThrow = true;
+                return true;
+            }
+
+            is = byteSource.getInputStream();
+            skipBytes(is, directoryOffset);
+
+            final List<TiffField> fields = new ArrayList<TiffField>();
+
+            int entryCount;
+            try {
+                entryCount = read2Bytes("DirectoryEntryCount", is,
+                        "Not a Valid TIFF File");
+            } catch (final IOException e) {
+                if (strict) {
+                    throw e;
+                } else {
+                    canThrow = true;
+                    return true;
+                }
+            }
+
+            for (int i = 0; i < entryCount; i++) {
+                final int tag = read2Bytes("Tag", is, "Not a Valid TIFF File");
+                final int type = read2Bytes("Type", is, "Not a Valid TIFF File");
+                final long count = 0xFFFFffffL & read4Bytes("Count", is, "Not a Valid TIFF File");
+                final byte offsetBytes[] = readBytes("Offset", is, 4,
+                        "Not a Valid TIFF File");
+                final long offset = 0xFFFFffffL & toInt(offsetBytes);
+
+                if (tag == 0) {
+                    // skip invalid fields.
+                    // These are seen very rarely, but can have invalid value
+                    // lengths,
+                    // which can cause OOM problems.
+                    continue;
+                }
+                
+                final FieldType fieldType;
+                try {
+                    fieldType = FieldType.getFieldType(type);
+                } catch (final ImageReadException imageReadEx) {
+                    // skip over unknown fields types, since we
+                    // can't calculate their size without
+                    // knowing their type
+                    continue;
+                }
+                final long valueLength = count * fieldType.getSize();
+                final byte[] value;
+                if (valueLength > TIFF_ENTRY_MAX_VALUE_LENGTH) {
+                    if ((offset < 0) ||
+                            (offset + valueLength) > byteSource.getLength()) {
+                        if (strict) {
+                            throw new IOException(
+                                    "Attempt to read byte range starting from " + offset + " " +
+                                            "of length " + valueLength + " " +
+                                            "which is outside the file's size of " +
+                                            byteSource.getLength());
+                        } else {
+                            // corrupt field, ignore it
+                            continue;
+                        }
+                    }
+                    value = byteSource.getBlock(offset, (int)valueLength);
+                } else {
+                    value = offsetBytes;
+                }
+
+                final TiffField field = new TiffField(tag, dirType, fieldType, count,
+                        offset, value, getByteOrder(), i);
+
+                fields.add(field);
+
+                if (!listener.addField(field)) {
+                    canThrow = true;
+                    return true;
+                }
+            }
+
+            final long nextDirectoryOffset = 0xFFFFffffL & read4Bytes("nextDirectoryOffset", is,
+                    "Not a Valid TIFF File");
+
+            final TiffDirectory directory = new TiffDirectory(dirType, fields,
+                    directoryOffset, nextDirectoryOffset);
+
+            if (listener.readImageData()) {
+                if (directory.hasTiffImageData()) {
+                    final TiffImageData rawImageData = getTiffRawImageData(
+                            byteSource, directory);
+                    directory.setTiffImageData(rawImageData);
+                }
+                if (directory.hasJpegImageData()) {
+                    final JpegImageData rawJpegImageData = getJpegRawImageData(
+                            byteSource, directory);
+                    directory.setJpegImageData(rawJpegImageData);
+                }
+            }
+
+            if (!listener.addDirectory(directory)) {
+                canThrow = true;
+                return true;
+            }
+
+            if (listener.readOffsetDirectories()) {
+                final TagInfoLong[] offsetFields = {
+                        EXIF_TAG_EXIF_OFFSET,
+                        EXIF_TAG_GPSINFO,
+                        EXIF_TAG_INTEROP_OFFSET
+                };
+                final int[] directoryTypes = {
+                        TiffDirectoryConstants.DIRECTORY_TYPE_EXIF,
+                        TiffDirectoryConstants.DIRECTORY_TYPE_GPS,
+                        TiffDirectoryConstants.DIRECTORY_TYPE_INTEROPERABILITY
+                };
+                for (int i = 0; i < offsetFields.length; i++) {
+                    final TagInfoLong offsetField = offsetFields[i];
+                    final TiffField field = directory.findField(offsetField);
+                    if (field != null) {
+                        long subDirectoryOffset;
+                        int subDirectoryType;
+                        boolean subDirectoryRead = false;
+                        try {
+                            subDirectoryOffset = directory.getSingleFieldValue(offsetField);
+                            subDirectoryType = directoryTypes[i];
+                            subDirectoryRead = readDirectory(byteSource,
+                                    subDirectoryOffset, subDirectoryType,
+                                    formatCompliance, listener, true, visited);
     
-        r14 = new org.apache.commons.imaging.formats.tiff.TiffDirectory(r34, r8, r32, 4294967295L & org.apache.commons.imaging.common.BinaryFunctions.read4Bytes("nextDirectoryOffset", r9, "Not a Valid TIFF File", getByteOrder()));
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:48:0x0157, code lost:
-    
-        if (r36.readImageData() == false) goto L55;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:50:0x015d, code lost:
-    
-        if (r14.hasTiffImageData() == false) goto L52;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:51:0x015f, code lost:
-    
-        r14.setTiffImageData(getTiffRawImageData(r31, r14));
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:53:0x016a, code lost:
-    
-        if (r14.hasJpegImageData() == false) goto L55;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:54:0x016c, code lost:
-    
-        r14.setJpegImageData(getJpegRawImageData(r31, r14));
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:56:0x0177, code lost:
-    
-        if (r36.addDirectory(r14) != false) goto L58;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:57:0x0179, code lost:
-    
-        r1 = true;
-        r2 = new java.io.Closeable[]{r9};
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:60:0x0185, code lost:
-    
-        if (r36.readOffsetDirectories() == false) goto L89;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:61:0x0187, code lost:
-    
-        r15 = new org.apache.commons.imaging.formats.tiff.taginfos.TagInfoLong[3];
-        r15[0] = org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants.EXIF_TAG_EXIF_OFFSET;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:63:0x0191, code lost:
-    
-        r15[1] = org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants.EXIF_TAG_GPSINFO;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:65:0x0194, code lost:
-    
-        r15[2] = org.apache.commons.imaging.formats.tiff.constants.ExifTagConstants.EXIF_TAG_INTEROP_OFFSET;
-        r7 = new int[]{-2, -3, -4};
-        r6 = 0;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:67:0x019f, code lost:
-    
-        if (r6 >= r15.length) goto L136;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:68:0x01a1, code lost:
-    
-        r5 = r14.findField(r15[r6]);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:69:0x01a7, code lost:
-    
-        if (r5 == null) goto L85;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:71:0x01b0, code lost:
-    
-        r28 = r5;
-        r18 = r6;
-        r20 = r7;
-        r29 = r15;
-        r15 = r8;
-        r19 = r9;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:72:0x01c7, code lost:
-    
-        r1 = readDirectory(r31, r14.getSingleFieldValue(r1), r7[r6], r35, r36, true, r38);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:74:0x01cc, code lost:
-    
-        r0 = e;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:76:0x01ce, code lost:
-    
-        r0 = e;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:77:0x01cf, code lost:
-    
-        r28 = r5;
-        r18 = r6;
-        r20 = r7;
-        r19 = r9;
-        r29 = r15;
-        r15 = r8;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:78:0x01da, code lost:
-    
-        r1 = r0;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:80:0x01dd, code lost:
-    
-        if (r30.strict != false) goto L137;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:81:0x01df, code lost:
-    
-        throw r1;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:82:0x01e0, code lost:
-    
-        r1 = false;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:83:0x01e1, code lost:
-    
-        if (r1 == false) goto L84;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:84:0x01e3, code lost:
-    
-        r15.remove(r28);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:85:0x01e9, code lost:
-    
-        r18 = r6;
-        r20 = r7;
-        r19 = r9;
-        r29 = r15;
-        r15 = r8;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:86:0x01f2, code lost:
-    
-        r6 = r18 + 1;
-        r8 = r15;
-        r9 = r19;
-        r7 = r20;
-        r15 = r29;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:87:0x01fc, code lost:
-    
-        r0 = move-exception;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:88:0x01fd, code lost:
-    
-        r1 = r0;
-        r2 = 1;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:89:0x0202, code lost:
-    
-        r19 = r9;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:90:0x0204, code lost:
-    
-        if (r37 != false) goto L94;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:92:0x020a, code lost:
-    
-        if (r14.nextDirectoryOffset <= 0) goto L94;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:93:0x020c, code lost:
-    
-        readDirectory(r31, r14.nextDirectoryOffset, r34 + 1, r35, r36, r38);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:94:0x021a, code lost:
-    
-        r1 = true;
-        r2 = new java.io.Closeable[]{r19};
-     */
-    /* JADX WARN: Not initialized variable reg: 19, insn: 0x023a: MOVE (r9 I:??[OBJECT, ARRAY]) = (r19 I:??[OBJECT, ARRAY]), block:B:105:0x0239 */
-    /* JADX WARN: Unreachable blocks removed: 1, instructions: 1 */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private boolean readDirectory(org.apache.commons.imaging.common.bytesource.ByteSource r31, long r32, int r34, org.apache.commons.imaging.FormatCompliance r35, org.apache.commons.imaging.formats.tiff.TiffReader.Listener r36, boolean r37, java.util.List<java.lang.Number> r38) throws java.lang.Throwable {
-        /*
-            Method dump skipped, instructions count: 604
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.formats.tiff.TiffReader.readDirectory(org.apache.commons.imaging.common.bytesource.ByteSource, long, int, org.apache.commons.imaging.FormatCompliance, org.apache.commons.imaging.formats.tiff.TiffReader$Listener, boolean, java.util.List):boolean");
+                        } catch (final ImageReadException imageReadException) {
+                            if (strict) {
+                                throw imageReadException;
+                            }
+                        }
+                        if (!subDirectoryRead) {
+                            fields.remove(field);
+                        }
+                    }
+                }
+            }
+
+            if (!ignoreNextDirectory && directory.nextDirectoryOffset > 0) {
+                // Debug.debug("next dir", directory.nextDirectoryOffset );
+                readDirectory(byteSource, directory.nextDirectoryOffset,
+                        dirType + 1, formatCompliance, listener, visited);
+            }
+
+            canThrow = true;
+            return true;
+        } finally {
+            IoUtils.closeQuietly(canThrow, is);
+        }
     }
 
     private static class Collector implements Listener {

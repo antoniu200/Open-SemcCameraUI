@@ -30,57 +30,50 @@ public class EmailSignInConfig implements SafeParcelable {
         return 0;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:16:0x0031 A[Catch: ClassCastException -> 0x0049, TryCatch #0 {ClassCastException -> 0x0049, blocks: (B:5:0x0004, B:7:0x0012, B:9:0x0016, B:14:0x0029, B:16:0x0031, B:19:0x003c, B:12:0x001d), top: B:25:0x0004 }] */
-    /* JADX WARN: Removed duplicated region for block: B:19:0x003c A[Catch: ClassCastException -> 0x0049, TRY_LEAVE, TryCatch #0 {ClassCastException -> 0x0049, blocks: (B:5:0x0004, B:7:0x0012, B:9:0x0016, B:14:0x0029, B:16:0x0031, B:19:0x003c, B:12:0x001d), top: B:25:0x0004 }] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public boolean equals(java.lang.Object r4) {
-        /*
-            r3 = this;
-            r0 = 0
-            if (r4 != 0) goto L4
-            return r0
-        L4:
-            com.google.android.gms.auth.api.signin.EmailSignInConfig r4 = (com.google.android.gms.auth.api.signin.EmailSignInConfig) r4     // Catch: java.lang.ClassCastException -> L49
-            android.net.Uri r1 = r3.zzSU     // Catch: java.lang.ClassCastException -> L49
-            android.net.Uri r2 = r4.zzlO()     // Catch: java.lang.ClassCastException -> L49
-            boolean r1 = r1.equals(r2)     // Catch: java.lang.ClassCastException -> L49
-            if (r1 == 0) goto L49
-            android.net.Uri r1 = r3.zzSW     // Catch: java.lang.ClassCastException -> L49
-            if (r1 != 0) goto L1d
-            android.net.Uri r1 = r4.zzlP()     // Catch: java.lang.ClassCastException -> L49
-            if (r1 != 0) goto L49
-            goto L29
-        L1d:
-            android.net.Uri r1 = r3.zzSW     // Catch: java.lang.ClassCastException -> L49
-            android.net.Uri r2 = r4.zzlP()     // Catch: java.lang.ClassCastException -> L49
-            boolean r1 = r1.equals(r2)     // Catch: java.lang.ClassCastException -> L49
-            if (r1 == 0) goto L49
-        L29:
-            java.lang.String r1 = r3.zzSV     // Catch: java.lang.ClassCastException -> L49
-            boolean r1 = android.text.TextUtils.isEmpty(r1)     // Catch: java.lang.ClassCastException -> L49
-            if (r1 == 0) goto L3c
-            java.lang.String r3 = r4.zzlQ()     // Catch: java.lang.ClassCastException -> L49
-            boolean r3 = android.text.TextUtils.isEmpty(r3)     // Catch: java.lang.ClassCastException -> L49
-            if (r3 == 0) goto L49
-            goto L48
-        L3c:
-            java.lang.String r3 = r3.zzSV     // Catch: java.lang.ClassCastException -> L49
-            java.lang.String r4 = r4.zzlQ()     // Catch: java.lang.ClassCastException -> L49
-            boolean r3 = r3.equals(r4)     // Catch: java.lang.ClassCastException -> L49
-            if (r3 == 0) goto L49
-        L48:
-            r0 = 1
-        L49:
-            return r0
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.android.gms.auth.api.signin.EmailSignInConfig.equals(java.lang.Object):boolean");
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        try {
+            EmailSignInConfig other = (EmailSignInConfig) obj;
+
+            // Required URI must match
+            if (!this.zzSU.equals(other.zzlO())) {
+                return false;
+            }
+
+            // Optional URI: null-safe equal
+            if (this.zzSW == null) {
+                if (other.zzlP() != null) {
+                    return false;
+                }
+            } else if (!this.zzSW.equals(other.zzlP())) {
+                return false;
+            }
+
+            // String field: treat empty == empty
+            if (android.text.TextUtils.isEmpty(this.zzSV)) {
+                if (!android.text.TextUtils.isEmpty(other.zzlQ())) {
+                    return false;
+                }
+            } else if (!this.zzSV.equals(other.zzlQ())) {
+                return false;
+            }
+
+            return true;
+        } catch (ClassCastException e) {
+            return false;
+        }
     }
 
+    @Override
     public int hashCode() {
-        return new com.google.android.gms.auth.api.signin.internal.zzc().zzl(this.zzSU).zzl(this.zzSW).zzl(this.zzSV).zzmd();
+        int result = (this.zzSU != null ? this.zzSU.hashCode() : 0);
+        result = 31 * result + (this.zzSW != null ? this.zzSW.hashCode() : 0);
+        final String sv = nz(this.zzSV);
+        result = 31 * result + (sv != null ? sv.hashCode() : 0);
+        return result;
     }
 
     @Override // android.os.Parcelable

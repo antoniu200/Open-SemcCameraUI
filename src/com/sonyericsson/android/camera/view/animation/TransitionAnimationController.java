@@ -211,71 +211,38 @@ public class TransitionAnimationController {
         }
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Removed duplicated region for block: B:27:0x004a A[RETURN] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private boolean verifyLastRequest(com.sonyericsson.android.camera.view.animation.AnimationRequest r5) {
-        /*
-            r4 = this;
-            com.sonyericsson.android.camera.view.animation.AnimationRequest r0 = r4.mLastRequest
-            r1 = 0
-            r2 = 1
-            if (r0 != 0) goto L16
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = r5.mDegree
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r0 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.START
-            if (r5 != r0) goto L15
-            java.util.concurrent.BlockingQueue<android.animation.AnimatorSet> r4 = r4.mQueue
-            boolean r4 = r4.isEmpty()
-            if (r4 == 0) goto L15
-            return r2
-        L15:
-            return r1
-        L16:
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationType r0 = r5.mType
-            com.sonyericsson.android.camera.view.animation.AnimationRequest r3 = r4.mLastRequest
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationType r3 = r3.mType
-            if (r0 == r3) goto L1f
-            return r1
-        L1f:
-            int[] r0 = com.sonyericsson.android.camera.view.animation.TransitionAnimationController.AnonymousClass1.$SwitchMap$com$sonyericsson$android$camera$view$animation$AnimationRequest$AnimationDegree
-            com.sonyericsson.android.camera.view.animation.AnimationRequest r4 = r4.mLastRequest
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r4.mDegree
-            int r4 = r4.ordinal()
-            r4 = r0[r4]
-            switch(r4) {
-                case 1: goto L3d;
-                case 2: goto L36;
-                case 3: goto L4a;
-                case 4: goto L2f;
-                default: goto L2e;
-            }
-        L2e:
-            goto L4a
-        L2f:
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.START
-            if (r4 != r5) goto L4a
-            return r2
-        L36:
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.FINISH
-            if (r4 != r5) goto L4a
-            return r2
-        L3d:
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r0 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.EXEC
-            if (r4 == r0) goto L49
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r4 = r5.mDegree
-            com.sonyericsson.android.camera.view.animation.AnimationRequest$AnimationDegree r5 = com.sonyericsson.android.camera.view.animation.AnimationRequest.AnimationDegree.CANCEL
-            if (r4 != r5) goto L4a
-        L49:
-            return r2
-        L4a:
-            return r1
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.view.animation.TransitionAnimationController.verifyLastRequest(com.sonyericsson.android.camera.view.animation.AnimationRequest):boolean");
+    // inside TransitionAnimationController
+    private boolean verifyLastRequest(AnimationRequest req) {
+        // no previous request → only allow START when queue is empty
+        if (mLastRequest == null) {
+            return req.mDegree == AnimationRequest.AnimationDegree.START
+                    && mQueue.isEmpty();
+        }
+
+        // different animation type → reject
+        if (req.mType != mLastRequest.mType) {
+            return false;
+        }
+
+        // allowed sequences based on the last degree
+        switch (mLastRequest.mDegree) {
+            case START:
+                // after START: EXEC or CANCEL is valid
+                return req.mDegree == AnimationRequest.AnimationDegree.EXEC
+                        || req.mDegree == AnimationRequest.AnimationDegree.CANCEL;
+
+            case EXEC:
+                // after EXEC: FINISH is valid
+                return req.mDegree == AnimationRequest.AnimationDegree.FINISH;
+
+            case CANCEL:
+                // after CANCEL: a fresh START is valid
+                return req.mDegree == AnimationRequest.AnimationDegree.START;
+
+            case FINISH:
+            default:
+                // after FINISH (or anything unexpected): nothing else is valid
+                return false;
+        }
     }
 }

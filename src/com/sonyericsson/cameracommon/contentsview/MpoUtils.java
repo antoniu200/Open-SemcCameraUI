@@ -4,6 +4,7 @@ import com.sonyericsson.android.camera.util.CamLog;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Locale;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
 public class MpoUtils {
@@ -31,24 +32,125 @@ public class MpoUtils {
     private MpoUtils() {
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:52:0x0122, code lost:
-    
-        if (r3 == null) goto L65;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:53:0x0124, code lost:
-    
-        r3.close();
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static int getType(java.lang.String r9) throws java.lang.Throwable {
-        /*
-            Method dump skipped, instructions count: 358
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.cameracommon.contentsview.MpoUtils.getType(java.lang.String):int");
+    // inside MpoUtils.java
+    public static int getType(String path) throws Throwable {
+        int UNKNOWN = 0;
+
+        RandomAccessFile raf = null;
+        try {
+            raf = new RandomAccessFile(path, "r");
+            final byte[] marker = new byte[2];
+
+            // read marker stream
+            for (;;) {
+                int read = raf.read(marker);
+                if (read < 2) {
+                    // EOF or short read → unknown
+                    break;
+                }
+
+                if (CamLog.VERBOSE) {
+                    CamLog.d(new String[] {
+                            "read:" + Integer.toHexString(marker[0] & 0xFF) + " "
+                                    + Integer.toHexString(marker[1] & 0xFF)
+                    });
+                }
+
+                // SOI
+                if (isSOI(marker[0], marker[1])) {
+                    if (CamLog.VERBOSE) {
+                        CamLog.d(new String[] { "This segments is SOI." });
+                    }
+                    continue;
+                }
+
+                // EOI
+                if (isEOI(marker[0], marker[1])) {
+                    if (CamLog.VERBOSE) {
+                        CamLog.d(new String[] { "This segments is EOI." });
+                    }
+                    continue;
+                }
+
+                // APPn
+                if (isAPP(marker[0], marker[1])) {
+                    if (CamLog.VERBOSE) {
+                        // byte is signed; +32 maps E0..EF → 0..15
+                        CamLog.d(new String[] {
+                                String.format(Locale.UK, "This segments is APP%d.", marker[1] + 32)
+                        });
+                    }
+
+                    // remember start of this segment + size to jump to next
+                    long nextPos = raf.getFilePointer() + (raf.readShort() & 0xFFFF);
+
+                    // APP2 → MPF check
+                    if (isAPP2(marker[0], marker[1]) && checkFormatIdentifier(raf)) {
+                        if (CamLog.VERBOSE) {
+                            CamLog.d(new String[] { "This section has MPF." });
+                        }
+
+                        raf.readShort();     // endian tag (already validated by checkFormatIdentifier)
+                        skip(raf, 6);        // offset to IFD0
+                        short count = raf.readShort();
+
+                        for (int i = 0; i < count; i++) {
+                            if (checkMPEntryTag(raf)) {
+                                if (CamLog.VERBOSE) {
+                                    CamLog.d(new String[] { "This tag is MP entry." });
+                                }
+                                skip(raf, 2);                 // type
+                                int flags = raf.readInt();    // contains number-of-images * 16
+                                int num = flags / 16;
+                                int type = typeFromEntries(num);
+
+                                try { raf.close(); } catch (IOException ignore) {}
+                                return type;
+                            } else {
+                                if (CamLog.VERBOSE) {
+                                    CamLog.d(new String[] { "This tag is not MP entry." });
+                                }
+                                skip(raf, 10); // move to next tag
+                            }
+                        }
+                    }
+
+                    // skip to next segment
+                    raf.seek(nextPos);
+                    continue;
+                }
+
+                // Unknown marker
+                if (CamLog.VERBOSE) {
+                    CamLog.d(new String[] { "Found unknown marker." });
+                }
+                // fall through; loop continues
+            }
+
+            // no type detected
+            return UNKNOWN;
+
+        } catch (IOException e) {
+            CamLog.e(new String[] {
+                    "Fail to analize a mpo file by IO Exception. message:" + e.getMessage()
+            });
+            if (CamLog.VERBOSE) {
+                CamLog.d(new String[] { "This mpo is unknown image." });
+            }
+            return UNKNOWN;
+
+        } catch (Throwable t) {
+            // close then rethrow to honor the throws Throwable contract
+            if (raf != null) {
+                try { raf.close(); } catch (IOException ignore) {}
+            }
+            throw t;
+
+        } finally {
+            if (raf != null) {
+                try { raf.close(); } catch (IOException ignore) {}
+            }
+        }
     }
 
     private static class JpegMaker {

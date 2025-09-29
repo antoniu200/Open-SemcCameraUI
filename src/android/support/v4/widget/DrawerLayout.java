@@ -961,87 +961,51 @@ public class DrawerLayout extends ViewGroup {
         return false;
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Removed duplicated region for block: B:18:0x0056  */
-    @Override // android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public boolean onTouchEvent(android.view.MotionEvent r7) {
-        /*
-            r6 = this;
-            android.support.v4.widget.ViewDragHelper r0 = r6.mLeftDragger
-            r0.processTouchEvent(r7)
-            android.support.v4.widget.ViewDragHelper r0 = r6.mRightDragger
-            r0.processTouchEvent(r7)
-            int r0 = r7.getAction()
-            r0 = r0 & 255(0xff, float:3.57E-43)
-            r1 = 3
-            r2 = 1
-            r3 = 0
-            if (r0 == r1) goto L6e
-            switch(r0) {
-                case 0: goto L5d;
-                case 1: goto L19;
-                default: goto L18;
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        mLeftDragger.processTouchEvent(ev);
+        mRightDragger.processTouchEvent(ev);
+        final int action = ev.getAction();
+        boolean wantTouchEvents = true;
+        switch (action & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN: {
+                final float x = ev.getX();
+                final float y = ev.getY();
+                mInitialMotionX = x;
+                mInitialMotionY = y;
+                mDisallowInterceptRequested = false;
+                mChildrenCanceledTouch = false;
+                break;
             }
-        L18:
-            goto L75
-        L19:
-            float r0 = r7.getX()
-            float r7 = r7.getY()
-            android.support.v4.widget.ViewDragHelper r1 = r6.mLeftDragger
-            int r4 = (int) r0
-            int r5 = (int) r7
-            android.view.View r1 = r1.findTopChildUnder(r4, r5)
-            if (r1 == 0) goto L56
-            boolean r1 = r6.isContentView(r1)
-            if (r1 == 0) goto L56
-            float r1 = r6.mInitialMotionX
-            float r0 = r0 - r1
-            float r1 = r6.mInitialMotionY
-            float r7 = r7 - r1
-            android.support.v4.widget.ViewDragHelper r1 = r6.mLeftDragger
-            int r1 = r1.getTouchSlop()
-            float r0 = r0 * r0
-            float r7 = r7 * r7
-            float r0 = r0 + r7
-            int r1 = r1 * r1
-            float r7 = (float) r1
-            int r7 = (r0 > r7 ? 1 : (r0 == r7 ? 0 : -1))
-            if (r7 >= 0) goto L56
-            android.view.View r7 = r6.findOpenDrawer()
-            if (r7 == 0) goto L56
-            int r7 = r6.getDrawerLockMode(r7)
-            r0 = 2
-            if (r7 != r0) goto L54
-            goto L56
-        L54:
-            r7 = r3
-            goto L57
-        L56:
-            r7 = r2
-        L57:
-            r6.closeDrawers(r7)
-            r6.mDisallowInterceptRequested = r3
-            goto L75
-        L5d:
-            float r0 = r7.getX()
-            float r7 = r7.getY()
-            r6.mInitialMotionX = r0
-            r6.mInitialMotionY = r7
-            r6.mDisallowInterceptRequested = r3
-            r6.mChildrenCanceledTouch = r3
-            goto L75
-        L6e:
-            r6.closeDrawers(r2)
-            r6.mDisallowInterceptRequested = r3
-            r6.mChildrenCanceledTouch = r3
-        L75:
-            return r2
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.widget.DrawerLayout.onTouchEvent(android.view.MotionEvent):boolean");
+            case MotionEvent.ACTION_UP: {
+                final float x = ev.getX();
+                final float y = ev.getY();
+                boolean peekingOnly = true;
+                final View touchedView = mLeftDragger.findTopChildUnder((int) x, (int) y);
+                if (touchedView != null && isContentView(touchedView)) {
+                    final float dx = x - mInitialMotionX;
+                    final float dy = y - mInitialMotionY;
+                    final int slop = mLeftDragger.getTouchSlop();
+                    if (dx * dx + dy * dy < slop * slop) {
+                        // Taps close a dimmed open drawer but only if it isn't locked open.
+                        final View openDrawer = findOpenDrawer();
+                        if (openDrawer != null) {
+                            peekingOnly = getDrawerLockMode(openDrawer) == LOCK_MODE_LOCKED_OPEN;
+                        }
+                    }
+                }
+                closeDrawers(peekingOnly);
+                mDisallowInterceptRequested = false;
+                break;
+            }
+            case MotionEvent.ACTION_CANCEL: {
+                closeDrawers(true);
+                mDisallowInterceptRequested = false;
+                mChildrenCanceledTouch = false;
+                break;
+            }
+        }
+        return wantTouchEvents;
     }
 
     @Override // android.view.ViewGroup, android.view.ViewParent

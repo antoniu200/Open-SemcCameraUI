@@ -118,63 +118,35 @@ public abstract class TwoStatePreference extends Preference {
         syncSummaryView(preferenceViewHolder.findViewById(android.R.id.summary));
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:17:0x0030  */
-    /* JADX WARN: Removed duplicated region for block: B:22:0x0042  */
-    /* JADX WARN: Removed duplicated region for block: B:25:0x0049  */
-    /* JADX WARN: Removed duplicated region for block: B:27:? A[RETURN, SYNTHETIC] */
     @android.support.annotation.RestrictTo({android.support.annotation.RestrictTo.Scope.LIBRARY_GROUP})
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected void syncSummaryView(android.view.View r4) {
-        /*
-            r3 = this;
-            boolean r0 = r4 instanceof android.widget.TextView
-            if (r0 != 0) goto L5
-            return
-        L5:
-            android.widget.TextView r4 = (android.widget.TextView) r4
-            r0 = 1
-            boolean r1 = r3.mChecked
-            r2 = 0
-            if (r1 == 0) goto L1c
-            java.lang.CharSequence r1 = r3.mSummaryOn
-            boolean r1 = android.text.TextUtils.isEmpty(r1)
-            if (r1 != 0) goto L1c
-            java.lang.CharSequence r0 = r3.mSummaryOn
-            r4.setText(r0)
-        L1a:
-            r0 = r2
-            goto L2e
-        L1c:
-            boolean r1 = r3.mChecked
-            if (r1 != 0) goto L2e
-            java.lang.CharSequence r1 = r3.mSummaryOff
-            boolean r1 = android.text.TextUtils.isEmpty(r1)
-            if (r1 != 0) goto L2e
-            java.lang.CharSequence r0 = r3.mSummaryOff
-            r4.setText(r0)
-            goto L1a
-        L2e:
-            if (r0 == 0) goto L3e
-            java.lang.CharSequence r3 = r3.getSummary()
-            boolean r1 = android.text.TextUtils.isEmpty(r3)
-            if (r1 != 0) goto L3e
-            r4.setText(r3)
-            r0 = r2
-        L3e:
-            r3 = 8
-            if (r0 != 0) goto L43
-            r3 = r2
-        L43:
-            int r0 = r4.getVisibility()
-            if (r3 == r0) goto L4c
-            r4.setVisibility(r3)
-        L4c:
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.preference.TwoStatePreference.syncSummaryView(android.view.View):void");
+    protected void syncSummaryView(View view) {
+        // Sync the summary view
+        TextView summaryView = (TextView) view.findViewById(com.android.internal.R.id.summary);
+        if (summaryView != null) {
+            boolean useDefaultSummary = true;
+            if (mChecked && !TextUtils.isEmpty(mSummaryOn)) {
+                summaryView.setText(mSummaryOn);
+                useDefaultSummary = false;
+            } else if (!mChecked && !TextUtils.isEmpty(mSummaryOff)) {
+                summaryView.setText(mSummaryOff);
+                useDefaultSummary = false;
+            }
+            if (useDefaultSummary) {
+                final CharSequence summary = getSummary();
+                if (!TextUtils.isEmpty(summary)) {
+                    summaryView.setText(summary);
+                    useDefaultSummary = false;
+                }
+            }
+            int newVisibility = View.GONE;
+            if (!useDefaultSummary) {
+                // Someone has written to it
+                newVisibility = View.VISIBLE;
+            }
+            if (newVisibility != summaryView.getVisibility()) {
+                summaryView.setVisibility(newVisibility);
+            }
+        }
     }
 
     @Override // android.support.v7.preference.Preference

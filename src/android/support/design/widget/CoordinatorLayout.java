@@ -18,6 +18,7 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.FloatRange;
 import android.support.annotation.IdRes;
+import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RestrictTo;
@@ -27,6 +28,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.drawable.DrawableCompat;
 import android.support.v4.util.ObjectsCompat;
 import android.support.v4.util.Pools;
+import android.support.v4.util.Pools.Pool;
+import android.support.v4.util.Pools.SynchronizedPool;
 import android.support.v4.view.AbsSavedState;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.NestedScrollingParent2;
@@ -40,10 +43,12 @@ import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.View.MeasureSpec;
 import com.sonyericsson.cameracommon.device.SizeConstants;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -407,73 +412,41 @@ public class CoordinatorLayout extends ViewGroup implements NestedScrollingParen
         return zPerformIntercept;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:14:0x0031  */
-    /* JADX WARN: Removed duplicated region for block: B:15:0x0037  */
-    /* JADX WARN: Removed duplicated region for block: B:18:0x004c  */
-    /* JADX WARN: Removed duplicated region for block: B:22:0x0054  */
-    /* JADX WARN: Removed duplicated region for block: B:7:0x0015 A[PHI: r3
-  0x0015: PHI (r3v4 boolean) = (r3v2 boolean), (r3v5 boolean) binds: [B:10:0x0024, B:5:0x0012] A[DONT_GENERATE, DONT_INLINE]] */
     @Override // android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public boolean onTouchEvent(android.view.MotionEvent r18) {
-        /*
-            r17 = this;
-            r0 = r17
-            r1 = r18
-            int r2 = r18.getActionMasked()
-            android.view.View r3 = r0.mBehaviorTouchView
-            r4 = 1
-            r5 = 0
-            if (r3 != 0) goto L17
-            boolean r3 = r0.performIntercept(r1, r4)
-            if (r3 == 0) goto L15
-            goto L18
-        L15:
-            r6 = r5
-            goto L2c
-        L17:
-            r3 = r5
-        L18:
-            android.view.View r6 = r0.mBehaviorTouchView
-            android.view.ViewGroup$LayoutParams r6 = r6.getLayoutParams()
-            android.support.design.widget.CoordinatorLayout$LayoutParams r6 = (android.support.design.widget.CoordinatorLayout.LayoutParams) r6
-            android.support.design.widget.CoordinatorLayout$Behavior r6 = r6.getBehavior()
-            if (r6 == 0) goto L15
-            android.view.View r7 = r0.mBehaviorTouchView
-            boolean r6 = r6.onTouchEvent(r0, r7, r1)
-        L2c:
-            android.view.View r7 = r0.mBehaviorTouchView
-            r8 = 0
-            if (r7 != 0) goto L37
-            boolean r1 = super.onTouchEvent(r18)
-            r6 = r6 | r1
-            goto L4a
-        L37:
-            if (r3 == 0) goto L4a
-            long r11 = android.os.SystemClock.uptimeMillis()
-            r13 = 3
-            r14 = 0
-            r15 = 0
-            r16 = 0
-            r9 = r11
-            android.view.MotionEvent r8 = android.view.MotionEvent.obtain(r9, r11, r13, r14, r15, r16)
-            super.onTouchEvent(r8)
-        L4a:
-            if (r8 == 0) goto L4f
-            r8.recycle()
-        L4f:
-            if (r2 == r4) goto L54
-            r1 = 3
-            if (r2 != r1) goto L57
-        L54:
-            r0.resetTouchBehaviors(r5)
-        L57:
-            return r6
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.design.widget.CoordinatorLayout.onTouchEvent(android.view.MotionEvent):boolean");
+    public boolean onTouchEvent(MotionEvent ev) {
+        boolean handled = false;
+        boolean cancelSuper = false;
+        MotionEvent cancelEvent = null;
+        final int action = ev.getActionMasked();
+        if (mBehaviorTouchView != null || (cancelSuper = performIntercept(ev, TYPE_ON_TOUCH))) {
+            // Safe since performIntercept guarantees that
+            // mBehaviorTouchView != null if it returns true
+            final LayoutParams lp = (LayoutParams) mBehaviorTouchView.getLayoutParams();
+            final Behavior b = lp.getBehavior();
+            if (b != null) {
+                handled = b.onTouchEvent(this, mBehaviorTouchView, ev);
+            }
+        }
+        // Keep the super implementation correct
+        if (mBehaviorTouchView == null) {
+            handled |= super.onTouchEvent(ev);
+        } else if (cancelSuper) {
+            if (cancelEvent == null) {
+                final long now = SystemClock.uptimeMillis();
+                cancelEvent = MotionEvent.obtain(now, now,
+                        MotionEvent.ACTION_CANCEL, 0.0f, 0.0f, 0);
+            }
+            super.onTouchEvent(cancelEvent);
+        }
+        if (!handled && action == MotionEvent.ACTION_DOWN) {
+        }
+        if (cancelEvent != null) {
+            cancelEvent.recycle();
+        }
+        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            resetTouchBehaviors(false);
+        }
+        return handled;
     }
 
     @Override // android.view.ViewGroup, android.view.ViewParent
@@ -498,64 +471,76 @@ public class CoordinatorLayout extends ViewGroup implements NestedScrollingParen
         return this.mKeylines[i];
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
-    static Behavior parseBehavior(Context context, AttributeSet attributeSet, String str) throws NoSuchMethodException, SecurityException {
-        if (TextUtils.isEmpty(str)) {
+    static Behavior parseBehavior(Context context, AttributeSet attrs, String name) {
+        if (TextUtils.isEmpty(name)) {
             return null;
         }
-        if (str.startsWith(".")) {
-            str = context.getPackageName() + str;
-        } else if (str.indexOf(46) < 0 && !TextUtils.isEmpty(WIDGET_PACKAGE_NAME)) {
-            str = WIDGET_PACKAGE_NAME + '.' + str;
+        final String fullName;
+        if (name.startsWith(".")) {
+            // Relative to the app package. Prepend the app package name.
+            fullName = context.getPackageName() + name;
+        } else if (name.indexOf('.') >= 0) {
+            // Fully qualified package name.
+            fullName = name;
+        } else {
+            // Assume stock behavior in this package (if we have one)
+            fullName = !TextUtils.isEmpty(WIDGET_PACKAGE_NAME)
+                    ? (WIDGET_PACKAGE_NAME + '.' + name)
+                    : name;
         }
         try {
-            Map map = sConstructors.get();
-            if (map == null) {
-                map = new HashMap();
-                sConstructors.set(map);
+            Map<String, Constructor<Behavior>> constructors = sConstructors.get();
+            if (constructors == null) {
+                constructors = new HashMap<>();
+                sConstructors.set(constructors);
             }
-            Constructor<?> constructor = (Constructor) map.get(str);
-            if (constructor == null) {
-                constructor = context.getClassLoader().loadClass(str).getConstructor(CONSTRUCTOR_PARAMS);
-                constructor.setAccessible(true);
-                map.put(str, constructor);
+            Constructor<Behavior> c = constructors.get(fullName);
+            if (c == null) {
+                final Class<Behavior> clazz = (Class<Behavior>) context.getClassLoader()
+                        .loadClass(fullName);
+                c = clazz.getConstructor(CONSTRUCTOR_PARAMS);
+                c.setAccessible(true);
+                constructors.put(fullName, c);
             }
-            return (Behavior) constructor.newInstance(context, attributeSet);
+            return c.newInstance(context, attrs);
         } catch (Exception e) {
-            throw new RuntimeException("Could not inflate Behavior subclass " + str, e);
+            throw new RuntimeException("Could not inflate Behavior subclass " + fullName, e);
         }
     }
 
-    /* JADX WARN: Multi-variable type inference failed */
-    LayoutParams getResolvedLayoutParams(View view) {
-        LayoutParams layoutParams = (LayoutParams) view.getLayoutParams();
-        if (!layoutParams.mBehaviorResolved) {
-            if (view instanceof AttachedBehavior) {
-                Behavior behavior = ((AttachedBehavior) view).getBehavior();
-                if (behavior == null) {
+    LayoutParams getResolvedLayoutParams(View child) {
+        final LayoutParams result = (LayoutParams) child.getLayoutParams();
+        if (!result.mBehaviorResolved) {
+            if (child instanceof AttachedBehavior) {
+                Behavior attachedBehavior = ((AttachedBehavior) child).getBehavior();
+                if (attachedBehavior == null) {
                     Log.e(TAG, "Attached behavior class is null");
                 }
-                layoutParams.setBehavior(behavior);
-                layoutParams.mBehaviorResolved = true;
+                result.setBehavior(attachedBehavior);
+                result.mBehaviorResolved = true;
             } else {
+                // The deprecated path that looks up the attached behavior based on annotation
+                Class<?> childClass = child.getClass();
                 DefaultBehavior defaultBehavior = null;
-                for (Class<?> superclass = view.getClass(); superclass != null; superclass = superclass.getSuperclass()) {
-                    defaultBehavior = (DefaultBehavior) superclass.getAnnotation(DefaultBehavior.class);
-                    if (defaultBehavior != null) {
-                        break;
-                    }
+                while (childClass != null
+                        && (defaultBehavior = childClass.getAnnotation(DefaultBehavior.class))
+                                == null) {
+                    childClass = childClass.getSuperclass();
                 }
                 if (defaultBehavior != null) {
                     try {
-                        layoutParams.setBehavior(defaultBehavior.value().getDeclaredConstructor(new Class[0]).newInstance(new Object[0]));
+                        result.setBehavior(
+                                defaultBehavior.value().getDeclaredConstructor().newInstance());
                     } catch (Exception e) {
-                        Log.e(TAG, "Default behavior class " + defaultBehavior.value().getName() + " could not be instantiated. Did you forget a default constructor?", e);
+                        Log.e(TAG, "Default behavior class " + defaultBehavior.value().getName()
+                                        + " could not be instantiated. Did you forget"
+                                        + " a default constructor?", e);
                     }
                 }
-                layoutParams.mBehaviorResolved = true;
+                result.mBehaviorResolved = true;
             }
         }
-        return layoutParams;
+        return result;
     }
 
     private void prepareChildren() {
@@ -601,20 +586,79 @@ public class CoordinatorLayout extends ViewGroup implements NestedScrollingParen
         measureChildWithMargins(view, i, i2, i3, i4);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:39:0x00f7  */
-    /* JADX WARN: Removed duplicated region for block: B:42:0x0101  */
-    /* JADX WARN: Removed duplicated region for block: B:46:0x0126  */
     @Override // android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected void onMeasure(int r32, int r33) {
-        /*
-            Method dump skipped, instructions count: 400
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.design.widget.CoordinatorLayout.onMeasure(int, int):void");
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        prepareChildren();
+        ensurePreDrawListener();
+        final int paddingLeft = getPaddingLeft();
+        final int paddingTop = getPaddingTop();
+        final int paddingRight = getPaddingRight();
+        final int paddingBottom = getPaddingBottom();
+        final int layoutDirection = ViewCompat.getLayoutDirection(this);
+        final boolean isRtl = layoutDirection == ViewCompat.LAYOUT_DIRECTION_RTL;
+        final int widthMode = MeasureSpec.getMode(widthMeasureSpec);
+        final int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        final int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        final int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        final int widthPadding = paddingLeft + paddingRight;
+        final int heightPadding = paddingTop + paddingBottom;
+        int widthUsed = getSuggestedMinimumWidth();
+        int heightUsed = getSuggestedMinimumHeight();
+        int childState = 0;
+        final boolean applyInsets = mLastInsets != null && ViewCompat.getFitsSystemWindows(this);
+        final int childCount = mDependencySortedChildren.size();
+        for (int i = 0; i < childCount; i++) {
+            final View child = mDependencySortedChildren.get(i);
+            if (child.getVisibility() == GONE) {
+                // If the child is GONE, skip...
+                continue;
+            }
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            int keylineWidthUsed = 0;
+            if (lp.keyline >= 0 && widthMode != MeasureSpec.UNSPECIFIED) {
+                final int keylinePos = getKeyline(lp.keyline);
+                final int keylineGravity = GravityCompat.getAbsoluteGravity(
+                        resolveKeylineGravity(lp.gravity), layoutDirection)
+                        & Gravity.HORIZONTAL_GRAVITY_MASK;
+                if ((keylineGravity == Gravity.LEFT && !isRtl)
+                        || (keylineGravity == Gravity.RIGHT && isRtl)) {
+                    keylineWidthUsed = Math.max(0, widthSize - paddingRight - keylinePos);
+                } else if ((keylineGravity == Gravity.RIGHT && !isRtl)
+                        || (keylineGravity == Gravity.LEFT && isRtl)) {
+                    keylineWidthUsed = Math.max(0, keylinePos - paddingLeft);
+                }
+            }
+            int childWidthMeasureSpec = widthMeasureSpec;
+            int childHeightMeasureSpec = heightMeasureSpec;
+            if (applyInsets && !ViewCompat.getFitsSystemWindows(child)) {
+                // We're set to handle insets but this child isn't, so we will measure the
+                // child as if there are no insets
+                final int horizInsets = mLastInsets.getSystemWindowInsetLeft()
+                        + mLastInsets.getSystemWindowInsetRight();
+                final int vertInsets = mLastInsets.getSystemWindowInsetTop()
+                        + mLastInsets.getSystemWindowInsetBottom();
+                childWidthMeasureSpec = MeasureSpec.makeMeasureSpec(
+                        widthSize - horizInsets, widthMode);
+                childHeightMeasureSpec = MeasureSpec.makeMeasureSpec(
+                        heightSize - vertInsets, heightMode);
+            }
+            final Behavior b = lp.getBehavior();
+            if (b == null || !b.onMeasureChild(this, child, childWidthMeasureSpec, keylineWidthUsed,
+                    childHeightMeasureSpec, 0)) {
+                onMeasureChild(child, childWidthMeasureSpec, keylineWidthUsed,
+                        childHeightMeasureSpec, 0);
+            }
+            widthUsed = Math.max(widthUsed, widthPadding + child.getMeasuredWidth() +
+                    lp.leftMargin + lp.rightMargin);
+            heightUsed = Math.max(heightUsed, heightPadding + child.getMeasuredHeight() +
+                    lp.topMargin + lp.bottomMargin);
+            childState = View.combineMeasuredStates(childState, child.getMeasuredState());
+        }
+        final int width = View.resolveSizeAndState(widthUsed, widthMeasureSpec,
+                childState & View.MEASURED_STATE_MASK);
+        final int height = View.resolveSizeAndState(heightUsed, heightMeasureSpec,
+                childState << View.MEASURED_HEIGHT_STATE_SHIFT);
+        setMeasuredDimension(width, height);
     }
 
     private WindowInsetsCompat dispatchApplyWindowInsetsToBehaviors(WindowInsetsCompat windowInsetsCompat) {
@@ -832,17 +876,113 @@ public class CoordinatorLayout extends ViewGroup implements NestedScrollingParen
         return super.drawChild(canvas, view, j);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:46:0x00ca  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    final void onChildViewsChanged(int r18) {
-        /*
-            Method dump skipped, instructions count: 273
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.design.widget.CoordinatorLayout.onChildViewsChanged(int):void");
+    /**
+     * Dispatch any dependent view changes to the relevant {@link Behavior} instances.
+     *
+     * Usually run as part of the pre-draw step when at least one child view has a reported
+     * dependency on another view. This allows CoordinatorLayout to account for layout
+     * changes and animations that occur outside of the normal layout pass.
+     *
+     * It can also be ran as part of the nested scrolling dispatch to ensure that any offsetting
+     * is completed within the correct coordinate window.
+     *
+     * The offsetting behavior implemented here does not store the computed offset in
+     * the LayoutParams; instead it expects that the layout process will always reconstruct
+     * the proper positioning.
+     *
+     * @param type the type of event which has caused this call
+     */
+    final void onChildViewsChanged(@DispatchChangeEvent final int type) {
+        final int layoutDirection = ViewCompat.getLayoutDirection(this);
+        final int childCount = mDependencySortedChildren.size();
+        final Rect inset = acquireTempRect();
+        final Rect drawRect = acquireTempRect();
+        final Rect lastDrawRect = acquireTempRect();
+        for (int i = 0; i < childCount; i++) {
+            final View child = mDependencySortedChildren.get(i);
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            if (type == EVENT_PRE_DRAW && child.getVisibility() == View.GONE) {
+                // Do not try to update GONE child views in pre draw updates.
+                continue;
+            }
+            // Check child views before for anchor
+            for (int j = 0; j < i; j++) {
+                final View checkChild = mDependencySortedChildren.get(j);
+                if (lp.mAnchorDirectChild == checkChild) {
+                    offsetChildToAnchor(child, layoutDirection);
+                }
+            }
+            // Get the current draw rect of the view
+            getChildRect(child, true, drawRect);
+            // Accumulate inset sizes
+            if (lp.insetEdge != Gravity.NO_GRAVITY && !drawRect.isEmpty()) {
+                final int absInsetEdge = GravityCompat.getAbsoluteGravity(
+                        lp.insetEdge, layoutDirection);
+                switch (absInsetEdge & Gravity.VERTICAL_GRAVITY_MASK) {
+                    case Gravity.TOP:
+                        inset.top = Math.max(inset.top, drawRect.bottom);
+                        break;
+                    case Gravity.BOTTOM:
+                        inset.bottom = Math.max(inset.bottom, getHeight() - drawRect.top);
+                        break;
+                }
+                switch (absInsetEdge & Gravity.HORIZONTAL_GRAVITY_MASK) {
+                    case Gravity.LEFT:
+                        inset.left = Math.max(inset.left, drawRect.right);
+                        break;
+                    case Gravity.RIGHT:
+                        inset.right = Math.max(inset.right, getWidth() - drawRect.left);
+                        break;
+                }
+            }
+            // Dodge inset edges if necessary
+            if (lp.dodgeInsetEdges != Gravity.NO_GRAVITY && child.getVisibility() == View.VISIBLE) {
+                offsetChildByInset(child, inset, layoutDirection);
+            }
+            if (type != EVENT_VIEW_REMOVED) {
+                // Did it change? if not continue
+                getLastChildRect(child, lastDrawRect);
+                if (lastDrawRect.equals(drawRect)) {
+                    continue;
+                }
+                recordLastChildRect(child, drawRect);
+            }
+            // Update any behavior-dependent views for the change
+            for (int j = i + 1; j < childCount; j++) {
+                final View checkChild = mDependencySortedChildren.get(j);
+                final LayoutParams checkLp = (LayoutParams) checkChild.getLayoutParams();
+                final Behavior b = checkLp.getBehavior();
+                if (b != null && b.layoutDependsOn(this, checkChild, child)) {
+                    if (type == EVENT_PRE_DRAW && checkLp.getChangedAfterNestedScroll()) {
+                        // If this is from a pre-draw and we have already been changed
+                        // from a nested scroll, skip the dispatch and reset the flag
+                        checkLp.resetChangedAfterNestedScroll();
+                        continue;
+                    }
+                    final boolean handled;
+                    switch (type) {
+                        case EVENT_VIEW_REMOVED:
+                            // EVENT_VIEW_REMOVED means that we need to dispatch
+                            // onDependentViewRemoved() instead
+                            b.onDependentViewRemoved(this, checkChild, child);
+                            handled = true;
+                            break;
+                        default:
+                            // Otherwise we dispatch onDependentViewChanged()
+                            handled = b.onDependentViewChanged(this, checkChild, child);
+                            break;
+                    }
+                    if (type == EVENT_NESTED_SCROLL) {
+                        // If this is from a nested scroll, set the flag so that we may skip
+                        // any resulting onPreDraw dispatch (if needed)
+                        checkLp.setChangedAfterNestedScroll(handled);
+                    }
+                }
+            }
+        }
+        releaseTempRect(inset);
+        releaseTempRect(drawRect);
+        releaseTempRect(lastDrawRect);
     }
 
     private void offsetChildByInset(View view, Rect rect, int i) {
@@ -1661,62 +1801,71 @@ public class CoordinatorLayout extends ViewGroup implements NestedScrollingParen
             return this.mAnchorView;
         }
 
-        /* JADX WARN: Multi-variable type inference failed */
-        /* JADX WARN: Type inference failed for: r2v2, types: [android.view.ViewParent] */
-        private void resolveAnchorView(View view, CoordinatorLayout coordinatorLayout) {
-            this.mAnchorView = coordinatorLayout.findViewById(this.mAnchorId);
-            if (this.mAnchorView != null) {
-                if (this.mAnchorView == coordinatorLayout) {
-                    if (coordinatorLayout.isInEditMode()) {
-                        this.mAnchorDirectChild = null;
-                        this.mAnchorView = null;
+        /**
+         * Determine the anchor view for the child view this LayoutParams is assigned to.
+         * Assumes mAnchorId is valid.
+         */
+        private void resolveAnchorView(final View forChild, final CoordinatorLayout parent) {
+            mAnchorView = parent.findViewById(mAnchorId);
+            if (mAnchorView != null) {
+                if (mAnchorView == parent) {
+                    if (parent.isInEditMode()) {
+                        mAnchorView = mAnchorDirectChild = null;
                         return;
                     }
-                    throw new IllegalStateException("View can not be anchored to the the parent CoordinatorLayout");
+                    throw new IllegalStateException(
+                            "View can not be anchored to the the parent CoordinatorLayout");
                 }
-                CoordinatorLayout coordinatorLayout2 = this.mAnchorView;
-                for (CoordinatorLayout parent = this.mAnchorView.getParent(); parent != coordinatorLayout && parent != null; parent = parent.getParent()) {
-                    if (parent == view) {
-                        if (coordinatorLayout.isInEditMode()) {
-                            this.mAnchorDirectChild = null;
-                            this.mAnchorView = null;
+                View directChild = mAnchorView;
+                for (ViewParent p = mAnchorView.getParent();
+                        p != parent && p != null;
+                        p = p.getParent()) {
+                    if (p == forChild) {
+                        if (parent.isInEditMode()) {
+                            mAnchorView = mAnchorDirectChild = null;
                             return;
                         }
-                        throw new IllegalStateException("Anchor must not be a descendant of the anchored view");
+                        throw new IllegalStateException(
+                                "Anchor must not be a descendant of the anchored view");
                     }
-                    if (parent instanceof View) {
-                        coordinatorLayout2 = parent;
+                    if (p instanceof View) {
+                        directChild = (View) p;
                     }
                 }
-                this.mAnchorDirectChild = coordinatorLayout2;
-                return;
+                mAnchorDirectChild = directChild;
+            } else {
+                if (parent.isInEditMode()) {
+                    mAnchorView = mAnchorDirectChild = null;
+                    return;
+                }
+                throw new IllegalStateException("Could not find CoordinatorLayout descendant view"
+                        + " with id " + parent.getResources().getResourceName(mAnchorId)
+                        + " to anchor view " + forChild);
             }
-            if (coordinatorLayout.isInEditMode()) {
-                this.mAnchorDirectChild = null;
-                this.mAnchorView = null;
-                return;
-            }
-            throw new IllegalStateException("Could not find CoordinatorLayout descendant view with id " + coordinatorLayout.getResources().getResourceName(this.mAnchorId) + " to anchor view " + view);
         }
 
-        /* JADX WARN: Multi-variable type inference failed */
-        /* JADX WARN: Type inference failed for: r1v2, types: [android.view.ViewParent] */
-        private boolean verifyAnchorView(View view, CoordinatorLayout coordinatorLayout) {
-            if (this.mAnchorView.getId() != this.mAnchorId) {
+        /**
+         * Verify that the previously resolved anchor view is still valid - that it is still
+         * a descendant of the expected parent view, it is not the child this LayoutParams
+         * is assigned to or a descendant of it, and it has the expected id.
+         */
+        private boolean verifyAnchorView(View forChild, CoordinatorLayout parent) {
+            if (mAnchorView.getId() != mAnchorId) {
                 return false;
             }
-            CoordinatorLayout coordinatorLayout2 = this.mAnchorView;
-            for (CoordinatorLayout parent = this.mAnchorView.getParent(); parent != coordinatorLayout; parent = parent.getParent()) {
-                if (parent == null || parent == view) {
-                    this.mAnchorDirectChild = null;
-                    this.mAnchorView = null;
+            View directChild = mAnchorView;
+            for (ViewParent p = mAnchorView.getParent();
+                    p != parent;
+                    p = p.getParent()) {
+                if (p == null || p == forChild) {
+                    mAnchorView = mAnchorDirectChild = null;
                     return false;
                 }
-                if (parent instanceof View) {
-                    coordinatorLayout2 = parent;
+                if (p instanceof View) {
+                    directChild = (View) p;
                 }
             }
-            this.mAnchorDirectChild = coordinatorLayout2;
+            mAnchorDirectChild = directChild;
             return true;
         }
 

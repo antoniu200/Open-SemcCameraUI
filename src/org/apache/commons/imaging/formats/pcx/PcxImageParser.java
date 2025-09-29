@@ -287,17 +287,129 @@ public class PcxImageParser extends ImageParser {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:87:0x01fd  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private java.awt.image.BufferedImage readImage(org.apache.commons.imaging.formats.pcx.PcxImageParser.PcxHeader r25, java.io.InputStream r26, org.apache.commons.imaging.common.bytesource.ByteSource r27) throws java.io.IOException, org.apache.commons.imaging.ImageReadException {
-        /*
-            Method dump skipped, instructions count: 686
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: org.apache.commons.imaging.formats.pcx.PcxImageParser.readImage(org.apache.commons.imaging.formats.pcx.PcxImageParser$PcxHeader, java.io.InputStream, org.apache.commons.imaging.common.bytesource.ByteSource):java.awt.image.BufferedImage");
+    private BufferedImage readImage(final PcxHeader pcxHeader, final InputStream inputStream, final ByteSource byteSource) throws ImageReadException, IOException {
+        final int w = pcxHeader.xMax - pcxHeader.xMin + 1;
+        if (w < 0) {
+            throw new ImageReadException("Image width is negative");
+        }
+        final int h = pcxHeader.yMax - pcxHeader.yMin + 1;
+        if (h < 0) {
+            throw new ImageReadException("Image height is negative");
+        }
+        final byte[] array = new byte[pcxHeader.bytesPerLine * pcxHeader.nPlanes];
+        if ((pcxHeader.bitsPerPixel == 1 || pcxHeader.bitsPerPixel == 2 || pcxHeader.bitsPerPixel == 4 || pcxHeader.bitsPerPixel == 8) && pcxHeader.nPlanes == 1) {
+            final int scanlineStride = (pcxHeader.bitsPerPixel * w + 7) / 8;
+            final byte[] dataArray = new byte[h * scanlineStride];
+            for (int i = 0; i < h; ++i) {
+                this.readScanLine(pcxHeader, inputStream, array);
+                System.arraycopy(array, 0, dataArray, i * scanlineStride, scanlineStride);
+            }
+            final DataBufferByte dataBufferByte = new DataBufferByte(dataArray, dataArray.length);
+            int[] colormap;
+            if (pcxHeader.bitsPerPixel == 1) {
+                final int[] array2;
+                colormap = (array2 = new int[2]);
+                array2[0] = 0;
+                array2[1] = 16777215;
+            }
+            else if (pcxHeader.bitsPerPixel == 8) {
+                final int[] read256ColorPalette = this.read256ColorPalette(inputStream);
+                int[] read256ColorPaletteFromEndOfFile;
+                if (read256ColorPalette == null) {
+                    read256ColorPaletteFromEndOfFile = this.read256ColorPaletteFromEndOfFile(byteSource);
+                }
+                else {
+                    read256ColorPaletteFromEndOfFile = read256ColorPalette;
+                }
+                colormap = read256ColorPaletteFromEndOfFile;
+                if (read256ColorPaletteFromEndOfFile == null) {
+                    throw new ImageReadException("No 256 color palette found in image that needs it");
+                }
+            }
+            else {
+                colormap = pcxHeader.colormap;
+            }
+            WritableRaster raster;
+            if (pcxHeader.bitsPerPixel == 8) {
+                raster = Raster.createInterleavedRaster(dataBufferByte, w, h, scanlineStride, 1, new int[] { 0 }, null);
+            }
+            else {
+                raster = Raster.createPackedRaster(dataBufferByte, w, h, pcxHeader.bitsPerPixel, null);
+            }
+            final IndexColorModel cm = new IndexColorModel(pcxHeader.bitsPerPixel, 1 << pcxHeader.bitsPerPixel, colormap, 0, false, -1, 0);
+            return new BufferedImage(cm, raster, cm.isAlphaPremultiplied(), new Properties());
+        }
+        if (pcxHeader.bitsPerPixel == 1 && 2 <= pcxHeader.nPlanes && pcxHeader.nPlanes <= 4) {
+            final BufferedImage bufferedImage = new BufferedImage(w, h, 12, new IndexColorModel(pcxHeader.nPlanes, 1 << pcxHeader.nPlanes, pcxHeader.colormap, 0, false, -1, 0));
+            final byte[] array3 = new byte[w];
+            for (int j = 0; j < h; ++j) {
+                this.readScanLine(pcxHeader, inputStream, array);
+                Arrays.fill(array3, (byte)0);
+                int k = 0;
+                int n = 0;
+                while (k < pcxHeader.nPlanes) {
+                    for (int l = 0; l < pcxHeader.bytesPerLine; ++l, ++n) {
+                        final byte b = array[n];
+                        for (int n2 = 0; n2 < 8; ++n2) {
+                            final int n3 = 8 * l + n2;
+                            if (n3 >= array3.length) {
+                                break;
+                            }
+                            array3[n3] |= (byte)(((b & 0xFF) >> 7 - n2 & 0x1) << k);
+                        }
+                    }
+                    ++k;
+                }
+                bufferedImage.getRaster().setDataElements(0, j, w, 1, array3);
+            }
+            return bufferedImage;
+        }
+        if (pcxHeader.bitsPerPixel == 8 && pcxHeader.nPlanes == 3) {
+            final byte[][] dataArray2 = new byte[3][];
+            final int n4 = w * h;
+            dataArray2[0] = new byte[n4];
+            dataArray2[1] = new byte[n4];
+            dataArray2[2] = new byte[n4];
+            for (int n5 = 0; n5 < h; ++n5) {
+                this.readScanLine(pcxHeader, inputStream, array);
+                final byte[] array4 = dataArray2[0];
+                final int n6 = n5 * w;
+                System.arraycopy(array, 0, array4, n6, w);
+                System.arraycopy(array, pcxHeader.bytesPerLine, dataArray2[1], n6, w);
+                System.arraycopy(array, pcxHeader.bytesPerLine * 2, dataArray2[2], n6, w);
+            }
+            final WritableRaster bandedRaster = Raster.createBandedRaster(new DataBufferByte(dataArray2, dataArray2[0].length), w, h, w, new int[] { 0, 1, 2 }, new int[] { 0, 0, 0 }, null);
+            final ComponentColorModel cm2 = new ComponentColorModel(ColorSpace.getInstance(1000), false, false, 1, 0);
+            return new BufferedImage(cm2, bandedRaster, cm2.isAlphaPremultiplied(), new Properties());
+        }
+        if ((pcxHeader.bitsPerPixel == 24 && pcxHeader.nPlanes == 1) || (pcxHeader.bitsPerPixel == 32 && pcxHeader.nPlanes == 1)) {
+            final int scanlineStride2 = 3 * w;
+            final byte[] dataArray3 = new byte[scanlineStride2 * h];
+            for (int n7 = 0; n7 < h; ++n7) {
+                this.readScanLine(pcxHeader, inputStream, array);
+                if (pcxHeader.bitsPerPixel == 24) {
+                    System.arraycopy(array, 0, dataArray3, n7 * scanlineStride2, scanlineStride2);
+                }
+                else {
+                    for (int n8 = 0; n8 < w; ++n8) {
+                        final int n9 = n7 * scanlineStride2 + 3 * n8;
+                        final int n10 = 4 * n8;
+                        dataArray3[n9] = array[n10];
+                        dataArray3[n9 + 1] = array[n10 + 1];
+                        dataArray3[n9 + 2] = array[n10 + 2];
+                    }
+                }
+            }
+            final WritableRaster interleavedRaster = Raster.createInterleavedRaster(new DataBufferByte(dataArray3, dataArray3.length), w, h, scanlineStride2, 3, new int[] { 2, 1, 0 }, null);
+            final ComponentColorModel cm3 = new ComponentColorModel(ColorSpace.getInstance(1000), false, false, 1, 0);
+            return new BufferedImage(cm3, interleavedRaster, cm3.isAlphaPremultiplied(), new Properties());
+        }
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Invalid/unsupported image with bitsPerPixel ");
+        sb.append(pcxHeader.bitsPerPixel);
+        sb.append(" and planes ");
+        sb.append(pcxHeader.nPlanes);
+        throw new ImageReadException(sb.toString());
     }
 
     @Override // org.apache.commons.imaging.ImageParser

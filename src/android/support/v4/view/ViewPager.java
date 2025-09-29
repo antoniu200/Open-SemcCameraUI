@@ -676,24 +676,176 @@ public class ViewPager extends ViewGroup {
         populate(this.mCurItem);
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:33:0x00c4, code lost:
-    
-        r8 = null;
-     */
-    /* JADX WARN: Removed duplicated region for block: B:70:0x0157 A[PHI: r7 r10 r15
-  0x0157: PHI (r7v14 float) = (r7v12 float), (r7v13 float), (r7v5 float) binds: [B:68:0x014c, B:65:0x0136, B:59:0x0120] A[DONT_GENERATE, DONT_INLINE]
-  0x0157: PHI (r10v7 int) = (r10v1 int), (r10v6 int), (r10v10 int) binds: [B:68:0x014c, B:65:0x0136, B:59:0x0120] A[DONT_GENERATE, DONT_INLINE]
-  0x0157: PHI (r15v6 int) = (r15v5 int), (r15v4 int), (r15v9 int) binds: [B:68:0x014c, B:65:0x0136, B:59:0x0120] A[DONT_GENERATE, DONT_INLINE]] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    void populate(int r19) throws android.content.res.Resources.NotFoundException {
-        /*
-            Method dump skipped, instructions count: 622
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.view.ViewPager.populate(int):void");
+    void populate(int newCurrentItem) {
+        ItemInfo oldCurInfo = null;
+        int focusDirection = View.FOCUS_FORWARD;
+        if (mCurItem != newCurrentItem) {
+            focusDirection = mCurItem < newCurrentItem ? View.FOCUS_RIGHT : View.FOCUS_LEFT;
+            oldCurInfo = infoForPosition(mCurItem);
+            mCurItem = newCurrentItem;
+        }
+        if (mAdapter == null) {
+            sortChildDrawingOrder();
+            return;
+        }
+        // Bail now if we are waiting to populate.  This is to hold off
+        // on creating views from the time the user releases their finger to
+        // fling to a new position until we have finished the scroll to
+        // that position, avoiding glitches from happening at that point.
+        if (mPopulatePending) {
+            if (DEBUG) Log.i(TAG, "populate is pending, skipping for now...");
+            sortChildDrawingOrder();
+            return;
+        }
+        // Also, don't populate until we are attached to a window.  This is to
+        // avoid trying to populate before we have restored our view hierarchy
+        // state and conflicting with what is restored.
+        if (getWindowToken() == null) {
+            return;
+        }
+        mAdapter.startUpdate(this);
+        final int pageLimit = mOffscreenPageLimit;
+        final int startPos = Math.max(0, mCurItem - pageLimit);
+        final int N = mAdapter.getCount();
+        final int endPos = Math.min(N-1, mCurItem + pageLimit);
+        if (N != mExpectedAdapterCount) {
+            String resName;
+            try {
+                resName = getResources().getResourceName(getId());
+            } catch (Resources.NotFoundException e) {
+                resName = Integer.toHexString(getId());
+            }
+            throw new IllegalStateException("The application's PagerAdapter changed the adapter's" +
+                    " contents without calling PagerAdapter#notifyDataSetChanged!" +
+                    " Expected adapter item count: " + mExpectedAdapterCount + ", found: " + N +
+                    " Pager id: " + resName +
+                    " Pager class: " + getClass() +
+                    " Problematic adapter: " + mAdapter.getClass());
+        }
+        // Locate the currently focused item or add it if needed.
+        int curIndex = -1;
+        ItemInfo curItem = null;
+        for (curIndex = 0; curIndex < mItems.size(); curIndex++) {
+            final ItemInfo ii = mItems.get(curIndex);
+            if (ii.position >= mCurItem) {
+                if (ii.position == mCurItem) curItem = ii;
+                break;
+            }
+        }
+        if (curItem == null && N > 0) {
+            curItem = addNewItem(mCurItem, curIndex);
+        }
+        // Fill 3x the available width or up to the number of offscreen
+        // pages requested to either side, whichever is larger.
+        // If we have no current item we have no work to do.
+        if (curItem != null) {
+            float extraWidthLeft = 0.f;
+            int itemIndex = curIndex - 1;
+            ItemInfo ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
+            final int clientWidth = getPaddedWidth();
+            final float leftWidthNeeded = clientWidth <= 0 ? 0 :
+                    2.f - curItem.widthFactor + (float) getPaddingLeft() / (float) clientWidth;
+            for (int pos = mCurItem - 1; pos >= 0; pos--) {
+                if (extraWidthLeft >= leftWidthNeeded && pos < startPos) {
+                    if (ii == null) {
+                        break;
+                    }
+                    if (pos == ii.position && !ii.scrolling) {
+                        mItems.remove(itemIndex);
+                        mAdapter.destroyItem(this, pos, ii.object);
+                        if (DEBUG) {
+                            Log.i(TAG, "populate() - destroyItem() with pos: " + pos +
+                                    " view: " + ii.object);
+                        }
+                        itemIndex--;
+                        curIndex--;
+                        ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
+                    }
+                } else if (ii != null && pos == ii.position) {
+                    extraWidthLeft += ii.widthFactor;
+                    itemIndex--;
+                    ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
+                } else {
+                    ii = addNewItem(pos, itemIndex + 1);
+                    extraWidthLeft += ii.widthFactor;
+                    curIndex++;
+                    ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
+                }
+            }
+            float extraWidthRight = curItem.widthFactor;
+            itemIndex = curIndex + 1;
+            if (extraWidthRight < 2.f) {
+                ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                final float rightWidthNeeded = clientWidth <= 0 ? 0 :
+                        (float) getPaddingRight() / (float) clientWidth + 2.f;
+                for (int pos = mCurItem + 1; pos < N; pos++) {
+                    if (extraWidthRight >= rightWidthNeeded && pos > endPos) {
+                        if (ii == null) {
+                            break;
+                        }
+                        if (pos == ii.position && !ii.scrolling) {
+                            mItems.remove(itemIndex);
+                            mAdapter.destroyItem(this, pos, ii.object);
+                            if (DEBUG) {
+                                Log.i(TAG, "populate() - destroyItem() with pos: " + pos +
+                                        " view: " + ii.object);
+                            }
+                            ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                        }
+                    } else if (ii != null && pos == ii.position) {
+                        extraWidthRight += ii.widthFactor;
+                        itemIndex++;
+                        ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                    } else {
+                        ii = addNewItem(pos, itemIndex);
+                        itemIndex++;
+                        extraWidthRight += ii.widthFactor;
+                        ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                    }
+                }
+            }
+            calculatePageOffsets(curItem, curIndex, oldCurInfo);
+        }
+        if (DEBUG) {
+            Log.i(TAG, "Current page list:");
+            for (int i=0; i<mItems.size(); i++) {
+                Log.i(TAG, "#" + i + ": page " + mItems.get(i).position);
+            }
+        }
+        mAdapter.setPrimaryItem(this, mCurItem, curItem != null ? curItem.object : null);
+        mAdapter.finishUpdate(this);
+        // Check width measurement of current pages and drawing sort order.
+        // Update LayoutParams as needed.
+        final int childCount = getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            final View child = getChildAt(i);
+            final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+            lp.childIndex = i;
+            if (!lp.isDecor && lp.widthFactor == 0.f) {
+                // 0 means requery the adapter for this, it doesn't have a valid width.
+                final ItemInfo ii = infoForChild(child);
+                if (ii != null) {
+                    lp.widthFactor = ii.widthFactor;
+                    lp.position = ii.position;
+                }
+            }
+        }
+        sortChildDrawingOrder();
+        if (hasFocus()) {
+            View currentFocused = findFocus();
+            ItemInfo ii = currentFocused != null ? infoForAnyChild(currentFocused) : null;
+            if (ii == null || ii.position != mCurItem) {
+                for (int i=0; i<getChildCount(); i++) {
+                    View child = getChildAt(i);
+                    ii = infoForChild(child);
+                    if (ii != null && ii.position == mCurItem) {
+                        if (child.requestFocus(focusDirection)) {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void sortChildDrawingOrder() {
@@ -1181,107 +1333,74 @@ public class ViewPager extends ViewGroup {
         throw new IllegalStateException("onPageScrolled did not call superclass implementation");
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:22:0x0066  */
-    @android.support.annotation.CallSuper
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected void onPageScrolled(int r13, float r14, int r15) {
-        /*
-            r12 = this;
-            int r0 = r12.mDecorChildCount
-            r1 = 0
-            r2 = 1
-            if (r0 <= 0) goto L6d
-            int r0 = r12.getScrollX()
-            int r3 = r12.getPaddingLeft()
-            int r4 = r12.getPaddingRight()
-            int r5 = r12.getWidth()
-            int r6 = r12.getChildCount()
-            r7 = r4
-            r4 = r3
-            r3 = r1
-        L1d:
-            if (r3 >= r6) goto L6d
-            android.view.View r8 = r12.getChildAt(r3)
-            android.view.ViewGroup$LayoutParams r9 = r8.getLayoutParams()
-            android.support.v4.view.ViewPager$LayoutParams r9 = (android.support.v4.view.ViewPager.LayoutParams) r9
-            boolean r10 = r9.isDecor
-            if (r10 != 0) goto L2e
-            goto L6a
-        L2e:
-            int r9 = r9.gravity
-            r9 = r9 & 7
-            if (r9 == r2) goto L4f
-            r10 = 3
-            if (r9 == r10) goto L49
-            r10 = 5
-            if (r9 == r10) goto L3c
-            r9 = r4
-            goto L5e
-        L3c:
-            int r9 = r5 - r7
-            int r10 = r8.getMeasuredWidth()
-            int r9 = r9 - r10
-            int r10 = r8.getMeasuredWidth()
-            int r7 = r7 + r10
-            goto L5b
-        L49:
-            int r9 = r8.getWidth()
-            int r9 = r9 + r4
-            goto L5e
-        L4f:
-            int r9 = r8.getMeasuredWidth()
-            int r9 = r5 - r9
-            int r9 = r9 / 2
-            int r9 = java.lang.Math.max(r9, r4)
-        L5b:
-            r11 = r9
-            r9 = r4
-            r4 = r11
-        L5e:
-            int r4 = r4 + r0
-            int r10 = r8.getLeft()
-            int r4 = r4 - r10
-            if (r4 == 0) goto L69
-            r8.offsetLeftAndRight(r4)
-        L69:
-            r4 = r9
-        L6a:
-            int r3 = r3 + 1
-            goto L1d
-        L6d:
-            r12.dispatchOnPageScrolled(r13, r14, r15)
-            android.support.v4.view.ViewPager$PageTransformer r13 = r12.mPageTransformer
-            if (r13 == 0) goto La1
-            int r13 = r12.getScrollX()
-            int r14 = r12.getChildCount()
-        L7c:
-            if (r1 >= r14) goto La1
-            android.view.View r15 = r12.getChildAt(r1)
-            android.view.ViewGroup$LayoutParams r0 = r15.getLayoutParams()
-            android.support.v4.view.ViewPager$LayoutParams r0 = (android.support.v4.view.ViewPager.LayoutParams) r0
-            boolean r0 = r0.isDecor
-            if (r0 == 0) goto L8d
-            goto L9e
-        L8d:
-            int r0 = r15.getLeft()
-            int r0 = r0 - r13
-            float r0 = (float) r0
-            int r3 = r12.getClientWidth()
-            float r3 = (float) r3
-            float r0 = r0 / r3
-            android.support.v4.view.ViewPager$PageTransformer r3 = r12.mPageTransformer
-            r3.transformPage(r15, r0)
-        L9e:
-            int r1 = r1 + 1
-            goto L7c
-        La1:
-            r12.mCalledSuper = r2
-            return
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.view.ViewPager.onPageScrolled(int, float, int):void");
+    /**
+     * This method will be invoked when the current page is scrolled, either as part
+     * of a programmatically initiated smooth scroll or a user initiated touch scroll.
+     * If you override this method you must call through to the superclass implementation
+     * (e.g. super.onPageScrolled(position, offset, offsetPixels)) before onPageScrolled
+     * returns.
+     *
+     * @param position Position index of the first page currently being displayed.
+     *                 Page position+1 will be visible if positionOffset is nonzero.
+     * @param offset Value from [0, 1) indicating the offset from the page at position.
+     * @param offsetPixels Value in pixels indicating the offset from position.
+     */
+    protected void onPageScrolled(int position, float offset, int offsetPixels) {
+        // Offset any decor views if needed - keep them on-screen at all times.
+        if (mDecorChildCount > 0) {
+            final int scrollX = getScrollX();
+            int paddingLeft = getPaddingLeft();
+            int paddingRight = getPaddingRight();
+            final int width = getWidth();
+            final int childCount = getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (!lp.isDecor) continue;
+                final int hgrav = lp.gravity & Gravity.HORIZONTAL_GRAVITY_MASK;
+                int childLeft = 0;
+                switch (hgrav) {
+                    default:
+                        childLeft = paddingLeft;
+                        break;
+                    case Gravity.LEFT:
+                        childLeft = paddingLeft;
+                        paddingLeft += child.getWidth();
+                        break;
+                    case Gravity.CENTER_HORIZONTAL:
+                        childLeft = Math.max((width - child.getMeasuredWidth()) / 2,
+                                paddingLeft);
+                        break;
+                    case Gravity.RIGHT:
+                        childLeft = width - paddingRight - child.getMeasuredWidth();
+                        paddingRight += child.getMeasuredWidth();
+                        break;
+                }
+                childLeft += scrollX;
+                final int childOffset = childLeft - child.getLeft();
+                if (childOffset != 0) {
+                    child.offsetLeftAndRight(childOffset);
+                }
+            }
+        }
+        if (mOnPageChangeListener != null) {
+            mOnPageChangeListener.onPageScrolled(position, offset, offsetPixels);
+        }
+        if (mInternalPageChangeListener != null) {
+            mInternalPageChangeListener.onPageScrolled(position, offset, offsetPixels);
+        }
+        if (mPageTransformer != null) {
+            final int scrollX = getScrollX();
+            final int childCount = getChildCount();
+            for (int i = 0; i < childCount; i++) {
+                final View child = getChildAt(i);
+                final LayoutParams lp = (LayoutParams) child.getLayoutParams();
+                if (lp.isDecor) continue;
+                final float transformPos = (float) (child.getLeft() - scrollX) / getPaddedWidth();
+                mPageTransformer.transformPage(child, transformPos);
+            }
+        }
+        mCalledSuper = true;
     }
 
     private void dispatchOnPageScrolled(int i, float f, int i2) {
@@ -1461,18 +1580,121 @@ public class ViewPager extends ViewGroup {
         return this.mIsBeingDragged;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:44:0x00d5  */
-    @Override // android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public boolean onTouchEvent(android.view.MotionEvent r8) throws android.content.res.Resources.NotFoundException {
-        /*
-            Method dump skipped, instructions count: 364
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.view.ViewPager.onTouchEvent(android.view.MotionEvent):boolean");
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN && ev.getEdgeFlags() != 0) {
+            // Don't handle edge touches immediately -- they may actually belong to one of our
+            // descendants.
+            return false;
+        }
+        if (mAdapter == null || mAdapter.getCount() == 0) {
+            // Nothing to present or scroll; nothing to touch.
+            return false;
+        }
+        if (mVelocityTracker == null) {
+            mVelocityTracker = VelocityTracker.obtain();
+        }
+        mVelocityTracker.addMovement(ev);
+        final int action = ev.getAction();
+        boolean needsInvalidate = false;
+        switch (action & MotionEvent.ACTION_MASK) {
+            case MotionEvent.ACTION_DOWN: {
+                mScroller.abortAnimation();
+                mPopulatePending = false;
+                populate();
+                // Remember where the motion event started
+                mLastMotionX = mInitialMotionX = ev.getX();
+                mLastMotionY = mInitialMotionY = ev.getY();
+                mActivePointerId = ev.getPointerId(0);
+                break;
+            }
+            case MotionEvent.ACTION_MOVE:
+                if (!mIsBeingDragged) {
+                    final int pointerIndex = ev.findPointerIndex(mActivePointerId);
+                    final float x = ev.getX(pointerIndex);
+                    final float xDiff = Math.abs(x - mLastMotionX);
+                    final float y = ev.getY(pointerIndex);
+                    final float yDiff = Math.abs(y - mLastMotionY);
+                    if (DEBUG) Log.v(TAG, "Moved x to " + x + "," + y + " diff=" + xDiff + "," + yDiff);
+                    if (xDiff > mTouchSlop && xDiff > yDiff) {
+                        if (DEBUG) Log.v(TAG, "Starting drag!");
+                        mIsBeingDragged = true;
+                        requestParentDisallowInterceptTouchEvent(true);
+                        mLastMotionX = x - mInitialMotionX > 0 ? mInitialMotionX + mTouchSlop :
+                                mInitialMotionX - mTouchSlop;
+                        mLastMotionY = y;
+                        setScrollState(SCROLL_STATE_DRAGGING);
+                        setScrollingCacheEnabled(true);
+                        // Disallow Parent Intercept, just in case
+                        ViewParent parent = getParent();
+                        if (parent != null) {
+                            parent.requestDisallowInterceptTouchEvent(true);
+                        }
+                    }
+                }
+                // Not else! Note that mIsBeingDragged can be set above.
+                if (mIsBeingDragged) {
+                    // Scroll to follow the motion event
+                    final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
+                    final float x = ev.getX(activePointerIndex);
+                    needsInvalidate |= performDrag(x);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (mIsBeingDragged) {
+                    final VelocityTracker velocityTracker = mVelocityTracker;
+                    velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
+                    final int initialVelocity = (int) velocityTracker.getXVelocity(mActivePointerId);
+                    mPopulatePending = true;
+                    final float scrollStart = getScrollStart();
+                    final float scrolledPages = scrollStart / getPaddedWidth();
+                    final ItemInfo ii = infoForFirstVisiblePage();
+                    final int currentPage = ii.position;
+                    final float nextPageOffset;
+                    if (isLayoutRtl()) {
+                        nextPageOffset = (ii.offset - scrolledPages) / ii.widthFactor;
+                    }  else {
+                        nextPageOffset = (scrolledPages - ii.offset) / ii.widthFactor;
+                    }
+                    final int activePointerIndex = ev.findPointerIndex(mActivePointerId);
+                    final float x = ev.getX(activePointerIndex);
+                    final int totalDelta = (int) (x - mInitialMotionX);
+                    final int nextPage = determineTargetPage(
+                            currentPage, nextPageOffset, initialVelocity, totalDelta);
+                    setCurrentItemInternal(nextPage, true, true, initialVelocity);
+                    mActivePointerId = INVALID_POINTER;
+                    endDrag();
+                    mLeftEdge.onRelease();
+                    mRightEdge.onRelease();
+                    needsInvalidate = true;
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                if (mIsBeingDragged) {
+                    scrollToItem(mCurItem, true, 0, false);
+                    mActivePointerId = INVALID_POINTER;
+                    endDrag();
+                    mLeftEdge.onRelease();
+                    mRightEdge.onRelease();
+                    needsInvalidate = true;
+                }
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN: {
+                final int index = ev.getActionIndex();
+                final float x = ev.getX(index);
+                mLastMotionX = x;
+                mActivePointerId = ev.getPointerId(index);
+                break;
+            }
+            case MotionEvent.ACTION_POINTER_UP:
+                onSecondaryPointerUp(ev);
+                mLastMotionX = ev.getX(ev.findPointerIndex(mActivePointerId));
+                break;
+        }
+        if (needsInvalidate) {
+            postInvalidateOnAnimation();
+        }
+        return true;
     }
 
     private boolean resetTouch() {
@@ -1826,124 +2048,68 @@ public class ViewPager extends ViewGroup {
         return false;
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:19:0x0068  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public boolean arrowScroll(int r8) throws android.content.res.Resources.NotFoundException {
-        /*
-            r7 = this;
-            android.view.View r0 = r7.findFocus()
-            r1 = 1
-            r2 = 0
-            r3 = 0
-            if (r0 != r7) goto La
-            goto L69
-        La:
-            if (r0 == 0) goto L68
-            android.view.ViewParent r4 = r0.getParent()
-        L10:
-            boolean r5 = r4 instanceof android.view.ViewGroup
-            if (r5 == 0) goto L1d
-            if (r4 != r7) goto L18
-            r4 = r1
-            goto L1e
-        L18:
-            android.view.ViewParent r4 = r4.getParent()
-            goto L10
-        L1d:
-            r4 = r2
-        L1e:
-            if (r4 != 0) goto L68
-            java.lang.StringBuilder r4 = new java.lang.StringBuilder
-            r4.<init>()
-            java.lang.Class r5 = r0.getClass()
-            java.lang.String r5 = r5.getSimpleName()
-            r4.append(r5)
-            android.view.ViewParent r0 = r0.getParent()
-        L34:
-            boolean r5 = r0 instanceof android.view.ViewGroup
-            if (r5 == 0) goto L4d
-            java.lang.String r5 = " => "
-            r4.append(r5)
-            java.lang.Class r5 = r0.getClass()
-            java.lang.String r5 = r5.getSimpleName()
-            r4.append(r5)
-            android.view.ViewParent r0 = r0.getParent()
-            goto L34
-        L4d:
-            java.lang.String r0 = "ViewPager"
-            java.lang.StringBuilder r5 = new java.lang.StringBuilder
-            r5.<init>()
-            java.lang.String r6 = "arrowScroll tried to find focus based on non-child current focused view "
-            r5.append(r6)
-            java.lang.String r4 = r4.toString()
-            r5.append(r4)
-            java.lang.String r4 = r5.toString()
-            android.util.Log.e(r0, r4)
-            goto L69
-        L68:
-            r3 = r0
-        L69:
-            android.view.FocusFinder r0 = android.view.FocusFinder.getInstance()
-            android.view.View r0 = r0.findNextFocus(r7, r3, r8)
-            r4 = 66
-            r5 = 17
-            if (r0 == 0) goto Lba
-            if (r0 == r3) goto Lba
-            if (r8 != r5) goto L9a
-            android.graphics.Rect r1 = r7.mTempRect
-            android.graphics.Rect r1 = r7.getChildRectInPagerCoordinates(r1, r0)
-            int r1 = r1.left
-            android.graphics.Rect r2 = r7.mTempRect
-            android.graphics.Rect r2 = r7.getChildRectInPagerCoordinates(r2, r3)
-            int r2 = r2.left
-            if (r3 == 0) goto L94
-            if (r1 < r2) goto L94
-            boolean r0 = r7.pageLeft()
-            goto L98
-        L94:
-            boolean r0 = r0.requestFocus()
-        L98:
-            r2 = r0
-            goto Lcd
-        L9a:
-            if (r8 != r4) goto Lcd
-            android.graphics.Rect r1 = r7.mTempRect
-            android.graphics.Rect r1 = r7.getChildRectInPagerCoordinates(r1, r0)
-            int r1 = r1.left
-            android.graphics.Rect r2 = r7.mTempRect
-            android.graphics.Rect r2 = r7.getChildRectInPagerCoordinates(r2, r3)
-            int r2 = r2.left
-            if (r3 == 0) goto Lb5
-            if (r1 > r2) goto Lb5
-            boolean r0 = r7.pageRight()
-            goto L98
-        Lb5:
-            boolean r0 = r0.requestFocus()
-            goto L98
-        Lba:
-            if (r8 == r5) goto Lc9
-            if (r8 != r1) goto Lbf
-            goto Lc9
-        Lbf:
-            if (r8 == r4) goto Lc4
-            r0 = 2
-            if (r8 != r0) goto Lcd
-        Lc4:
-            boolean r2 = r7.pageRight()
-            goto Lcd
-        Lc9:
-            boolean r2 = r7.pageLeft()
-        Lcd:
-            if (r2 == 0) goto Ld6
-            int r8 = android.view.SoundEffectConstants.getContantForFocusDirection(r8)
-            r7.playSoundEffect(r8)
-        Ld6:
-            return r2
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.view.ViewPager.arrowScroll(int):boolean");
+    public boolean arrowScroll(int direction) {
+        View currentFocused = findFocus();
+        if (currentFocused == this) {
+            currentFocused = null;
+        } else if (currentFocused != null) {
+            boolean isChild = false;
+            for (ViewParent parent = currentFocused.getParent(); parent instanceof ViewGroup;
+                    parent = parent.getParent()) {
+                if (parent == this) {
+                    isChild = true;
+                    break;
+                }
+            }
+            if (!isChild) {
+                // This would cause the focus search down below to fail in fun ways.
+                final StringBuilder sb = new StringBuilder();
+                sb.append(currentFocused.getClass().getSimpleName());
+                for (ViewParent parent = currentFocused.getParent(); parent instanceof ViewGroup;
+                        parent = parent.getParent()) {
+                    sb.append(" => ").append(parent.getClass().getSimpleName());
+                }
+                Log.e(TAG, "arrowScroll tried to find focus based on non-child " +
+                        "current focused view " + sb.toString());
+                currentFocused = null;
+            }
+        }
+        boolean handled = false;
+        View nextFocused = FocusFinder.getInstance().findNextFocus(this, currentFocused,
+                direction);
+        if (nextFocused != null && nextFocused != currentFocused) {
+            if (direction == View.FOCUS_LEFT) {
+                // If there is nothing to the left, or this is causing us to
+                // jump to the right, then what we really want to do is page left.
+                final int nextLeft = getChildRectInPagerCoordinates(mTempRect, nextFocused).left;
+                final int currLeft = getChildRectInPagerCoordinates(mTempRect, currentFocused).left;
+                if (currentFocused != null && nextLeft >= currLeft) {
+                    handled = pageLeft();
+                } else {
+                    handled = nextFocused.requestFocus();
+                }
+            } else if (direction == View.FOCUS_RIGHT) {
+                // If there is nothing to the right, or this is causing us to
+                // jump to the left, then what we really want to do is page right.
+                final int nextLeft = getChildRectInPagerCoordinates(mTempRect, nextFocused).left;
+                final int currLeft = getChildRectInPagerCoordinates(mTempRect, currentFocused).left;
+                if (currentFocused != null && nextLeft <= currLeft) {
+                    handled = pageRight();
+                } else {
+                    handled = nextFocused.requestFocus();
+                }
+            }
+        } else if (direction == FOCUS_LEFT || direction == FOCUS_BACKWARD) {
+            // Trying to move left and nothing there; try to page.
+            handled = pageLeft();
+        } else if (direction == FOCUS_RIGHT || direction == FOCUS_FORWARD) {
+            // Trying to move right and nothing there; try to page.
+            handled = pageRight();
+        }
+        if (handled) {
+            playSoundEffect(SoundEffectConstants.getContantForFocusDirection(direction));
+        }
+        return handled;
     }
 
     private Rect getChildRectInPagerCoordinates(Rect rect, View view) {

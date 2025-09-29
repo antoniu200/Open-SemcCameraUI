@@ -22,6 +22,10 @@ import com.sonyericsson.android.camera.view.baselayout.LayoutDependencyResolver;
 import com.sonyericsson.cameracommon.utility.CameraTimer;
 import com.sonyericsson.cameracommon.utility.LayoutOrientationResolver;
 import com.sonyericsson.cameracommon.utility.PositionConverter;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.IOException;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
 public class AutoReviewController implements AutoReviewContent.ContentReceiver {
@@ -155,138 +159,41 @@ public class AutoReviewController implements AutoReviewContent.ContentReceiver {
         this.mImageView.setImageBitmap(bitmapConvertBitmap);
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:37:0x004f  */
-    /* JADX WARN: Removed duplicated region for block: B:80:? A[Catch: all -> 0x005e, Throwable -> 0x0060, SYNTHETIC, TRY_LEAVE, TryCatch #3 {Throwable -> 0x0060, blocks: (B:6:0x000d, B:42:0x005a, B:41:0x0056, B:43:0x005d), top: B:62:0x000d }] */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public static android.graphics.Bitmap convertBitmap(android.content.Context r8, android.net.Uri r9, byte[] r10, boolean r11) throws java.lang.Throwable {
-        /*
-            if (r10 != 0) goto La6
-            r0 = 1
-            r1 = 0
-            android.content.ContentResolver r2 = r8.getContentResolver()     // Catch: java.io.IOException -> L73 java.io.FileNotFoundException -> L8d
-            java.io.InputStream r9 = r2.openInputStream(r9)     // Catch: java.io.IOException -> L73 java.io.FileNotFoundException -> L8d
-            r2 = 0
-            java.io.ByteArrayOutputStream r3 = new java.io.ByteArrayOutputStream     // Catch: java.lang.Throwable -> L5e java.lang.Throwable -> L60
-            r3.<init>()     // Catch: java.lang.Throwable -> L5e java.lang.Throwable -> L60
-            if (r9 == 0) goto L28
-            r4 = 1024(0x400, float:1.435E-42)
-            byte[] r4 = new byte[r4]     // Catch: java.lang.Throwable -> L23 java.lang.Throwable -> L26
-        L18:
-            int r5 = r9.read(r4)     // Catch: java.lang.Throwable -> L23 java.lang.Throwable -> L26
-            r6 = -1
-            if (r5 == r6) goto L28
-            r3.write(r4, r1, r5)     // Catch: java.lang.Throwable -> L23 java.lang.Throwable -> L26
-            goto L18
-        L23:
-            r4 = move-exception
-            r5 = r2
-            goto L4d
-        L26:
-            r4 = move-exception
-            goto L48
-        L28:
-            byte[] r4 = r3.toByteArray()     // Catch: java.lang.Throwable -> L23 java.lang.Throwable -> L26
-            if (r3 == 0) goto L3a
-            r3.close()     // Catch: java.lang.Throwable -> L32 java.lang.Throwable -> L36
-            goto L3a
-        L32:
-            r10 = move-exception
-            r3 = r10
-            r10 = r4
-            goto L62
-        L36:
-            r10 = move-exception
-            r2 = r10
-            r10 = r4
-            goto L61
-        L3a:
-            if (r9 == 0) goto L46
-            r9.close()     // Catch: java.io.IOException -> L40 java.io.FileNotFoundException -> L43
-            goto L46
-        L40:
-            r9 = move-exception
-            r10 = r4
-            goto L74
-        L43:
-            r9 = move-exception
-            r10 = r4
-            goto L8e
-        L46:
-            r10 = r4
-            goto La6
-        L48:
-            throw r4     // Catch: java.lang.Throwable -> L49
-        L49:
-            r5 = move-exception
-            r7 = r5
-            r5 = r4
-            r4 = r7
-        L4d:
-            if (r3 == 0) goto L5d
-            if (r5 == 0) goto L5a
-            r3.close()     // Catch: java.lang.Throwable -> L55 java.lang.Throwable -> L5e
-            goto L5d
-        L55:
-            r3 = move-exception
-            r5.addSuppressed(r3)     // Catch: java.lang.Throwable -> L5e java.lang.Throwable -> L60
-            goto L5d
-        L5a:
-            r3.close()     // Catch: java.lang.Throwable -> L5e java.lang.Throwable -> L60
-        L5d:
-            throw r4     // Catch: java.lang.Throwable -> L5e java.lang.Throwable -> L60
-        L5e:
-            r3 = move-exception
-            goto L62
-        L60:
-            r2 = move-exception
-        L61:
-            throw r2     // Catch: java.lang.Throwable -> L5e
-        L62:
-            if (r9 == 0) goto L72
-            if (r2 == 0) goto L6f
-            r9.close()     // Catch: java.lang.Throwable -> L6a java.io.IOException -> L73 java.io.FileNotFoundException -> L8d
-            goto L72
-        L6a:
-            r9 = move-exception
-            r2.addSuppressed(r9)     // Catch: java.io.IOException -> L73 java.io.FileNotFoundException -> L8d
-            goto L72
-        L6f:
-            r9.close()     // Catch: java.io.IOException -> L73 java.io.FileNotFoundException -> L8d
-        L72:
-            throw r3     // Catch: java.io.IOException -> L73 java.io.FileNotFoundException -> L8d
-        L73:
-            r9 = move-exception
-        L74:
-            java.lang.String[] r0 = new java.lang.String[r0]
-            java.lang.StringBuilder r2 = new java.lang.StringBuilder
-            r2.<init>()
-            java.lang.String r3 = "load of auto review image is failed "
-            r2.append(r3)
-            r2.append(r9)
-            java.lang.String r9 = r2.toString()
-            r0[r1] = r9
-            com.sonyericsson.android.camera.util.CamLog.e(r0)
-            goto La6
-        L8d:
-            r9 = move-exception
-        L8e:
-            java.lang.String[] r0 = new java.lang.String[r0]
-            java.lang.StringBuilder r2 = new java.lang.StringBuilder
-            r2.<init>()
-            java.lang.String r3 = "load of auto review image is failed "
-            r2.append(r3)
-            r2.append(r9)
-            java.lang.String r9 = r2.toString()
-            r0[r1] = r9
-            com.sonyericsson.android.camera.util.CamLog.e(r0)
-        La6:
-            android.graphics.Bitmap r8 = getPreviewBmp(r8, r10, r11)
-            return r8
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.view.AutoReviewController.convertBitmap(android.content.Context, android.net.Uri, byte[], boolean):android.graphics.Bitmap");
+    public static Bitmap convertBitmap(Context ctx, Uri uri, byte[] data, boolean flag) throws java.lang.Throwable {
+
+        if (data == null) {
+            InputStream in = null;
+            ByteArrayOutputStream baos = null;
+            try {
+                in = ctx.getContentResolver().openInputStream(uri);
+                baos = new ByteArrayOutputStream();
+                if (in != null) {
+                    byte[] buf = new byte[1024];
+                    int n;
+                    while ((n = in.read(buf)) != -1) {
+                        baos.write(buf, 0, n);
+                    }
+                }
+                data = baos.toByteArray();
+
+            } catch (FileNotFoundException e) {
+                CamLog.e(new String[] { "load of auto review image is failed " + e });
+
+            } catch (IOException e) {
+                CamLog.e(new String[] { "load of auto review image is failed " + e });
+
+            } finally {
+                if (baos != null) {
+                    try { baos.close(); } catch (Throwable ignore) {}
+                }
+                if (in != null) {
+                    try { in.close(); } catch (Throwable ignore) {}
+                }
+            }
+        }
+
+        // Always delegate to preview creation as in the fallback
+        return getPreviewBmp(ctx, data, flag);
     }
 
     private static Bitmap getPreviewBmp(Context context, byte[] bArr, boolean z) throws Resources.NotFoundException {

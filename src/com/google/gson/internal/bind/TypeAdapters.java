@@ -59,89 +59,53 @@ public final class TypeAdapters {
     };
     public static final TypeAdapterFactory CLASS_FACTORY = newFactory(Class.class, CLASS);
     public static final TypeAdapter<BitSet> BIT_SET = new TypeAdapter<BitSet>() { // from class: com.google.gson.internal.bind.TypeAdapters.2
-        /* JADX WARN: Removed duplicated region for block: B:17:0x004d  */
-        /* JADX WARN: Removed duplicated region for block: B:24:0x0073  */
-        /* JADX WARN: Removed duplicated region for block: B:33:0x0076 A[SYNTHETIC] */
-        @Override // com.google.gson.TypeAdapter
-        /*
-            Code decompiled incorrectly, please refer to instructions dump.
-            To view partially-correct code enable 'Show inconsistent code' option in preferences
-        */
-        public java.util.BitSet read(com.google.gson.stream.JsonReader r6) throws java.io.IOException {
-            /*
-                r5 = this;
-                com.google.gson.stream.JsonToken r5 = r6.peek()
-                com.google.gson.stream.JsonToken r0 = com.google.gson.stream.JsonToken.NULL
-                if (r5 != r0) goto Ld
-                r6.nextNull()
-                r5 = 0
-                return r5
-            Ld:
-                java.util.BitSet r5 = new java.util.BitSet
-                r5.<init>()
-                r6.beginArray()
-                com.google.gson.stream.JsonToken r0 = r6.peek()
-                r1 = 0
-                r2 = r1
-            L1b:
-                com.google.gson.stream.JsonToken r3 = com.google.gson.stream.JsonToken.END_ARRAY
-                if (r0 == r3) goto L7d
-                int[] r3 = com.google.gson.internal.bind.TypeAdapters.AnonymousClass32.$SwitchMap$com$google$gson$stream$JsonToken
-                int r4 = r0.ordinal()
-                r3 = r3[r4]
-                r4 = 1
-                switch(r3) {
-                    case 1: goto L6b;
-                    case 2: goto L66;
-                    case 3: goto L42;
-                    default: goto L2b;
+        @Override
+        public BitSet read(JsonReader in) throws IOException {
+            JsonToken token = in.peek();
+            if (token == JsonToken.NULL) {
+                in.nextNull();
+                return null;
+            }
+
+            BitSet bits = new BitSet();
+            in.beginArray();
+            int index = 0;
+
+            while ((token = in.peek()) != JsonToken.END_ARRAY) {
+                boolean set;
+                switch (token) {
+                    case NUMBER: {
+                        int v = in.nextInt();
+                        set = (v != 0);
+                        break;
+                    }
+                    case BOOLEAN: {
+                        set = in.nextBoolean();
+                        break;
+                    }
+                    case STRING: {
+                        String s = in.nextString();
+                        try {
+                            set = (Integer.parseInt(s) != 0);
+                        } catch (NumberFormatException e) {
+                            throw new JsonSyntaxException(
+                                "Error: Expecting: bitset number value (1, 0), Found: " + s
+                            );
+                        }
+                        break;
+                    }
+                    default:
+                        throw new JsonSyntaxException(
+                            "Invalid bitset value type: " + token
+                        );
                 }
-            L2b:
-                com.google.gson.JsonSyntaxException r5 = new com.google.gson.JsonSyntaxException
-                java.lang.StringBuilder r6 = new java.lang.StringBuilder
-                r6.<init>()
-                java.lang.String r1 = "Invalid bitset value type: "
-                r6.append(r1)
-                r6.append(r0)
-                java.lang.String r6 = r6.toString()
-                r5.<init>(r6)
-                throw r5
-            L42:
-                java.lang.String r0 = r6.nextString()
-                int r3 = java.lang.Integer.parseInt(r0)     // Catch: java.lang.NumberFormatException -> L4f
-                if (r3 == 0) goto L4d
-                goto L71
-            L4d:
-                r4 = r1
-                goto L71
-            L4f:
-                com.google.gson.JsonSyntaxException r5 = new com.google.gson.JsonSyntaxException
-                java.lang.StringBuilder r6 = new java.lang.StringBuilder
-                r6.<init>()
-                java.lang.String r1 = "Error: Expecting: bitset number value (1, 0), Found: "
-                r6.append(r1)
-                r6.append(r0)
-                java.lang.String r6 = r6.toString()
-                r5.<init>(r6)
-                throw r5
-            L66:
-                boolean r4 = r6.nextBoolean()
-                goto L71
-            L6b:
-                int r0 = r6.nextInt()
-                if (r0 == 0) goto L4d
-            L71:
-                if (r4 == 0) goto L76
-                r5.set(r2)
-            L76:
-                int r2 = r2 + 1
-                com.google.gson.stream.JsonToken r0 = r6.peek()
-                goto L1b
-            L7d:
-                r6.endArray()
-                return r5
-            */
-            throw new UnsupportedOperationException("Method not decompiled: com.google.gson.internal.bind.TypeAdapters.AnonymousClass2.read(com.google.gson.stream.JsonReader):java.util.BitSet");
+                if (set) {
+                    bits.set(index);
+                }
+                index++;
+            }
+            in.endArray();
+            return bits;
         }
 
         @Override // com.google.gson.TypeAdapter

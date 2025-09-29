@@ -56,19 +56,73 @@ public class ContentFrameLayout extends FrameLayout {
         }
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:23:0x006a  */
-    /* JADX WARN: Removed duplicated region for block: B:60:0x00f8  */
-    @Override // android.widget.FrameLayout, android.view.View
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    protected void onMeasure(int r14, int r15) {
-        /*
-            Method dump skipped, instructions count: 255
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v7.widget.ContentFrameLayout.onMeasure(int, int):void");
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        final DisplayMetrics metrics = getContext().getResources().getDisplayMetrics();
+        final boolean isPortrait = metrics.widthPixels < metrics.heightPixels;
+        final int widthMode = getMode(widthMeasureSpec);
+        final int heightMode = getMode(heightMeasureSpec);
+        boolean fixedWidth = false;
+        if (widthMode == AT_MOST) {
+            final TypedValue tvw = isPortrait ? mFixedWidthMinor : mFixedWidthMajor;
+            if (tvw != null && tvw.type != TypedValue.TYPE_NULL) {
+                int w = 0;
+                if (tvw.type == TypedValue.TYPE_DIMENSION) {
+                    w = (int) tvw.getDimension(metrics);
+                } else if (tvw.type == TypedValue.TYPE_FRACTION) {
+                    w = (int) tvw.getFraction(metrics.widthPixels, metrics.widthPixels);
+                }
+                if (w > 0) {
+                    w -= (mDecorPadding.left + mDecorPadding.right);
+                    final int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+                    widthMeasureSpec = MeasureSpec.makeMeasureSpec(
+                            Math.min(w, widthSize), EXACTLY);
+                    fixedWidth = true;
+                }
+            }
+        }
+        if (heightMode == AT_MOST) {
+            final TypedValue tvh = isPortrait ? mFixedHeightMajor : mFixedHeightMinor;
+            if (tvh != null && tvh.type != TypedValue.TYPE_NULL) {
+                int h = 0;
+                if (tvh.type == TypedValue.TYPE_DIMENSION) {
+                    h = (int) tvh.getDimension(metrics);
+                } else if (tvh.type == TypedValue.TYPE_FRACTION) {
+                    h = (int) tvh.getFraction(metrics.heightPixels, metrics.heightPixels);
+                }
+                if (h > 0) {
+                    h -= (mDecorPadding.top + mDecorPadding.bottom);
+                    final int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+                    heightMeasureSpec = MeasureSpec.makeMeasureSpec(
+                            Math.min(h, heightSize), EXACTLY);
+                }
+            }
+        }
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int width = getMeasuredWidth();
+        boolean measure = false;
+        widthMeasureSpec = MeasureSpec.makeMeasureSpec(width, EXACTLY);
+        if (!fixedWidth && widthMode == AT_MOST) {
+            final TypedValue tv = isPortrait ? mMinWidthMinor : mMinWidthMajor;
+            if (tv != null && tv.type != TypedValue.TYPE_NULL) {
+                int min = 0;
+                if (tv.type == TypedValue.TYPE_DIMENSION) {
+                    min = (int) tv.getDimension(metrics);
+                } else if (tv.type == TypedValue.TYPE_FRACTION) {
+                    min = (int) tv.getFraction(metrics.widthPixels, metrics.widthPixels);
+                }
+                if (min > 0) {
+                    min -= (mDecorPadding.left + mDecorPadding.right);
+                }
+                if (width < min) {
+                    widthMeasureSpec = MeasureSpec.makeMeasureSpec(min, EXACTLY);
+                    measure = true;
+                }
+            }
+        }
+        if (measure) {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        }
     }
 
     public TypedValue getMinWidthMajor() {

@@ -1,6 +1,7 @@
 package com.google.android.gms.internal;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /* loaded from: C:\Users\User\Desktop\camera\SemcCameraUI\classes.dex */
 public class zzmg<K, V> {
@@ -108,76 +109,28 @@ public class zzmg<K, V> {
         return String.format("LruCache[maxSize=%d,hits=%d,misses=%d,hitRate=%d%%]", Integer.valueOf(this.zzagC), Integer.valueOf(this.zzagG), Integer.valueOf(this.zzagH), Integer.valueOf(i != 0 ? (100 * this.zzagG) / i : 0));
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:21:0x0071, code lost:
-    
-        throw new java.lang.IllegalStateException(getClass().getName() + ".sizeOf() is reporting inconsistent results!");
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public void trimToSize(int r5) {
-        /*
-            r4 = this;
-        L0:
-            monitor-enter(r4)
-            int r0 = r4.size     // Catch: java.lang.Throwable -> L72
-            if (r0 < 0) goto L53
-            java.util.LinkedHashMap<K, V> r0 = r4.zzagB     // Catch: java.lang.Throwable -> L72
-            boolean r0 = r0.isEmpty()     // Catch: java.lang.Throwable -> L72
-            if (r0 == 0) goto L12
-            int r0 = r4.size     // Catch: java.lang.Throwable -> L72
-            if (r0 == 0) goto L12
-            goto L53
-        L12:
-            int r0 = r4.size     // Catch: java.lang.Throwable -> L72
-            if (r0 <= r5) goto L51
-            java.util.LinkedHashMap<K, V> r0 = r4.zzagB     // Catch: java.lang.Throwable -> L72
-            boolean r0 = r0.isEmpty()     // Catch: java.lang.Throwable -> L72
-            if (r0 == 0) goto L1f
-            goto L51
-        L1f:
-            java.util.LinkedHashMap<K, V> r0 = r4.zzagB     // Catch: java.lang.Throwable -> L72
-            java.util.Set r0 = r0.entrySet()     // Catch: java.lang.Throwable -> L72
-            java.util.Iterator r0 = r0.iterator()     // Catch: java.lang.Throwable -> L72
-            java.lang.Object r0 = r0.next()     // Catch: java.lang.Throwable -> L72
-            java.util.Map$Entry r0 = (java.util.Map.Entry) r0     // Catch: java.lang.Throwable -> L72
-            java.lang.Object r1 = r0.getKey()     // Catch: java.lang.Throwable -> L72
-            java.lang.Object r0 = r0.getValue()     // Catch: java.lang.Throwable -> L72
-            java.util.LinkedHashMap<K, V> r2 = r4.zzagB     // Catch: java.lang.Throwable -> L72
-            r2.remove(r1)     // Catch: java.lang.Throwable -> L72
-            int r2 = r4.size     // Catch: java.lang.Throwable -> L72
-            int r3 = r4.zzc(r1, r0)     // Catch: java.lang.Throwable -> L72
-            int r2 = r2 - r3
-            r4.size = r2     // Catch: java.lang.Throwable -> L72
-            int r2 = r4.zzagF     // Catch: java.lang.Throwable -> L72
-            r3 = 1
-            int r2 = r2 + r3
-            r4.zzagF = r2     // Catch: java.lang.Throwable -> L72
-            monitor-exit(r4)     // Catch: java.lang.Throwable -> L72
-            r2 = 0
-            r4.entryRemoved(r3, r1, r0, r2)
-            goto L0
-        L51:
-            monitor-exit(r4)     // Catch: java.lang.Throwable -> L72
-            return
-        L53:
-            java.lang.IllegalStateException r5 = new java.lang.IllegalStateException     // Catch: java.lang.Throwable -> L72
-            java.lang.StringBuilder r0 = new java.lang.StringBuilder     // Catch: java.lang.Throwable -> L72
-            r0.<init>()     // Catch: java.lang.Throwable -> L72
-            java.lang.Class r1 = r4.getClass()     // Catch: java.lang.Throwable -> L72
-            java.lang.String r1 = r1.getName()     // Catch: java.lang.Throwable -> L72
-            r0.append(r1)     // Catch: java.lang.Throwable -> L72
-            java.lang.String r1 = ".sizeOf() is reporting inconsistent results!"
-            r0.append(r1)     // Catch: java.lang.Throwable -> L72
-            java.lang.String r0 = r0.toString()     // Catch: java.lang.Throwable -> L72
-            r5.<init>(r0)     // Catch: java.lang.Throwable -> L72
-            throw r5     // Catch: java.lang.Throwable -> L72
-        L72:
-            r5 = move-exception
-            monitor-exit(r4)     // Catch: java.lang.Throwable -> L72
-            throw r5
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.google.android.gms.internal.zzmg.trimToSize(int):void");
+    public void trimToSize(int maxSize) {
+        for (;;) {
+            K key;
+            V value;
+            synchronized (this) {
+                if (size < 0 || (zzagB.isEmpty() && size != 0)) {
+                    throw new IllegalStateException(getClass().getName()
+                            + ".sizeOf() is reporting inconsistent results!");
+                }
+                if (size <= maxSize || zzagB.isEmpty()) {
+                    return;
+                }
+                // Evict the eldest entry (LinkedHashMap preserves order appropriate for this cache)
+                Entry<K,V> toEvict = zzagB.entrySet().iterator().next();
+                key = toEvict.getKey();
+                value = toEvict.getValue();
+                zzagB.remove(key);
+                size -= zzc(key, value); // per-class size accounting
+                zzagF++;                 // eviction/modification count
+            }
+            // Notify outside the monitor
+            entryRemoved(true, key, value, null);
+        }
     }
 }

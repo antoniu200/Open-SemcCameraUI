@@ -23,18 +23,135 @@ public class ResolutionOptions {
         this.mDefaultVideoSize = "";
     }
 
-    /* JADX WARN: Can't fix incorrect switch cases order, some code will duplicate */
-    /* JADX WARN: Removed duplicated region for block: B:44:0x00a2  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    public ResolutionOptions(android.content.Context r7, java.lang.String r8, java.util.List<android.graphics.Rect> r9) {
-        /*
-            Method dump skipped, instructions count: 516
-            To view this dump change 'Code comments level' option to 'DEBUG'
-        */
-        throw new UnsupportedOperationException("Method not decompiled: com.sonyericsson.android.camera.util.capability.ResolutionOptions.<init>(android.content.Context, java.lang.String, java.util.List):void");
+    public ResolutionOptions(Context ctx, String modelCode, List<Rect> maxRects) {
+        // Aspect dependency used in several branches
+        final boolean dependOnAspect = ResolutionDependence.isDependOnAspect(ctx);
+
+        // These will be set in each branch
+        String[] resolutionOptions;
+        String[] superiorAutoOptions;
+        String[] videoSizeOptions;
+        String   defaultResolution;
+        String   defaultVideoSize;
+
+        // Grouped exactly as in the fallback
+        switch (modelCode) {
+            case "SOI20BS0":
+            case "SOI20BS2": {
+                final int resArr      = 0x7f030001; // 2130903041
+                final int supArr      = 0x7f030007; // 2130903047
+                final int videoArr    = is4KVideoSizeSupported(ctx) ? 0x7f03000c : 0x7f03000f; // 2130903052/3055
+                final int defResStr   = dependOnAspect ? 0x7f0f0352 : 0x7f0f035f;              // 2131690322/0335
+                final int defVideoStr = 0x7f0f0362;                                           // 2131690338
+                resolutionOptions     = ctx.getResources().getStringArray(resArr);
+                superiorAutoOptions   = ctx.getResources().getStringArray(supArr);
+                videoSizeOptions      = ctx.getResources().getStringArray(videoArr);
+                defaultResolution     = ctx.getResources().getString(defResStr);
+                defaultVideoSize      = ctx.getResources().getString(defVideoStr);
+                break;
+            }
+
+            case "SOS20FW0":
+            case "SOI20BSA": {
+                final int resArr      = 0x7f030002; // 2130903042
+                final int supArr      = 0x7f030008; // 2130903048
+                final int videoArr    = is4KVideoSizeSupported(ctx) ? 0x7f03000d : 0x7f030010; // 2130903053/3056
+                final int defResStr   = dependOnAspect ? 0x7f0f0353 : 0x7f0f0360;              // 2131690323/0336
+                final int defVideoStr = 0x7f0f0363;                                           // 2131690339
+                resolutionOptions     = ctx.getResources().getStringArray(resArr);
+                superiorAutoOptions   = ctx.getResources().getStringArray(supArr);
+                videoSizeOptions      = ctx.getResources().getStringArray(videoArr);
+                defaultResolution     = ctx.getResources().getString(defResStr);
+                defaultVideoSize      = ctx.getResources().getString(defVideoStr);
+                break;
+            }
+
+            case "SOI13BS1":
+            case "SEM13BS1": {
+                final int resArr      = 0x7f030000; // 2130903040
+                final int supArr      = 0x7f030006; // 2130903046
+                final int videoArr    = 0x7f03000e; // 2130903054
+                final int defResStr   = 0x7f0f0351; // 2131690321
+                final int defVideoStr = 0x7f0f0361; // 2131690337
+                resolutionOptions     = ctx.getResources().getStringArray(resArr);
+                superiorAutoOptions   = ctx.getResources().getStringArray(supArr);
+                videoSizeOptions      = ctx.getResources().getStringArray(videoArr);
+                defaultResolution     = ctx.getResources().getString(defResStr);
+                defaultVideoSize      = ctx.getResources().getString(defVideoStr);
+                break;
+            }
+
+            case "LGI08BS0":
+            case "CHI08BS0": {
+                final int resArr      = 0x7f030005; // 2130903045
+                final int supArr      = 0x7f03000b; // 2130903051
+                final int videoArr    = 0x7f030014; // 2130903060
+                final int defResStr   = 0x7f0f0356; // 2131690326
+                final int defVideoStr = 0x7f0f0368; // 2131690344
+                resolutionOptions     = ctx.getResources().getStringArray(resArr);
+                superiorAutoOptions   = ctx.getResources().getStringArray(supArr);
+                videoSizeOptions      = ctx.getResources().getStringArray(videoArr);
+                defaultResolution     = ctx.getResources().getString(defResStr);
+                defaultVideoSize      = ctx.getResources().getString(defVideoStr);
+                break;
+            }
+
+            case "LGI05BN1":
+            case "CHI05BN1": {
+                final int resArr      = 0x7f030003; // 2130903043
+                final int supArr      = 0x7f030009; // 2130903049
+                final int videoArr    = 0x7f030012; // 2130903058
+                final int defResStr   = 0x7f0f0354; // 2131690324
+                final int defVideoStr = 0x7f0f0366; // 2131690342
+                resolutionOptions     = ctx.getResources().getStringArray(resArr);
+                superiorAutoOptions   = ctx.getResources().getStringArray(supArr);
+                videoSizeOptions      = ctx.getResources().getStringArray(videoArr);
+                defaultResolution     = ctx.getResources().getString(defResStr);
+                defaultVideoSize      = ctx.getResources().getString(defVideoStr);
+                break;
+            }
+
+            case "LGI13BS0":
+            case "MTM13BS0": {
+                final int resArr      = 0x7f030004; // 2130903044
+                final int supArr      = 0x7f03000a; // 2130903050
+                final int videoArr    = 0x7f030013; // 2130903059
+                final int defResStr   = 0x7f0f0355; // 2131690325
+                final int defVideoStr = 0x7f0f0367; // 2131690343
+                resolutionOptions     = ctx.getResources().getStringArray(resArr);
+                superiorAutoOptions   = ctx.getResources().getStringArray(supArr);
+                videoSizeOptions      = ctx.getResources().getStringArray(videoArr);
+                defaultResolution     = ctx.getResources().getString(defResStr);
+                defaultVideoSize      = ctx.getResources().getString(defVideoStr);
+                break;
+            }
+
+            default: {
+                // Use device-reported max sizes
+                final String[] max = getMaxResolutions(maxRects);
+                resolutionOptions   = max;
+                superiorAutoOptions = max;
+
+                // Default resolution selection
+                if (max.length == 2) {
+                    defaultResolution = dependOnAspect ? max[0] : max[1];
+                } else {
+                    defaultResolution = max.length > 0 ? max[0] : "";
+                }
+
+                // Generic video arrays / defaults
+                videoSizeOptions = ctx.getResources().getStringArray(0x7f030011); // 2130903057
+                defaultVideoSize = ctx.getResources().getString(0x7f0f0364);      // 2131690340
+                break;
+            }
+        }
+
+        // Commit to final fields
+        this.mResolutionOptions           = resolutionOptions;
+        this.mSuperiorAutoResolutionOptions = superiorAutoOptions;
+        this.mVideoSizeOptions            = videoSizeOptions;
+        this.mDefaultResolution           = defaultResolution;
+        this.mDefaultVideoSize            = defaultVideoSize;
     }
 
     public String[] getResolutionOptions() {

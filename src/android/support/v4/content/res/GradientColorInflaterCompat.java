@@ -1,6 +1,7 @@
 package android.support.v4.content.res;
 
 import android.content.res.Resources;
+import android.content.res.Resources.Theme;
 import android.content.res.TypedArray;
 import android.graphics.LinearGradient;
 import android.graphics.RadialGradient;
@@ -15,6 +16,7 @@ import android.util.AttributeSet;
 import android.util.Xml;
 import com.sonymobile.cameracommon.research.idd.IddUtil;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -78,97 +80,47 @@ final class GradientColorInflaterCompat {
         }
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:24:0x008f, code lost:
-    
-        if (r4.size() <= 0) goto L27;
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:26:0x0096, code lost:
-    
-        return new android.support.v4.content.res.GradientColorInflaterCompat.ColorStops(r4, r2);
-     */
-    /* JADX WARN: Code restructure failed: missing block: B:27:0x0097, code lost:
-    
+    private static ColorStops inflateChildElements(@NonNull Resources res,
+                                                   @NonNull XmlPullParser parser,
+                                                   @NonNull AttributeSet attrs,
+                                                   @Nullable Resources.Theme theme)
+            throws XmlPullParserException, java.io.IOException {
+        final int startDepth = parser.getDepth() + 1;
+        final ArrayList<Integer> colors = new ArrayList<>(20);
+        final ArrayList<Float> offsets = new ArrayList<>(20);
+
+        int type;
+        while (true) {
+            type = parser.next();
+            if (type == XmlPullParser.END_DOCUMENT) break;
+            final int depth = parser.getDepth();
+            if (depth < startDepth && type == XmlPullParser.END_TAG) break;
+            if (type != XmlPullParser.START_TAG) continue;
+            if (depth > startDepth) continue;
+
+            if (!"item".equals(parser.getName())) continue;
+
+            final TypedArray a = TypedArrayUtils.obtainAttributes(res, theme, attrs, R.styleable.GradientColorItem);
+            final boolean hasColor  = a.hasValue(R.styleable.GradientColorItem_android_color);
+            final boolean hasOffset = a.hasValue(R.styleable.GradientColorItem_android_offset);
+            if (!(hasColor && hasOffset)) {
+                a.recycle();
+                throw new XmlPullParserException(parser.getPositionDescription()
+                        + ": <item> tag requires a 'color' attribute and a 'offset' attribute!");
+            }
+
+            final int color = a.getColor(R.styleable.GradientColorItem_android_color, 0);
+            final float offset = a.getFloat(R.styleable.GradientColorItem_android_offset, 0f);
+            a.recycle();
+
+            colors.add(Integer.valueOf(color));
+            offsets.add(Float.valueOf(offset));
+        }
+
+        if (!colors.isEmpty()) {
+            return new ColorStops(colors, offsets);
+        }
         return null;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
-    private static android.support.v4.content.res.GradientColorInflaterCompat.ColorStops inflateChildElements(@android.support.annotation.NonNull android.content.res.Resources r8, @android.support.annotation.NonNull org.xmlpull.v1.XmlPullParser r9, @android.support.annotation.NonNull android.util.AttributeSet r10, @android.support.annotation.Nullable android.content.res.Resources.Theme r11) throws org.xmlpull.v1.XmlPullParserException, java.io.IOException {
-        /*
-            int r0 = r9.getDepth()
-            r1 = 1
-            int r0 = r0 + r1
-            java.util.ArrayList r2 = new java.util.ArrayList
-            r3 = 20
-            r2.<init>(r3)
-            java.util.ArrayList r4 = new java.util.ArrayList
-            r4.<init>(r3)
-        L12:
-            int r3 = r9.next()
-            if (r3 == r1) goto L8b
-            int r5 = r9.getDepth()
-            if (r5 >= r0) goto L21
-            r6 = 3
-            if (r3 == r6) goto L8b
-        L21:
-            r6 = 2
-            if (r3 == r6) goto L25
-            goto L12
-        L25:
-            if (r5 > r0) goto L12
-            java.lang.String r3 = r9.getName()
-            java.lang.String r5 = "item"
-            boolean r3 = r3.equals(r5)
-            if (r3 != 0) goto L34
-            goto L12
-        L34:
-            int[] r3 = android.support.compat.R.styleable.GradientColorItem
-            android.content.res.TypedArray r3 = android.support.v4.content.res.TypedArrayUtils.obtainAttributes(r8, r11, r10, r3)
-            int r5 = android.support.compat.R.styleable.GradientColorItem_android_color
-            boolean r5 = r3.hasValue(r5)
-            int r6 = android.support.compat.R.styleable.GradientColorItem_android_offset
-            boolean r6 = r3.hasValue(r6)
-            if (r5 == 0) goto L6b
-            if (r6 != 0) goto L4b
-            goto L6b
-        L4b:
-            int r5 = android.support.compat.R.styleable.GradientColorItem_android_color
-            r6 = 0
-            int r5 = r3.getColor(r5, r6)
-            int r6 = android.support.compat.R.styleable.GradientColorItem_android_offset
-            r7 = 0
-            float r6 = r3.getFloat(r6, r7)
-            r3.recycle()
-            java.lang.Integer r3 = java.lang.Integer.valueOf(r5)
-            r4.add(r3)
-            java.lang.Float r3 = java.lang.Float.valueOf(r6)
-            r2.add(r3)
-            goto L12
-        L6b:
-            org.xmlpull.v1.XmlPullParserException r8 = new org.xmlpull.v1.XmlPullParserException
-            java.lang.StringBuilder r10 = new java.lang.StringBuilder
-            r10.<init>()
-            java.lang.String r9 = r9.getPositionDescription()
-            r10.append(r9)
-            java.lang.String r9 = ": <item> tag requires a 'color' attribute and a 'offset' "
-            r10.append(r9)
-            java.lang.String r9 = "attribute!"
-            r10.append(r9)
-            java.lang.String r9 = r10.toString()
-            r8.<init>(r9)
-            throw r8
-        L8b:
-            int r8 = r4.size()
-            if (r8 <= 0) goto L97
-            android.support.v4.content.res.GradientColorInflaterCompat$ColorStops r8 = new android.support.v4.content.res.GradientColorInflaterCompat$ColorStops
-            r8.<init>(r4, r2)
-            return r8
-        L97:
-            r8 = 0
-            return r8
-        */
-        throw new UnsupportedOperationException("Method not decompiled: android.support.v4.content.res.GradientColorInflaterCompat.inflateChildElements(android.content.res.Resources, org.xmlpull.v1.XmlPullParser, android.util.AttributeSet, android.content.res.Resources$Theme):android.support.v4.content.res.GradientColorInflaterCompat$ColorStops");
     }
 
     private static ColorStops checkColors(@Nullable ColorStops colorStops, @ColorInt int i, @ColorInt int i2, boolean z, @ColorInt int i3) {
